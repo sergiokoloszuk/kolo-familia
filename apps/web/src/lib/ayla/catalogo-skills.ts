@@ -60,7 +60,6 @@ const ALARME_MIN_MS = 60_000;
 
 export async function carregarCatalogoSkills(
   supabase: { from: (t: string) => any },
-  familyId?: string | null,
 ): Promise<CatalogoSkills> {
   if (_cache && Date.now() - _cache.em < TTL_MS) {
     return { estado: "ok", skills: _cache.skills };
@@ -87,34 +86,46 @@ export async function carregarCatalogoSkills(
   } catch (e) {
     const motivo = e instanceof Error ? e.message : String(e);
     console.warn("[ayla:catalogo] skills não carregaram:", motivo);
-    // ⚠️ O EVENTO É PERSISTIDO. Antes só havia este `console.warn`, que some com
-    // a retenção da Vercel — então a causa do turno da Karina (09/09/2026) não
-    // estava guardada em lugar nenhum e teve que ser reconstruída por bancada.
-    // Nenhum dado da família entra aqui: só o id, que já é a chave de
-    // correlação usada por todo o resto da observabilidade.
-    const agora = Date.now();
-    if (agora - _ultimoAlarme >= ALARME_MIN_MS) {
-      _ultimoAlarme = agora;
-      void logEvent({
-        kind: "catalogo_skills_indisponivel",
-        severity: "error",
-        family_account_id: familyId ?? null,
-        message: `catálogo de skills não carregou: ${motivo.slice(0, 200)}`,
-        payload: {
-          sha: process.env.VERCEL_GIT_COMMIT_SHA ?? null,
-          motivo: motivo.slice(0, 400),
-          // O que fica sem entrada quando isto acontece — para quem lê o evento
-          // não precisar saber o mapa de cabeça.
-          consumidores_afetados: ["skills_do_turno", "boas_praticas", "lacuna_decisiva"],
-          cache_valido: Boolean(_cache),
-        },
-        persistir: true,
-      });
-    }
     // Sem catálogo a conversa NÃO PARA — mas quem chama passa a saber que a
     // ausência é falha, e não decisão.
     return { estado: "indisponivel", motivo: motivo.slice(0, 200) };
   }
+}
+
+/**
+ * Persiste o alarme FORA da onda de leituras pré-decisão.
+ *
+ * A separação é deliberada: `carregarCatalogoSkills` participa de um
+ * `Promise.all` que só pode conter leituras. O chamador espera a onda terminar
+ * e então dispara este efeito best-effort, sem acrescentar latência ao turno.
+ */
+export function registrarFalhaCatalogoSkills(
+  familyId: string | null | undefined,
+  motivo: string,
+): void {
+  // ⚠️ O EVENTO É PERSISTIDO. Antes só havia este `console.warn`, que some com
+  // a retenção da Vercel — então a causa do turno da Karina (09/09/2026) não
+  // estava guardada em lugar nenhum e teve que ser reconstruída por bancada.
+  // Nenhum dado da família entra aqui: só o id, que já é a chave de
+  // correlação usada por todo o resto da observabilidade.
+  const agora = Date.now();
+  if (agora - _ultimoAlarme < ALARME_MIN_MS) return;
+  _ultimoAlarme = agora;
+  void logEvent({
+    kind: "catalogo_skills_indisponivel",
+    severity: "error",
+    family_account_id: familyId ?? null,
+    message: `catálogo de skills não carregou: ${motivo.slice(0, 200)}`,
+    payload: {
+      sha: process.env.VERCEL_GIT_COMMIT_SHA ?? null,
+      motivo: motivo.slice(0, 400),
+      // O que fica sem entrada quando isto acontece — para quem lê o evento
+      // não precisar saber o mapa de cabeça.
+      consumidores_afetados: ["skills_do_turno", "boas_praticas", "lacuna_decisiva"],
+      cache_valido: Boolean(_cache),
+    },
+    persistir: true,
+  });
 }
 
 /** Só para teste: esquece o catálogo em memória. */

@@ -108,7 +108,7 @@ substitui a prioridade atual de segurança nem a análise de produção.
 | [PEND-035](#pend-035) | ✅ BAIXADA · O objetivo do Plano confundia BARREIRA com OBJETIVO FINAL | P1 | CONCLUÍDA |
 | [PEND-036](#pend-036) | O contexto mais recente não prevalece — o Plano reoferece o que a conversa acabou de descartar | P1 | ABERTA |
 | [PEND-037](#pend-037) | Fato × hipótese — o Plano afirma causas sem fonte rastreável | P2 | ABERTA |
-| [PEND-038](#pend-038) | Latência percebida no WhatsApp — e a resposta que chega em vários balões | P1 pós-rollout | ABERTA · MEDIÇÃO PARCIAL EM PRODUÇÃO |
+| [PEND-038](#pend-038) | Latência percebida no WhatsApp — e a resposta que chega em vários balões | P1 pós-rollout | ABERTA · MEDIDA · CORREÇÃO P1 LOCAL · AGUARDANDO CI/REVISÃO/MERGE |
 | [PEND-039](#pend-039) | BIA-5 · Bancada permanente de golden cases (e a prova de recuperação da BIA) | P1 | PRONTA PARA IMPLEMENTAR |
 | [PEND-040](#pend-040) | Observabilidade de IA — a conversa Web e o Plano não existem em api_calls | P1 | ABERTA |
 | [PEND-041](#pend-041) | O rastro do canal web não distingue conversa de geração de artefato | P2 | ABERTA |
@@ -933,7 +933,7 @@ Aberta em: 2026-08-11 · Origem: decisão de 11/08/2026
 
 ### PEND-038
 **Latência percebida no WhatsApp — e a resposta que chega em vários balões**
-Bloco: **A · Condução** · Prioridade: **P1 pós-rollout** · Estado: **ABERTA · MEDIÇÃO PARCIAL EM PRODUÇÃO**
+Bloco: **A · Condução** · Prioridade: **P1 pós-rollout** · Estado: **ABERTA · MEDIDA · CORREÇÃO P1 LOCAL · AGUARDANDO CI/REVISÃO/MERGE**
 Aberta em: 2026-08-11 · Origem: teste real (Karina/Manu, 11:25–11:28)
 
 > **Paralela à 3b, não depois dela.** Não adianta a inteligência melhorar se a
@@ -952,6 +952,54 @@ Aberta em: 2026-08-11 · Origem: teste real (Karina/Manu, 11:25–11:28)
   removida; leituras independentes passaram a ocorrer em paralelo. O portão
   final anti-fragmentação de 10 s e a prontidão clínica foram preservados.
   **Não fecha a pendência geral:** falta publicar e medir P50/P95 em produção.
+- **Medição de produção (26/10/2026, janela móvel de 72 h):** texto tratado no
+  WhatsApp, `n=22`: **P50 13,453 s**, **P95 15,733 s**, máximo 17,119 s até a
+  primeira aceitação da Z-API. Áudio tratado, `n=4`: **P50 18,906 s** e
+  P95/máximo 24,323 s. O recorte histórico de 08–11/10 tinha P50 13,189 s e
+  P95 21,462 s para texto: a mediana alta é estrutural, não uma regressão nova.
+- **Causa raiz medida no texto comum:** preparação/debounce P50 3,255 s;
+  pré-decisão 1,619 s; decisor 2,380 s; geração 3,910 s; envio 1,011 s. Dentro
+  da geração, o modelo principal custa P50 2,617 s e o contexto 1,215 s; a
+  aceitação do provedor custa só 368 ms. Percentis por etapa não são aditivos,
+  mas a sequência demonstra que o gargalo não é a Z-API: é trabalho serial
+  antes do envio, somado ao piso deliberado de 10 s contra fragmentação.
+- **Correção geral local (27/10/2026):** preserva o piso de 10 s, os dois
+  modelos, prompts, portões e respostas; transforma apenas leituras
+  independentes em ondas paralelas: segurança + retomada; desafios + estado do
+  menu; e escolha do menu + histórico/estado + últimas falas + catálogo. Não há
+  `insert`, `upsert`, `update` ou `delete` diretos nas ondas.
+- **Auditoria independente e correção P1 local (29/10/2026):** a revisão do
+  HEAD `987193c` encontrou que `carregarCatalogoSkills`, embora parecesse uma
+  leitura, iniciava `logEvent` no caminho de falha e portanto abria uma escrita
+  indireta de observabilidade enquanto o `Promise.all` ainda podia estar em
+  curso. Não havia mutação de domínio nem mistura entre famílias, mas o Gate 3
+  proíbe qualquer escrita na onda. A correção separa leitura e alarme: o helper
+  só devolve `indisponivel`, e o orquestrador dispara o evento explicitamente
+  depois da conclusão da onda. A prova comportamental confirma zero evento
+  durante a leitura e persistência posterior; testes relacionados 154/154 e
+  `tsc --noEmit` passaram. Falta commit/push, CI limpa e nova auditoria antes do
+  merge.
+- **Validação local atualizada (28/10/2026):** testes diretamente afetados
+  120/120; as duas asserções temporais foram estabilizadas em commit separado
+  (`992d3a3`) e passaram 36/36; a prova de continuidade foi alinhada à promessa
+  compartilhada (`01724a0`) e passou 71/71; `next typegen` e `tsc --noEmit`
+  passaram. A suíte completa chegou a 4.206 testes aprovados e 7 pulados; das
+  três falhas, a estrutural desta frente foi corrigida e passou isoladamente.
+  Restam duas provas dependentes do ambiente: o provider recebeu `fetch failed`
+  ao tentar a Anthropic sem chave, e a importação dinâmica de Stripe excedeu o
+  timeout de 5 s neste Windows. `npm ci`, suíte e build limpos ficam pendentes
+  no runner Linux do PR; o build local segue bloqueado pelo proxy de Google
+  Fonts. Detalhes em
+  `docs/analises/AYLA-LATENCIA-WHATSAPP-2026-10-27.md`.
+- **Prova no runner Linux (28/10/2026):** branch `codex/ayla-latencia`
+  publicada e PR em rascunho #151 aberto contra `main`. A GitHub Actions
+  executou índice/IDs, `npm ci`, `next typegen`, `tsc --noEmit`, suíte completa
+  e `next build --webpack` com código 0 no commit `50e9219` (run
+  `40760820029`, job `123071947109`, 6m12s). O preview da Vercel também passou.
+  Isso prova compilação e regressão em ambiente limpo; **não prova produção**:
+  faltam revisão independente, autorização de merge, deploy/health, smoke
+  passivo e medição pós-deploy. Checklist:
+  `docs/MISSAO-AYLA-LATENCIA-PRODUCAO-2026-10-27.md`.
 - **Medir separadamente**, no caminho real, antes de otimizar qualquer coisa:
   tempo até começar a responder · tempo total · chamadas ao roteador · chamadas
   ao modelo · queries · geração do Plano · geração do PDF · envio ao WhatsApp ·
@@ -963,10 +1011,11 @@ Aberta em: 2026-08-11 · Origem: teste real (Karina/Manu, 11:25–11:28)
   Plano completo em bancada: 8 chamadas ao modelo Claude com `thinking`, em
   lotes, sem PDF e sem envio. **Não explicam a demora que a família sente na
   conversa**, e usá-los para isso mandaria a investigação para o lugar errado.
-- **CONTINUAM NÃO MEDIDAS, depois do rollout geral de 11/08:** latência da
-  conversa **Web**, latência da conversa **WhatsApp** e latência do **Plano
-  real** em produção. Até 16:39Z do dia do rollout não houve um único turno
-  posterior ao redeploy — `api_calls` e `eventos_app` vazios no período.
+- **Continuam sem amostra suficiente:** conversa **Web** (houve apenas uma
+  chamada recente observável, com 14,999 s de modelo e prompt de 21.618 tokens)
+  e geração do **Plano real**. O endpoint web chamado de `stream` também retém a
+  resposta completa para inspeção antes de publicar; é causa plausível de
+  latência percebida, mas fica fora desta correção por falta de amostra.
 - **E há um obstáculo material para medir**, que precisa cair antes: a conversa
   Web e o Plano não registram nada em `api_calls` ([PEND-040]). Sem isso, "tempo
   de resposta em produção" não tem de onde sair.

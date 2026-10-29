@@ -92,7 +92,7 @@ import {
 import { classificarIntencao } from "./intent";
 import { decidirTurno } from "@/lib/conducao/decisao-do-turno";
 import { apurarEstadoDoTurno, blocoDeEstado } from "@/lib/conducao/estado-do-turno";
-import { carregarCatalogoSkills } from "./catalogo-skills";
+import { carregarCatalogoSkills, registrarFalhaCatalogoSkills } from "./catalogo-skills";
 import { recuperarBoasPraticas, blocoBoasPraticas } from "@/lib/conhecimento/recuperar";
 // FASE 4A NO WHATSAPP (10/08/2026) — os MESMOS módulos que a web usa, chamados
 // daqui. Nenhum deles é web-only: `carregarPerfilConsultavel`, `secoesDe` e as
@@ -3157,7 +3157,13 @@ async function processInboundInterno(
   // tentativa de suicídio da filha, a Ayla acertou o primeiro turno — e voltou
   // a ser conversa comum na mensagem seguinte, organizando a rotina da casa
   // cinco minutos depois. Cada turno reentrava do zero porque não havia estado.
-  const seguranca = await segurancaAberta(supabase, family.id, inbound.recebidaEm);
+  // As duas apurações só leem estado e dependem dos mesmos dados já resolvidos.
+  // Em fila, a retomada começava apenas depois de a segurança terminar; juntas,
+  // preservam a ordem dos portões abaixo sem somar duas viagens ao banco.
+  const [seguranca, retomada] = await Promise.all([
+    segurancaAberta(supabase, family.id, inbound.recebidaEm),
+    retomarPedidoAposClarificacao(supabase, family.id, inbound.texto),
+  ]);
   if (seguranca.aberta) {
     console.log(`[ayla:seguranca] ABERTA desde ${seguranca.desde} (checar=${seguranca.precisaChecar})`);
   }
@@ -3174,7 +3180,6 @@ async function processInboundInterno(
   // não pode fechar o estado. A retomada devolve o TEXTO ORIGINAL e o
   // roteamento normal decide de novo — sem caso especial, sem segunda máquina
   // de estado. Quem perguntou tem que estar pronto pra ouvir a resposta.
-  const retomada = await retomarPedidoAposClarificacao(supabase, family.id, inbound.texto);
   if (retomada) {
     console.log(
       `[ayla:clarificacao] "${inbound.texto}" retoma o pedido de ${retomada.quandoISO} — criança ${retomada.membroNome}`,
@@ -3192,15 +3197,19 @@ async function processInboundInterno(
   // gastar uma chamada de modelo para descobrir isso é desperdício. Situação
   // concreta não passa por aqui (ver `ehEntradaVaga`), então quem já contou o
   // que está acontecendo continua sendo atendida na hora.
-  const desafiosOnboarding = await carregarDesafiosOnboarding(supabase, membroConversa);
-  if (
-    !rotinaConversa &&
-    (await deveMostrarMenu(supabase, {
-      familyId: family.id,
-      texto: inbound.texto,
-      membroId: membroConversa,
-    }))
-  ) {
+  // O conteúdo do menu e a decisão de mostrá-lo são duas leituras independentes.
+  // O resultado continua sendo avaliado no mesmo ponto e com o mesmo fail-safe.
+  const [desafiosOnboarding, mostrarMenu] = await Promise.all([
+    carregarDesafiosOnboarding(supabase, membroConversa),
+    rotinaConversa
+      ? Promise.resolve(false)
+      : deveMostrarMenu(supabase, {
+          familyId: family.id,
+          texto: inbound.texto,
+          membroId: membroConversa,
+        }),
+  ]);
+  if (mostrarMenu) {
     const ctxMenu = await loadFamiliaParaEnvio(supabase, family.id);
     if (ctxMenu) {
       const bruto = ctxMenu.membros.find((m) => m.id === membroConversa)?.nome ?? "";
@@ -3299,13 +3308,6 @@ async function processInboundInterno(
     }
   }
 
-  // A MÃE RESPONDEU O NÚMERO. O tema sai do menu que ela VIU, não de uma
-  // adivinhação do modelo sobre o que "2" quer dizer — e a skill correspondente
-  // vai junto, porque a chave do tema é a mesma chave da skill.
-  const escolha = rotinaConversa
-    ? null
-    : await escolhaDoMenu(supabase, family.id, inbound.texto);
-
   // INTENÇÃO + TEMA por IA (entende o que a mãe quer e sobre o que, não só
   // palavra-chave). Sinal PRIMÁRIO do roteamento abaixo; os `pede*` de regex
   // ficam como reforço (OR). Só roda aqui (mensagem livre que precisa de rumo)
@@ -3323,19 +3325,53 @@ async function processInboundInterno(
   // que havia um quadro devendo. Apurando o estado ANTES, quem decide decide
   // com o que a Kolo sabe.
   //
-  // ⚠️ NENHUMA LEITURA DE HISTÓRICO A MAIS: `historicoDoTurno()` é memoizado e
-  // já foi lido acima. O estado acrescenta 2 SELECTs curtos, em paralelo.
-  const estadoDoTurno = rotinaConversa
+  // ⚠️ UMA ONDA DE LEITURAS, NÃO QUATRO FILAS. Escolha do menu, estado,
+  // últimas falas e catálogo não dependem entre si. O histórico continua sendo
+  // UMA promessa local ao turno e cada consumidor recebe a mesma família.
+  // Nenhuma escrita entra aqui: os portões e seus efeitos continuam abaixo,
+  // depois de todos os resultados estarem disponíveis.
+  const insumosPreDecisao = rotinaConversa
     ? null
-    : await apurarEstadoDoTurno(supabase, {
-        familyId: family.id,
-        membroId: membroConversa ?? null,
-        membroNome: null,
-        historico: (await historicoDoTurno())
-          .slice()
-          .reverse()
-          .map((l) => ({ direcao: l.direcao, texto: l.texto })),
-      });
+    : await (async () => {
+        const historicoPromise = historicoDoTurno();
+        const [escolha, estado, falas, catalogo] = await Promise.all([
+          escolhaDoMenu(supabase, family.id, inbound.texto),
+          historicoPromise.then((historico) =>
+            apurarEstadoDoTurno(supabase, {
+              familyId: family.id,
+              membroId: membroConversa ?? null,
+              membroNome: null,
+              historico: historico
+                .slice()
+                .reverse()
+                .map((l) => ({ direcao: l.direcao, texto: l.texto })),
+            }),
+          ),
+          // `carregarHistorico` preserva o comportamento legado de ordenar a
+          // cópia memoizada; o estado acima já recebeu uma cópia própria.
+          historicoPromise.then((historico) =>
+            ultimasFalas(supabase, family.id, inbound.texto, historico),
+          ),
+          carregarCatalogoSkills(supabase),
+        ]);
+        if (catalogo.estado === "indisponivel") {
+          registrarFalhaCatalogoSkills(family.id, catalogo.motivo);
+        }
+        return {
+          escolha,
+          estado,
+          falas,
+          catalogo:
+            catalogo.estado === "ok"
+              ? { catalogoSkills: catalogo.skills, catalogoDisponivel: true }
+              : { catalogoSkills: [], catalogoDisponivel: false },
+        };
+      })();
+  // A MÃE RESPONDEU O NÚMERO. O tema sai do menu que ela VIU, não de uma
+  // adivinhação do modelo sobre o que "2" quer dizer — e a skill correspondente
+  // vai junto, porque a chave do tema é a mesma chave da skill.
+  const escolha = insumosPreDecisao?.escolha ?? null;
+  const estadoDoTurno = insumosPreDecisao?.estado ?? null;
   const blocoEstadoDoTurno = estadoDoTurno ? blocoDeEstado(estadoDoTurno) : "";
 
   // ⚠️ QUEM DECIDE O TURNO É O GPT — Fase 1B, 06/09/2026.
@@ -3386,20 +3422,15 @@ async function processInboundInterno(
         // O custo E A DURAÇÃO da decisão viram linha em `api_calls`.
         supabase,
         familyId: family.id,
-        ...(await ultimasFalas(supabase, family.id, inbound.texto, await historicoDoTurno())),
+        ...insumosPreDecisao!.falas,
         // Já carregado para a entrada guiada. Repetir a mesma leitura aqui
         // acrescentava uma ida remota antes de toda resposta comum.
         temasOnboarding: desafiosOnboarding,
-        ...(await (async () => {
-          // ⚠️ FALHA ≠ VAZIO — PEND-184. O catálogo indisponível some do prompt
-          // e faz o modelo devolver `skills: []` obedecendo ao contrato; sem
-          // este sinal, aquele vazio chegaria ao Gate B e às Boas Práticas
-          // como se fosse decisão do modelo.
-          const cat = await carregarCatalogoSkills(supabase, family.id);
-          return cat.estado === "ok"
-            ? { catalogoSkills: cat.skills, catalogoDisponivel: true }
-            : { catalogoSkills: [], catalogoDisponivel: false };
-        })()),
+        // ⚠️ FALHA ≠ VAZIO — PEND-184. O catálogo indisponível some do prompt
+        // e faz o modelo devolver `skills: []` obedecendo ao contrato; sem
+        // este sinal, aquele vazio chegaria ao Gate B e às Boas Práticas
+        // como se fosse decisão do modelo.
+        ...insumosPreDecisao!.catalogo,
       });
   marco(rastro, "decisor_fim");
   const intent = turnoClassificado.intencao;

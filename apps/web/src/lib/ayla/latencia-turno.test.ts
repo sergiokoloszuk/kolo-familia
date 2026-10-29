@@ -104,7 +104,9 @@ describe("o histórico é lido UMA vez por turno", () => {
     expect(ORCH).toMatch(/async function lerHistoricoBruto\(/);
     expect(ORCH).toMatch(/historicoBrutoPromise \?\?= lerHistoricoBruto\(supabase, family\.id\)/);
     // E os três consumidores passam o resultado adiante, em vez de reler.
-    expect(ORCH).toMatch(/ultimasFalas\(supabase, family\.id, inbound\.texto, await historicoDoTurno\(\)\)/);
+    expect(ORCH).toMatch(
+      /historicoPromise\.then\(\(historico\) =>\s*ultimasFalas\(supabase, family\.id, inbound\.texto, historico\)/,
+    );
     expect(ORCH).toMatch(/carregarHistorico\(supabase, family\.id, inbound\.texto, null, undefined, bruto\)/);
     expect(ORCH).toMatch(/await historicoDoTurno\(\),\s*\),/);
   });
@@ -251,6 +253,45 @@ describe("as consultas paralelizadas continuam independentes", () => {
     // leituras vão juntas, e a checagem do contexto vem logo depois.
     expect(ORCH).toMatch(/\]\);\s*\n[\s\S]{0,1200}if \(!ctx\) \{/);
     expect(ORCH).toMatch(/texto: TEXTO_NAO_CONSEGUI_AGORA/);
+  });
+
+  it("MORDE: as leituras anteriores ao decisor formam uma onda só", () => {
+    const ORCH = readFileSync(resolve(__dirname, "orchestrator.ts"), "utf8");
+    const CATALOGO = readFileSync(resolve(__dirname, "catalogo-skills.ts"), "utf8");
+    const inicio = ORCH.indexOf("const [escolha, estado, falas, catalogo] = await Promise.all([");
+    const fim = ORCH.indexOf("        ]);", inicio);
+    expect(inicio, "a onda pré-decisão sumiu").toBeGreaterThan(-1);
+    expect(fim, "a onda pré-decisão não termina onde esperado").toBeGreaterThan(inicio);
+    const onda = ORCH.slice(inicio, fim);
+    for (const leitura of [
+      "escolhaDoMenu(",
+      "apurarEstadoDoTurno(",
+      "ultimasFalas(",
+      "carregarCatalogoSkills(",
+    ]) {
+      expect(onda, `leitura voltou para a fila: ${leitura}`).toContain(leitura);
+    }
+    expect(onda).not.toMatch(/\.(insert|upsert|update|delete)\(/);
+    const leituraCatalogo = CATALOGO.slice(
+      CATALOGO.indexOf("export async function carregarCatalogoSkills"),
+      CATALOGO.indexOf("export function registrarFalhaCatalogoSkills"),
+    );
+    expect(leituraCatalogo, "a leitura do catálogo voltou a esconder uma escrita").not.toContain(
+      "logEvent(",
+    );
+    expect(ORCH).toMatch(
+      /\]\);\s*if \(catalogo\.estado === "indisponivel"\) \{\s*registrarFalhaCatalogoSkills\(/,
+    );
+  });
+
+  it("segurança/retomada e conteúdo/estado do menu também são pares só de leitura", () => {
+    const ORCH = readFileSync(resolve(__dirname, "orchestrator.ts"), "utf8");
+    expect(ORCH).toMatch(
+      /const \[seguranca, retomada\] = await Promise\.all\(\[\s*segurancaAberta\([\s\S]*?retomarPedidoAposClarificacao\(/,
+    );
+    expect(ORCH).toMatch(
+      /const \[desafiosOnboarding, mostrarMenu\] = await Promise\.all\(\[\s*carregarDesafiosOnboarding\([\s\S]*?deveMostrarMenu\(/,
+    );
   });
 
   it("NENHUMA ESCRITA foi paralelizada", () => {
