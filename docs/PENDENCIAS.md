@@ -7081,6 +7081,17 @@ Bloco: **D · Entregas** · Prioridade: **P0**
 STATUS: **PUBLICADA · AGUARDANDO MEDIÇÃO REAL** · Aberta em: 2026-08-24
 Publicada em: 2026-08-24 · `fc70305` · produção servindo às 10:37Z (health ok, db ok)
 
+**Candidata visual isolada em 29/10/2026, sem baixa e sem produção:** a branch
+`codex/ayla-visual-respostas`, baseada em `1cb11c5` depois da PR #151, corrige
+títulos/listas da conversa Web e agrupamento por conteúdo nos dois caminhos de
+resposta WhatsApp, preservando uma linha lógica no histórico e indicando aceite
+parcial quando necessário. `qualidade-resposta.ts`, perfil/memória/conhecimento,
+trial, Black Friday e botões ficaram fora do diff. Baseline local: três
+atividades viraram 29 partes; candidata busca três unidades completas quando
+reconhecíveis e dentro do teto operacional. [Escopo, provas e limites](auditorias/ayla-visual-2026-10-29.md).
+É uma correção candidata para Preview, não medição em famílias nem conclusão
+desta ficha. Avaliação humana e publicação de produção dependem de autorização.
+
 > ⚠️ **NÃO BAIXADA DE PROPÓSITO.** O código está no ar e provado por 2.908
 > testes; o que ainda não existe é evidência de que a tela da família mudou.
 > `IMPLEMENTADA ≠ PRONTA`. A baixa depende da medição descrita no fim da ficha.

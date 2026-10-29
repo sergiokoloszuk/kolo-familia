@@ -43,19 +43,17 @@ describe("montagem das bolhas", () => {
     ].join("\n");
 
     const bolhas = dividirEmBolhas(texto);
-    expect(bolhas).toHaveLength(2);
-    expect(bolhas[0]).toBe("*O que eu faria primeiro*\nTire a comida nova do prato dele.");
-    expect(bolhas[1]).toContain("*Uma ideia pro fim de semana*\n");
+    expect(bolhas).toEqual([texto]);
   });
 
-  it("uma resposta de 4 blocos cabe em 4 bolhas, não em 8", () => {
+  it("uma orientação com quatro seções mantém seu respiro numa mensagem", () => {
     const texto = ["*A*", "", "um", "", "*B*", "", "dois", "", "*C*", "", "três", "", "*D*", "", "quatro"].join("\n");
-    expect(dividirEmBolhas(texto)).toHaveLength(4);
+    expect(dividirEmBolhas(texto)).toEqual([texto]);
   });
 
-  it("prosa corrida continua se dividindo como sempre — nada regrediu", () => {
+  it("parágrafos de uma orientação não viram bolhas separadas", () => {
     const texto = "Primeira ideia.\n\nSegunda ideia.\n\nTerceira.";
-    expect(dividirEmBolhas(texto)).toEqual(["Primeira ideia.", "Segunda ideia.", "Terceira."]);
+    expect(dividirEmBolhas(texto)).toEqual([texto]);
   });
 
   it("título com emoji também gruda", () => {
@@ -71,7 +69,7 @@ describe("montagem das bolhas", () => {
 
   it("título no fim do texto não engole o conteúdo nem some", () => {
     const bolhas = dividirEmBolhas("Alguma coisa.\n\n*Título órfão*");
-    expect(bolhas).toEqual(["Alguma coisa.", "*Título órfão*"]);
+    expect(bolhas).toEqual(["Alguma coisa.\n\n*Título órfão*"]);
   });
 
   it("o orquestrador usa o divisor — não o split cru", () => {

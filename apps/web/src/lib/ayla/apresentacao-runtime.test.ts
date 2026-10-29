@@ -37,11 +37,10 @@ describe("ESTÁ NO CAMINHO, e no lugar certo", () => {
   });
 
   it("3. não sobrou nenhuma chamada crua a dividirEmBolhas no runtime", () => {
-    // SABOTAGEM CONTRA MIM MESMA: se houvesse um segundo ponto de publicação
-    // que eu não vi, ele continuaria mandando Markdown cru e este teste
-    // apontaria o dedo. `VI NO CÓDIGO` que hoje existe um só.
+    // Legacy e resposta principal experimental usam a mesma conversão.
     const chamadas = orch.match(/dividirEmBolhas\(/g) ?? [];
-    expect(chamadas).toHaveLength(1);
+    expect(chamadas).toHaveLength(2);
+    expect(orch).toContain("dividirEmBolhas(paraWhatsApp(texto))");
     expect(orch).not.toMatch(/dividirEmBolhas\(textoCompleto\)/);
   });
 });
@@ -109,8 +108,7 @@ describe("REGRESSÃO — o que funcionava continua funcionando", () => {
   it("11. o título continua grudando no bloco que ele intitula", () => {
     // A regra que existia antes e não pode ter sido quebrada pela conversão.
     expect(dividirEmBolhas(paraWhatsApp("## Agora\n\nFaça isso.\n\nDepois isso."))).toEqual([
-      "*Agora*\nFaça isso.",
-      "Depois isso.",
+      "*Agora*\n\nFaça isso.\n\nDepois isso.",
     ]);
   });
 
@@ -136,14 +134,12 @@ describe("SABOTAGEM — os testes mordem?", () => {
     expect(orch).toContain("dividirEmBolhas(paraWhatsApp(textoCompleto))");
   });
 
-  it("S2 · se ela rodasse DEPOIS das bolhas, o título se separaria do bloco", () => {
-    // Prova que a ORDEM importa, e não é preferência estética.
+  it("S2 · a conversão preserva título e conteúdo na mesma unidade", () => {
     const t = "## Agora\n\nFaça isso.";
     const certo = dividirEmBolhas(paraWhatsApp(t));
     const errado = dividirEmBolhas(t).map(paraWhatsApp);
-    expect(certo).toEqual(["*Agora*\nFaça isso."]);
-    expect(errado).toEqual(["*Agora*", "Faça isso."]); // duas bolhas, uma com uma palavra
-    expect(certo).not.toEqual(errado);
+    expect(certo).toEqual(["*Agora*\n\nFaça isso."]);
+    expect(errado).toEqual(certo);
   });
 
   it("S3 · se ela ganhasse um await, o teste 4 quebra", () => {

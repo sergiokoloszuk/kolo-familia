@@ -58,9 +58,11 @@ function renderInline(text: string, keyPrefix: string): ReactNode[] {
 export function RespostaMarkdown({
   texto,
   className,
+  variante,
 }: {
   texto: string;
   className?: string;
+  variante?: "conversa";
 }) {
   const linhas = texto.replace(/\r\n/g, "\n").split("\n");
   const blocks: ReactNode[] = [];
@@ -92,7 +94,9 @@ export function RespostaMarkdown({
             {conteudo}
           </h3>
         ) : (
-          <h4 key={key++} className="text-sm font-bold uppercase tracking-[0.08em] text-muted-foreground">
+          <h4 key={key++} className={variante === "conversa"
+            ? "text-base font-semibold normal-case tracking-normal text-foreground"
+            : "text-sm font-bold uppercase tracking-[0.08em] text-muted-foreground"}>
             {conteudo}
           </h4>
         ),
@@ -110,7 +114,9 @@ export function RespostaMarkdown({
       blocks.push(
         <blockquote
           key={key++}
-          className="border-l-2 border-brand-yellow pl-4 text-foreground/80"
+          className={variante === "conversa"
+            ? "rounded-r-lg border-l-2 border-brand-yellow bg-kolo-lilas-bg-2 px-4 py-3 text-foreground"
+            : "border-l-2 border-brand-yellow pl-4 text-foreground/80"}
         >
           {linhasCitacao.map((q, qi) => (
             <p key={qi} className="leading-relaxed">
@@ -146,16 +152,28 @@ export function RespostaMarkdown({
 
     if (RE_ORDENADA.test(t)) {
       const itens: string[] = [];
+      const inicio = Number(t.match(/^\d+/)![0]);
+      let ultimoNumero = inicio;
       while (i < linhas.length && RE_ORDENADA.test(linhas[i].trim())) {
+        ultimoNumero = Number(linhas[i].trim().match(/^\d+/)![0]);
         itens.push(linhas[i].trim().replace(RE_ORDENADA, ""));
         i++;
+        // Linhas em branco dão respiro ao item, não reiniciam a lista.
+        // Um reinício explícito após 2+ continua sendo uma lista independente.
+        let proxima = i;
+        while (proxima < linhas.length && linhas[proxima].trim() === "") proxima++;
+        const seguinte = linhas[proxima]?.trim();
+        if (proxima > i && seguinte && RE_ORDENADA.test(seguinte)) {
+          const numero = Number(seguinte.match(/^\d+/)![0]);
+          if (numero !== 1 || ultimoNumero === 1) i = proxima;
+        }
       }
       blocks.push(
-        <ol key={key++} className="flex flex-col gap-1.5">
+        <ol key={key++} start={inicio} className="flex flex-col gap-1.5">
           {itens.map((it, ii) => (
             <li key={ii} className="flex gap-2.5 leading-relaxed">
               <span aria-hidden className="shrink-0 font-semibold text-brand-purple">
-                {ii + 1}.
+                {inicio + ii}.
               </span>
               <span className="flex-1">{renderInline(it, `ol-${key}-${ii}`)}</span>
             </li>
@@ -195,6 +213,17 @@ export function RespostaMarkdown({
   }
 
   return <div className={className ?? "flex flex-col gap-3 text-base"}>{blocks}</div>;
+}
+
+/** Mesmo componente para resposta em transmissão e mensagem já salva. */
+export function RespostaConversa({ texto }: { texto: string }) {
+  return (
+    <RespostaMarkdown
+      texto={limparRespostaKolo(texto)}
+      variante="conversa"
+      className="mt-2 flex min-w-0 max-w-[70ch] flex-col gap-4 break-words text-base text-foreground"
+    />
+  );
 }
 
 /**
