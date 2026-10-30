@@ -3870,7 +3870,8 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010 (itens 23, 24, 25) +
 - **Admin:** ADMIN PRECISA DE AJUSTE — acompanhar a jornada e a conversão por
   família. O funil já separa "em teste × trial vencido" (PEND-008, concluída).
 - **BLACK FRIDAY 2026 — contrato aprovado e implementação local em 24/10,
-  NÃO PUBLICADA:** campanha pública de 01/11/2026 00:00 a 30/11/2026 23:59
+  NÃO PUBLICADA:** campanha pública de 30/10/2026, a partir da ativação
+  administrativa, a 30/11/2026 23:59
   (Brasília); 15 dias completos de trial, sem cartão e sem cobrança automática;
   R$ 39,90/mês (`price_1UTQfzPAH1xSrJeSwmrOEor2`); anual oculto; compra durante
   o trial preserva os dias e cobra depois; oferta individual termina no fim do
@@ -3885,6 +3886,13 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010 (itens 23, 24, 25) +
   deve provar. Migrações 0096/0097 não aplicadas; nenhum envio, cobrança ou
   deploy. Produção segue **BLOQUEADA** por PEND-092, CI/preview, QA isolado e
   autorização expressa do Gate 8.
+- **DECISÃO DE KARINA EM 30/10/2026 — antecipar a abertura:** a promoção pode
+  entrar no ar assim que banco, deploy e smoke forem comprovados, sem esperar
+  01/11. Quem já estiver em trial deve completar 15 dias totais, preservando
+  prazo maior; quem entrar depois da ativação recebe 15 dias desde a própria
+  entrada. O envio promocional em massa continua separado e não é autorizado
+  por esta decisão. A mudança de data exige nova CI, regulamento atualizado e
+  prova no SHA efetivamente servido antes de declarar produção validada.
 - **Critério de conclusão:** DESEJADO aprovado; investigação ATUAL × DESEJADO
   com o número de conversão de antes.
 - **Agente recomendado:** PROPOR

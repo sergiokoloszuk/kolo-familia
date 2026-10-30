@@ -4,7 +4,7 @@ import { Eyebrow } from "@/components/brand/eyebrow";
 
 export const metadata: Metadata = {
   title: "Regulamento Black Friday 2026 · Kolo Família",
-  description: "Regras da oferta de novembro de 2026 da Kolo Família.",
+  description: "Regras da oferta promocional de 2026 da Kolo Família.",
 };
 
 export default function RegulamentoBlackFridayPage() {
@@ -13,13 +13,13 @@ export default function RegulamentoBlackFridayPage() {
       <header className="mb-10 border-b border-kolo-linha pb-8">
         <Eyebrow>Regulamento</Eyebrow>
         <h1 className="mt-2 font-heading text-4xl text-foreground md:text-5xl">Black Friday 2026</h1>
-        <p className="mt-3 text-sm text-muted-foreground">Versão de 23 de outubro de 2026</p>
+        <p className="mt-3 text-sm text-muted-foreground">Versão de 30 de outubro de 2026</p>
       </header>
       <div className="space-y-6 text-sm leading-relaxed text-foreground/90">
         <section>
           <h2 className="text-lg font-semibold">1. Quem promove e quando acontece</h2>
           <p>A oferta é promovida por Kolo Academy Ltda., CNPJ 60.374.232/0001-31, Rua Nagel, 33, Apto 82 Bloco 2, Vila Leopoldina, São Paulo/SP, CEP 05315-030.</p>
-          <p>Novas ativações podem ocorrer de 1º de novembro de 2026, às 00h00, até 30 de novembro de 2026, às 23h59, sempre no horário de Brasília.</p>
+          <p>Novas ativações podem ocorrer de 30 de outubro de 2026, a partir da ativação administrativa, até 30 de novembro de 2026, às 23h59, sempre no horário de Brasília.</p>
         </section>
         <section>
           <h2 className="text-lg font-semibold">2. O que a oferta inclui</h2>

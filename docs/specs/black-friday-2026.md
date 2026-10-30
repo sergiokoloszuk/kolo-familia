@@ -10,7 +10,7 @@ O roteiro operacional e as provas exigidas para a virada estão em
 
 ## O que uma família recebe
 
-- A campanha aceita novas entradas de **01/11/2026 00:00** até
+- A campanha aceita novas entradas de **30/10/2026, a partir da ativação administrativa,** até
   **30/11/2026 23:59**, horário de Brasília.
 - Quem entra recebe **15 dias completos de teste**, sem cartão e sem cobrança
   automática ao final.

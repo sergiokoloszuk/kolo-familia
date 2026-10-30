@@ -11,9 +11,9 @@ import {
 } from "./black-friday-2026";
 
 describe("Black Friday 2026 — contrato comercial", () => {
-  it("abre exatamente à meia-noite de Brasília em 1º de novembro", () => {
-    expect(janelaPublicaAberta("2026-11-01T02:59:59.999Z")).toBe(false);
-    expect(janelaPublicaAberta("2026-11-01T03:00:00.000Z")).toBe(true);
+  it("abre exatamente à meia-noite de Brasília em 30 de outubro", () => {
+    expect(janelaPublicaAberta("2026-10-30T02:59:59.999Z")).toBe(false);
+    expect(janelaPublicaAberta("2026-10-30T03:00:00.000Z")).toBe(true);
   });
 
   it("inclui todo o dia 30 e fecha à meia-noite de Brasília em 1º de dezembro", () => {

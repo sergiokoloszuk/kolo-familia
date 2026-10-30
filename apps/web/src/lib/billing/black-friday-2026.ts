@@ -2,7 +2,7 @@ const DIA_MS = 24 * 60 * 60 * 1000;
 
 export const BLACK_FRIDAY_2026 = {
   chave: "black_friday_2026",
-  inicio: "2026-11-01T03:00:00.000Z",
+  inicio: "2026-10-30T03:00:00.000Z",
   fimPublicoExclusivo: "2026-12-01T03:00:00.000Z",
   diasTrial: 15,
   checkoutSegundos: 30 * 60,

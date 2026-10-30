@@ -2,14 +2,14 @@
 
 **Dona da decisão:** Karina
 
-**Campanha:** 01/11/2026 00:00 a 30/11/2026 23:59, horário de Brasília
+**Campanha:** 30/10/2026, a partir da ativação administrativa, a 30/11/2026 23:59, horário de Brasília
 
 **Regra de segurança:** nenhum item marcado como prova pode ser substituído por
 “o código existe”. A campanha permanece desligada até a aprovação expressa de
 Karina.
 
-Este roteiro organiza o trabalho que pode ficar pronto antes de 1º de novembro
-e a sequência curta do dia da ativação. Ele não autoriza mensagem, cobrança,
+Este roteiro organiza o trabalho preparatório e a sequência curta do dia da
+ativação. Ele não autoriza mensagem, cobrança,
 migração, deploy ou alteração no Stripe.
 
 ## Situação em 27/10/2026
@@ -136,7 +136,7 @@ Mensagem preparada para Karina enviar:
 
 Nenhum passo deste portão conclui pagamento real.
 
-## Portão 7 — ativação em 1º de novembro
+## Portão 7 — ativação antecipada em 30 de outubro
 
 Só executar com a frase explícita de Karina autorizando a ativação.
 

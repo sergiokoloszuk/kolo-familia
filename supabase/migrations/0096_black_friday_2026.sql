@@ -90,7 +90,7 @@ begin
    where chave = 'black_friday_2026_estado';
 
   if v_estado <> 'ativa'
-     or now() < '2026-11-01 03:00:00+00'::timestamptz
+     or now() < '2026-10-30 03:00:00+00'::timestamptz
      or now() >= '2026-12-01 03:00:00+00'::timestamptz
      or new.status <> 'trialing'
      or (coalesce(new.cortesia, false) = true
@@ -150,7 +150,7 @@ begin
   select valor into v_estado from public.configuracao_geral
    where chave = 'black_friday_2026_estado';
   if v_estado <> 'ativa' then return 'campanha_inativa'; end if;
-  if now() < '2026-11-01 03:00:00+00'::timestamptz
+  if now() < '2026-10-30 03:00:00+00'::timestamptz
      or now() >= '2026-12-01 03:00:00+00'::timestamptz then
     return 'fora_da_janela';
   end if;
@@ -265,7 +265,7 @@ begin
   if v_admin is null or not public.is_admin() then
     raise exception 'BF2026_ADMIN_OBRIGATORIO';
   end if;
-  if now() < '2026-11-01 03:00:00+00'::timestamptz
+  if now() < '2026-10-30 03:00:00+00'::timestamptz
      or now() >= '2026-12-01 03:00:00+00'::timestamptz then
     raise exception 'BF2026_FORA_DA_JANELA';
   end if;
