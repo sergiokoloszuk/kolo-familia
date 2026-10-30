@@ -17,7 +17,7 @@ export default function PrivacidadePage() {
           <em className="not-italic text-brand-purple">Privacidade</em>
         </h1>
         <p className="mt-3 text-sm text-muted-foreground">
-          Última atualização: 23 de maio de 2026
+          Versão de 23 de outubro de 2026
         </p>
       </header>
 
@@ -25,7 +25,9 @@ export default function PrivacidadePage() {
         <section>
           <h2 className="text-lg font-semibold">1. Compromisso com a Privacidade</h2>
           <p>
-            A Kolo compromete-se com a privacidade, segurança e proteção dos
+            A controladora é Kolo Academy Ltda., CNPJ 60.374.232/0001-31,
+            Rua Nagel, 33, Apto 82 Bloco 2, Vila Leopoldina, São Paulo/SP,
+            CEP 05315-030. A Kolo compromete-se com a privacidade, segurança e proteção dos
             dados compartilhados pelas famílias, em conformidade com a{" "}
             <strong>Lei Geral de Proteção de Dados (LGPD – Lei nº 13.709/2018)</strong>.
           </p>
@@ -43,6 +45,11 @@ export default function PrivacidadePage() {
             <li>telefone (WhatsApp);</li>
             <li>e-mail.</li>
           </ul>
+          <p>
+            Novidades, parcerias e promoções por e-mail dependem de uma escolha
+            opcional, separada e desmarcada. Recusar não impede o uso do serviço.
+            Mensagens de segurança, cobrança e funcionamento são diferentes.
+          </p>
           <p className="font-medium">Dados da criança (quando compartilhados):</p>
           <ul className="ml-5 list-disc space-y-1">
             <li>primeiro nome;</li>
@@ -93,6 +100,12 @@ export default function PrivacidadePage() {
             do serviço (como infraestrutura ou processamento técnico da IA),
             adotando medidas de proteção adequadas.
           </p>
+          <p>
+            Conversas, fotos, áudios, relatos, relatórios e outros dados das
+            famílias não são destinados ao treinamento de modelos de IA pela
+            Kolo ou por fornecedores. O processamento necessário para gerar uma
+            resposta é diferente de treinamento.
+          </p>
         </section>
 
         <section>
@@ -127,10 +140,22 @@ export default function PrivacidadePage() {
         <section>
           <h2 className="text-lg font-semibold">7. Exclusão de Dados</h2>
           <p>
-            Você pode solicitar a exclusão dos seus dados enviando:{" "}
-            <strong>&quot;Excluir meus dados&quot;</strong>.
+            Você pode solicitar a exclusão na própria plataforma. Antes de
+            confirmar, exporte os relatórios ou o histórico que queira guardar.
           </p>
-          <p>A exclusão ocorrerá conforme exigências legais aplicáveis.</p>
+          <p>
+            No teste da Black Friday sem assinatura, o histórico é mantido por
+            30 dias após o prazo individual da oferta e então excluído. Em uma
+            assinatura cancelada, o acesso vai até o fim do período pago e a
+            exclusão ocorre depois dele, sem 30 dias adicionais.
+          </p>
+          <p>
+            A eliminação abrange banco e arquivos ativos. Cópias de segurança
+            seguem seu ciclo técnico de expiração; registros mínimos podem ser
+            conservados quando necessários por obrigação legal, prevenção de
+            fraude ou defesa de direitos, sem manter o conteúdo da criança por
+            conveniência.
+          </p>
         </section>
 
         <section>

@@ -43,8 +43,8 @@ function estado(p: Partial<EstadoTrial>): EstadoTrial {
 describe("A LEITURA NÃO ACRESCENTA ESPERA", () => {
   it("o documento é resolvido no MESMO Promise.all do contexto e do Core", () => {
     const bloco = EXP.slice(
-      EXP.indexOf("const [ctxTurno, core, bps, estadoTrial, evidencias, docTrial] = await Promise.all(["),
-      EXP.indexOf("const msBp ="),
+      EXP.indexOf("const [ctxTurno, core, bps, estadoTrial, evidencias, docTrial"),
+      EXP.indexOf("const msParalelo ="),
     );
     // ⚠️ `montarContexto` virou `ctxP` em 05/09/2026 (PEND-163): a promessa é
     // criada logo acima e consumida AQUI, para que a busca de repertório possa

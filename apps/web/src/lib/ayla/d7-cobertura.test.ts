@@ -179,7 +179,7 @@ describe("3 · observabilidade — nunca mais 'não sabemos por quê'", () => {
 
 describe("4 · o link comercial — /precos em todo caminho", () => {
   it("MORDE: nenhum fallback de trial manda para /assinatura", () => {
-    for (const chave of ["trial_d0", "trial_d3"] as const) {
+    for (const chave of ["trial_d0_v2", "trial_d1_v2", "trial_d3_v2"] as const) {
       for (const v of variacoesDe(chave)) {
         expect(v, `${chave}: ${v.slice(0, 60)}`).not.toMatch(/\/assinatura/);
       }
@@ -187,14 +187,14 @@ describe("4 · o link comercial — /precos em todo caminho", () => {
   });
 
   it("o link entra como VARIÁVEL, não escrito à mão", () => {
-    const d0 = variacoesDe("trial_d0");
+    const d0 = variacoesDe("trial_d0_v2");
     // Toda variação que fala em continuar precisa carregar o link.
     const comLink = d0.filter((v) => v.includes("{link_planos}"));
     expect(comLink.length).toBe(d0.length);
   });
 
   it("MORDE: `/planos` NÃO é rota de assinatura — não pode aparecer", () => {
-    for (const chave of ["trial_d0", "trial_d3"] as const) {
+    for (const chave of ["trial_d0_v2", "trial_d1_v2", "trial_d3_v2"] as const) {
       for (const v of variacoesDe(chave)) {
         expect(v).not.toMatch(/\/planos/);
       }
@@ -203,8 +203,9 @@ describe("4 · o link comercial — /precos em todo caminho", () => {
 });
 
 describe("5 · o que NÃO mudou", () => {
-  it("trial_d0 e trial_d3 seguem isentos da cadência de 3h", () => {
+  it("trial_d0, trial_d1 e trial_d3 seguem isentos da cadência de 3h", () => {
     expect(PROATIVAS_ISENTAS.has("trial_d0")).toBe(true);
+    expect(PROATIVAS_ISENTAS.has("trial_d1")).toBe(true);
     expect(PROATIVAS_ISENTAS.has("trial_d3")).toBe(true);
   });
 
@@ -221,5 +222,32 @@ describe("5 · o que NÃO mudou", () => {
 
   it("MORDE: o fechamento reativo recente continua calando a proativa", () => {
     expect(ORQ).toMatch(/fechamentoReativoRecente\(supabase, familyAccountId, agora\)/);
+  });
+});
+
+describe("6 · a jornada funciona para testes de 7 e de 15 dias", () => {
+  it("MORDE: o cron seleciona também quem termina amanhã", () => {
+    const CRON = fs.readFileSync(
+      path.join(__dirname, "..", "..", "app", "api", "ayla", "cron", "route.ts"),
+      "utf8",
+    );
+    expect(CRON).toContain("const amanha =");
+    expect(CRON).toMatch(/sendTrial\([\s\S]*?1,[\s\S]*?r\.trial_ends_at/);
+    expect(CRON).toContain('tipo: "trial_d1"');
+  });
+
+  it("D-3 escuta valor; D-1 avisa sem vender; D-0 esclarece a cobrança", () => {
+    const d3 = variacoesDe("trial_d3_v2").join(" ");
+    const d1 = variacoesDe("trial_d1_v2").join(" ");
+    const d0 = variacoesDe("trial_d0_v2").join(" ");
+    expect(d3).toMatch(/qual opção combina mais/i);
+    expect(d3).toMatch(/ainda não consegui usar o suficiente/i);
+    expect(d3).toMatch(/ainda não senti a ajuda que precisava/i);
+    expect(d3).not.toContain("{link_planos}");
+    expect(d1).toMatch(/não haverá cobrança automática/i);
+    expect(d1).not.toContain("{link_planos}");
+    expect(d0).toMatch(/não haverá cobrança automática/i);
+    expect(d0).toContain("{link_planos}");
+    expect(d0).toMatch(/agora não/i);
   });
 });

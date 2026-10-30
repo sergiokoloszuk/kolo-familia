@@ -137,7 +137,10 @@ export function blocoDaJornada(
   if (!estado.emConducaoComercial) return "";
   if (estado.fase !== "trial" && estado.fase !== "trial_encerrado") return "";
 
-  const dia = estado.fase === "trial_encerrado" ? 7 : Math.min(estado.dia ?? 0, 7);
+  // O dia exibido é o dia REAL. Num teste de 15 dias, prender o número em 7
+  // faria D8–D14 parecerem todos o mesmo dia e transformaria metade do teste
+  // em fechamento. A intenção continua relativa aos dias que faltam.
+  const dia = estado.fase === "trial_encerrado" ? 7 : (estado.dia ?? 0);
   const intencao = intencaoDoDia(dia, estado.diasRestantes ?? 0);
   const linhas: string[] = [];
 
@@ -194,6 +197,11 @@ export function blocoDaJornada(
     ].join("\n"),
   );
   linhas.push(`Intenção disponível hoje: ${INTENCAO_DO_DIA[intencao] ?? INTENCAO_DO_DIA[7]}`);
+  if (intencao === 7) {
+    linhas.push(
+      "SE ELA DISSER QUE NÃO QUER CONTINUAR: respeite sem tentar convencê-la. Pergunte uma única vez, e como escolha opcional: ‘Se quiser me contar, o que mais pesou? 1 não consegui usar o suficiente; 2 não senti que ajudou; 3 achei difícil ou confuso; 4 o preço não cabe agora; 5 não é o momento; 6 outro. Você também pode preferir não responder.’ Depois disso, encerre com gentileza e não insista.",
+    );
+  }
 
   // O QUE ACONTECEU DE VERDADE — e nada além disso.
   const fatos: string[] = [];
@@ -404,7 +412,7 @@ export function blocoPosTrial(params: {
   );
 
   linhas.push(
-    "OBJEÇÕES — uma pergunta por vez, nunca um questionário. Se disser que está caro, fale de preço e valor, sem desviar para a criança. Se disser que usou pouco, explique concretamente o que teria vivido. Se disser que as respostas foram genéricas, NÃO se defenda: agradeça, colha o que faltou e explique que você fica mais específica conforme conhece a criança. Se disser que não entendeu a Kolo, explique bem, com exemplos. Se disser que quer assinar, PARE de argumentar e entregue o link. Se disser que não quer, respeite; se ainda não souber o motivo, faça UMA pergunta simples e encerre.",
+    "OBJEÇÕES — uma pergunta por vez, nunca um questionário. Se disser que está caro, fale de preço e valor, sem desviar para a criança. Se disser que usou pouco, explique concretamente o que teria vivido. Se disser que as respostas foram genéricas, NÃO se defenda: agradeça, colha o que faltou e explique que você fica mais específica conforme conhece a criança. Se disser que não entendeu a Kolo, explique bem, com exemplos. Se disser que quer assinar, PARE de argumentar e entregue o link. Se disser que não quer, respeite e não argumente. Se ainda não souber o motivo, pergunte uma única vez: ‘Se quiser me contar, o que mais pesou? 1 não consegui usar o suficiente; 2 não senti que ajudou; 3 achei difícil ou confuso; 4 o preço não cabe agora; 5 não é o momento; 6 outro. Você também pode preferir não responder.’ Depois encerre e não insista.",
   );
 
   // ⚠️ O LINK JÁ FOI. Sem esta linha, o modelo copia da `<conversa_recente>` o

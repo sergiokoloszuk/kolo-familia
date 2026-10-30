@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -26,6 +27,7 @@ const schema = z.object({
       message: "Você precisa aceitar termos e política pra continuar.",
     }),
   }),
+  aceito_marketing: z.boolean().optional(),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -42,6 +44,7 @@ function pushFormSubmit() {
 }
 
 export default function SignupPage() {
+  const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [needsConfirm, setNeedsConfirm] = useState<string | null>(null);
@@ -142,6 +145,7 @@ export default function SignupPage() {
     const aceitoEm = new Date().toISOString();
     try {
       localStorage.setItem("termos_aceitos_em_pendente", aceitoEm);
+      localStorage.setItem("marketing_aceito_pendente", String(values.aceito_marketing === true));
     } catch {
       // privacy mode bloqueia; aceito é tentado de novo via banner pós-login
     }
@@ -176,24 +180,24 @@ export default function SignupPage() {
         await fetch("/api/me/aceitar-termos", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ aceitos_em: aceitoEm }),
+          body: JSON.stringify({ aceitos_em: aceitoEm, marketing: values.aceito_marketing === true }),
         });
       } catch {
         /* consumer cuida */
       }
-      window.location.href = "/onboarding";
+      router.replace("/onboarding");
     } else {
       // Tenta persistir agora (best-effort; consumer também tenta)
       try {
         await fetch("/api/me/aceitar-termos", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ aceitos_em: aceitoEm }),
+          body: JSON.stringify({ aceitos_em: aceitoEm, marketing: values.aceito_marketing === true }),
         });
       } catch {
         /* consumer cuida */
       }
-      window.location.href = "/onboarding";
+      router.replace("/onboarding");
     }
   }
 
@@ -298,7 +302,7 @@ export default function SignupPage() {
   return (
     <Card className="w-full max-w-sm">
       <CardHeader>
-        <CardTitle>Começar 7 dias grátis</CardTitle>
+        <CardTitle>Começar grátis</CardTitle>
         <CardDescription>Sem cartão. Cancela quando quiser.</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
@@ -377,6 +381,17 @@ export default function SignupPage() {
               {errors.aceito_termos.message}
             </span>
           )}
+          <label className="flex items-start gap-2 text-xs text-muted-foreground">
+            <input
+              type="checkbox"
+              {...register("aceito_marketing")}
+              className="mt-0.5"
+            />
+            <span>
+              Quero receber novidades sobre novas funcionalidades, parcerias e
+              promoções. Essa escolha é opcional e pode ser alterada depois.
+            </span>
+          </label>
           <Button type="submit" disabled={submitting}>
             {submitting ? "Criando conta..." : "Criar conta"}
           </Button>

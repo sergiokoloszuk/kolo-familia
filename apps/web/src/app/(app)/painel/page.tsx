@@ -1308,7 +1308,7 @@ function SubscriptionBanner({
         cta={trialDaysLeft <= 7 ? "Assinar agora" : "Ver assinatura"}
       >
         {trialDaysLeft > 0
-          ? `Faltam ${trialDaysLeft} dia${trialDaysLeft === 1 ? "" : "s"} dos seus 7 dias grátis.`
+          ? `Faltam ${trialDaysLeft} dia${trialDaysLeft === 1 ? "" : "s"} do seu período gratuito.`
           : "Seu trial termina hoje."}
       </BannerLayout>
     );

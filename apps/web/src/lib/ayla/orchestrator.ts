@@ -1027,7 +1027,7 @@ async function registrarTentativaTrial(p: {
 export async function sendTrial(
   supabase: SupabaseClient,
   familyAccountId: string,
-  diasRestantes: 3 | 0,
+  diasRestantes: 3 | 1 | 0,
   agora: Date = new Date(),
   /**
    * O INSTANTE EM QUE O TESTE TERMINA — para o texto não mentir sobre o prazo.
@@ -1054,13 +1054,23 @@ export async function sendTrial(
    */
   trialEndsAt?: string | null,
 ): Promise<EnvioResultado> {
-  const tipo: AylaTipoProativa = diasRestantes === 3 ? "trial_d3" : "trial_d0";
+  const tipo: AylaTipoProativa =
+    diasRestantes === 3 ? "trial_d3" : diasRestantes === 1 ? "trial_d1" : "trial_d0";
   // ⚠️ SÓ AFIRMA A EXPIRAÇÃO COM DATA NA MÃO. Sem `trialEndsAt` legível, o
   // texto continua o de hoje: dizer "acabou" para quem ainda tem horas custaria
   // uma conversão, e a dúvida não é evidência.
   const fim = trialEndsAt ? new Date(trialEndsAt) : null;
   const jaExpirou =
     diasRestantes === 0 && fim !== null && !Number.isNaN(fim.getTime()) && fim <= agora;
+  const terminaEm =
+    fim !== null && !Number.isNaN(fim.getTime())
+      ? new Intl.DateTimeFormat("pt-BR", {
+          timeZone: "America/Sao_Paulo",
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        }).format(fim)
+      : undefined;
 
   // ⚠️ A TRAVA VEM PRIMEIRO, e antes de qualquer consulta cara. Com quatro
   // batidas por dia, este é o único ponto que impede a família de receber o
@@ -1109,6 +1119,7 @@ export async function sendTrial(
   const texto = await templateTrial(supabase, {
     diasRestantes,
     jaExpirou,
+    terminaEm,
     nomeMae: ctx.nomeMae,
     seed: `${familyAccountId}-trial-${diasRestantes}`,
     // ⚠️ SEM `familyId` O LINK CHEGA DESLOGADO — e `/assinatura` é rota
@@ -1500,7 +1511,20 @@ export async function sendCampanha(
 ): Promise<EnvioResultado> {
   const tipo: AylaTipoProativa = (`campanha_${params.categoria}` as AylaTipoProativa);
 
-  // 1. Opt-out por categoria (operacional é exceção — comunicado obrigatório)
+  // 1. Promoção/novidade exige aceite positivo. Ausência de recusa não é
+  // consentimento. Mensagens operacionais continuam separadas.
+  if (params.categoria === "promocional" || params.categoria === "informacional") {
+    const { data: familia, error: consentimentoError } = await supabase
+      .from("family_accounts")
+      .select("marketing_consentido_em")
+      .eq("id", params.family_account_id)
+      .maybeSingle();
+    if (consentimentoError || !familia?.marketing_consentido_em) {
+      return { enviada: false, motivo: "Sem consentimento para novidades e promoções." };
+    }
+  }
+
+  // 2. Opt-out por categoria (operacional é exceção — comunicado obrigatório)
   if (params.categoria !== "operacional") {
     const { data: optout } = await supabase
       .from("categorias_optout")
@@ -1516,7 +1540,7 @@ export async function sendCampanha(
     }
   }
 
-  // 2. Regras Ayla (consentimento, pausa, 2/dia, silêncio total, comercial-pós-crise)
+  // 3. Regras Ayla (consentimento, pausa, 2/dia, silêncio total, comercial-pós-crise)
   const podeRes = await podeEnviarProativa(
     supabase,
     { family_account_id: params.family_account_id, agora },
@@ -1524,7 +1548,7 @@ export async function sendCampanha(
   );
   if (!podeRes.permitido) return { enviada: false, motivo: podeRes.motivo };
 
-  // 3. Carrega contato
+  // 4. Carrega contato
   const ctx = await loadFamiliaParaEnvio(supabase, params.family_account_id);
   if (!ctx) return { enviada: false, motivo: "Sem contexto da família." };
 

@@ -17,7 +17,7 @@ export default function CookiesPage() {
           <em className="not-italic text-brand-purple">Cookies</em>
         </h1>
         <p className="mt-3 text-sm text-muted-foreground">
-          Última atualização: 8 de maio de 2026
+          Versão de 23 de outubro de 2026
         </p>
       </header>
 
@@ -39,29 +39,24 @@ export default function CookiesPage() {
               termos. Sem eles o site não funciona.
             </li>
             <li>
-              <strong>Funcionais:</strong> lembrar o último membro foco,
-              estado de banners (NPS, lembretes). Você pode limpar pelo
-              navegador a qualquer hora.
-            </li>
-            <li>
-              <strong>Análise de performance (opcional):</strong> métricas
-              agregadas de uso pra melhorar a plataforma. Não armazenamos
-              identificador pessoal sem consentimento.
+              <strong>Análise de cadastro (opcional):</strong> Google Tag
+              Manager e parâmetros de origem ajudam a entender se o cadastro
+              funciona. Só carregam depois de você aceitar.
             </li>
           </ul>
           <p>
-            <strong>Não usamos cookies de publicidade ou rastreamento de
-            terceiros.</strong>
+            <strong>Não usamos cookies de afiliados.</strong> Também não há
+            publicidade comportamental na plataforma.
           </p>
         </section>
 
         <section>
           <h2 className="text-lg font-semibold">Como controlar</h2>
           <p>
-            Você pode bloquear ou apagar cookies pelas configurações do seu
-            navegador. Bloquear cookies essenciais quebra o login. Bloquear
-            funcionais pode tirar pequenas conveniências, mas o serviço
-            continua operando.
+            O aviso oferece duas escolhas: aceitar opcionais ou recusá-los. As
+            duas mantêm o acesso ao serviço. A escolha fica salva por até 12
+            meses; você pode apagá-la nas configurações do navegador para
+            escolher novamente. Bloquear cookies essenciais impede o login.
           </p>
         </section>
 
@@ -77,6 +72,12 @@ export default function CookiesPage() {
               Termos de Uso
             </a>
             .
+          </p>
+          <p>
+            Responsável: Kolo Academy Ltda., CNPJ 60.374.232/0001-31. Contato:{" "}
+            <a href="mailto:kolosuporte@gmail.com" className="underline underline-offset-2">
+              kolosuporte@gmail.com
+            </a>.
           </p>
         </section>
       </div>

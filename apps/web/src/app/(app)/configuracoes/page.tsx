@@ -19,7 +19,7 @@ export default async function ConfiguracoesPage() {
   const { supabase, family } = await loadFamilyContext();
   const familyId = family!.id;
 
-  const [{ data: prefs }, { data: optouts }] = await Promise.all([
+  const [{ data: prefs }, { data: marketing }] = await Promise.all([
     supabase
       .from("ayla_preferences")
       .select(
@@ -28,12 +28,11 @@ export default async function ConfiguracoesPage() {
       .eq("family_account_id", familyId)
       .maybeSingle(),
     supabase
-      .from("categorias_optout")
-      .select("categoria")
-      .eq("family_account_id", familyId),
+      .from("family_accounts")
+      .select("marketing_consentido_em")
+      .eq("id", familyId)
+      .maybeSingle(),
   ]);
-
-  const optoutSet = new Set((optouts ?? []).map((o) => o.categoria as string));
 
   return (
     <div className="flex flex-col gap-8">
@@ -118,7 +117,7 @@ export default async function ConfiguracoesPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <OptOutsForm optoutSet={Array.from(optoutSet)} />
+          <OptOutsForm consentido={Boolean(marketing?.marketing_consentido_em)} />
         </CardContent>
       </Card>
       </section>

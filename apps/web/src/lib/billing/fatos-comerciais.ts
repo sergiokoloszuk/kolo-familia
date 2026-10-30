@@ -42,4 +42,27 @@ export const TRIAL_DIAS = 7;
  * gasta contexto. Preço fica FORA daqui porque vive em `configuracao_precos` e
  * muda sem deploy; quem precisa dele o lê da tabela, como o `/ajuda` já faz.
  */
-export const FATOS_COMERCIAIS = `FATO COMERCIAL, nunca invente: o teste grátis é de ${TRIAL_DIAS} dias — corrija quem disser outro prazo, e não confunda com a duração de um Plano. Preço, planos e "como assino": responda VOCÊ e mande o link de Planos que o canal te dá — nunca mande procurar o suporte por causa disso.`;
+export const FATOS_COMERCIAIS = `FATO COMERCIAL, nunca invente: fora de uma campanha registrada, o teste grátis é de ${TRIAL_DIAS} dias — não confunda com a duração de um Plano. Uma regra individual de campanha, quando fornecida abaixo, prevalece apenas para aquela família. Preço, planos e "como assino": responda VOCÊ e mande o link de Planos que o canal te dá — nunca mande procurar o suporte por causa disso.`;
+
+/**
+ * Acrescenta a exceção individual somente quando o banco prova participação.
+ * Tabela ausente, erro ou família desconhecida preservam a regra normal de 7.
+ */
+export async function fatosComerciaisParaFamilia(
+  supabase: SupabaseClient | null | undefined,
+  familyId: string | null | undefined,
+): Promise<string> {
+  if (!supabase || !familyId) return FATOS_COMERCIAIS;
+  try {
+    const { data, error } = await supabase
+      .from("black_friday_2026_participacoes")
+      .select("trial_fim_em, oferta_fim_exclusivo")
+      .eq("family_account_id", familyId)
+      .maybeSingle();
+    if (error || !data) return FATOS_COMERCIAIS;
+    return `${FATOS_COMERCIAIS}\nFATO INDIVIDUAL BLACK FRIDAY 2026: esta família recebeu 15 dias completos de teste. O teste termina em ${data.trial_fim_em}. Ela pode contratar por R$ 39,90 por mês antes de ${data.oferta_fim_exclusivo}. Assinar durante o teste preserva todos os dias e a primeira cobrança ocorre depois do término.`;
+  } catch {
+    return FATOS_COMERCIAIS;
+  }
+}
+import type { SupabaseClient } from "@supabase/supabase-js";

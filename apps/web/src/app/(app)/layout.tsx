@@ -11,6 +11,11 @@ import { PagamentoGate } from "./pagamento-gate";
 import { PageViewTracker } from "./page-view-tracker";
 import { idadeAnos } from "@/lib/idade";
 import { lerCriancaAtivaId, resolverCriancaAtiva } from "@/lib/crianca-ativa";
+import {
+  podeSolicitarTrialBlackFriday,
+  resolverSituacaoBlackFridayDaFamilia,
+} from "@/lib/billing/oferta-familia";
+import { BLACK_FRIDAY_2026 } from "@/lib/billing/black-friday-2026";
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const { user, supabase, family } = await loadFamilyContext();
@@ -94,8 +99,22 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     // Preço pelo leitor único (lib/billing/planos.ts) — quem está bloqueada
     // não alcança /assinatura, então o valor tem que aparecer aqui. É o mesmo
     // número que o checkout vai cobrar, porque a fonte é o Stripe.
-    const planos = await lerPlanosParaExibir(createServiceRoleClient());
-    const mensalCent = planos.mensal.centavos;
+    const [planos, situacaoBlackFriday] = await Promise.all([
+      lerPlanosParaExibir(admin),
+      resolverSituacaoBlackFridayDaFamilia(supabase),
+    ]);
+    const ofertaBlackFriday = situacaoBlackFriday.oferta;
+    const ofertaBlackFridayIndisponivel = !situacaoBlackFriday.consultaConfiavel ||
+      (situacaoBlackFriday.direitoAoPreco && !ofertaBlackFriday);
+    const podePedirTrialBlackFriday = podeSolicitarTrialBlackFriday({
+      assinatura: sub,
+      consultaConfiavel: situacaoBlackFriday.consultaConfiavel,
+      jaParticipa: situacaoBlackFriday.participa,
+      estado: situacaoBlackFriday.estado,
+    });
+    const mensalCent = ofertaBlackFriday
+      ? BLACK_FRIDAY_2026.valorCentavos
+      : planos.mensal.centavos;
     const anualCent = planos.anual.centavos;
     const economiaCalculada = economiaAnual(mensalCent, anualCent);
     const economia = economiaCalculada ? formatarBRL(economiaCalculada.centavos) : null;
@@ -103,9 +122,12 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       <TrialGate
         vencido={acessoEncerradoSemPagar(sub)}
         jaUsouAntes={testeJaUsadoAntes(sub)}
-        precoMensal={formatarBRL(mensalCent)}
-        precoAnual={formatarBRL(anualCent)}
-        economiaAnual={economia}
+        podePedirTrialBlackFriday={podePedirTrialBlackFriday}
+        ofertaBlackFriday={Boolean(ofertaBlackFriday)}
+        ofertaBlackFridayIndisponivel={ofertaBlackFridayIndisponivel}
+        precoMensal={ofertaBlackFridayIndisponivel ? null : formatarBRL(mensalCent)}
+        precoAnual={ofertaBlackFriday || ofertaBlackFridayIndisponivel ? null : formatarBRL(anualCent)}
+        economiaAnual={ofertaBlackFriday || ofertaBlackFridayIndisponivel ? null : economia}
       />
     );
   }

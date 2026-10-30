@@ -11,7 +11,12 @@ import { formatarBRL, lerPlanosParaExibir } from "@/lib/billing/planos";
 import { AssinaturaActions } from "./assinatura-actions";
 import { origemValida } from "@/app/(public)/precos/origem";
 import { MarcoOrigem } from "@/app/(public)/precos/marco-origem";
-import { ExcluirContaForm } from "../configuracoes/conta/excluir-form";
+import {
+  podeSolicitarTrialBlackFriday,
+  resolverSituacaoBlackFridayDaFamilia,
+} from "@/lib/billing/oferta-familia";
+import { BLACK_FRIDAY_2026 } from "@/lib/billing/black-friday-2026";
+import { ativarMeuTrialBlackFriday } from "./actions";
 
 const STATUS_LABEL: Record<string, string> = {
   trialing: "Em trial",
@@ -44,7 +49,7 @@ export default async function AssinaturaPage(props: PageProps<"/assinatura">) {
   const { data: sub } = await supabase
     .from("subscription_accesses")
     .select(
-      "status, trial_ends_at, current_period_end, stripe_customer_id, stripe_subscription_id, cancel_at_period_end",
+      "status, trial_ends_at, current_period_end, stripe_customer_id, stripe_subscription_id, cancel_at_period_end, cortesia, cortesia_ate, pagamento_falhou_em",
     )
     .eq("family_account_id", familyId)
     .maybeSingle();
@@ -52,12 +57,24 @@ export default async function AssinaturaPage(props: PageProps<"/assinatura">) {
   // Preço pelo leitor único (lib/billing/planos.ts) — o Stripe é o dono, e
   // esta tela mostra exatamente o que o checkout vai cobrar. Service-role
   // porque configuração de preço é pública.
-  const planos = await lerPlanosParaExibir(createServiceRoleClient());
-  const mensalLabel = formatarBRL(planos.mensal.centavos);
+  const admin = createServiceRoleClient();
+  const [planos, situacaoBlackFriday] = await Promise.all([
+    lerPlanosParaExibir(admin),
+    resolverSituacaoBlackFridayDaFamilia(supabase),
+  ]);
+  const ofertaBlackFriday = situacaoBlackFriday.oferta;
+  const ofertaBlackFridayIndisponivel = !situacaoBlackFriday.consultaConfiavel ||
+    (situacaoBlackFriday.direitoAoPreco && !ofertaBlackFriday);
+  const mensalLabel = formatarBRL(
+    situacaoBlackFriday.direitoAoPreco
+      ? BLACK_FRIDAY_2026.valorCentavos
+      : planos.mensal.centavos,
+  );
   const anualLabel = formatarBRL(planos.anual.centavos);
 
   const sp = await props.searchParams;
   const flash = typeof sp.status === "string" ? sp.status : null;
+  const checkoutBlackFriday = sp.campanha === "black-friday-2026";
 
   const trialDaysLeft =
     sub?.status === "trialing" && sub.trial_ends_at
@@ -68,6 +85,14 @@ export default async function AssinaturaPage(props: PageProps<"/assinatura">) {
     sub?.current_period_end ? new Date(sub.current_period_end) : null;
 
   const statusKey = sub?.status ?? "trialing";
+  const agora = new Date();
+  const podePedirTrialBlackFriday = podeSolicitarTrialBlackFriday({
+    assinatura: sub,
+    consultaConfiavel: situacaoBlackFriday.consultaConfiavel,
+    jaParticipa: situacaoBlackFriday.participa,
+    estado: situacaoBlackFriday.estado,
+    agora,
+  });
 
   return (
     <div className="flex flex-col gap-8">
@@ -82,12 +107,12 @@ export default async function AssinaturaPage(props: PageProps<"/assinatura">) {
             <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
               {mensalLabel ? `${mensalLabel}/mês` : "Assinatura"}{" "}
               <em className="not-italic text-brand-purple">
-                {anualLabel ? `ou ${anualLabel}/ano` : "ou anual"}
+                {ofertaBlackFriday ? "Black Friday" : (anualLabel ? `ou ${anualLabel}/ano` : "ou anual")}
               </em>
             </h1>
             <p className="mt-2 max-w-2xl text-muted-foreground">
-              Você cancela quando quiser. Atenção: ao cancelar, sua conta e
-              todos os registros são apagados — sem volta.
+              Você pode cancelar a renovação quando quiser. Cancelar a
+              assinatura não apaga sua conta nem os registros da família.
             </p>
           </div>
         </div>
@@ -104,9 +129,12 @@ export default async function AssinaturaPage(props: PageProps<"/assinatura">) {
         <div className="flex items-start gap-3 rounded-2xl border-l-4 border-brand-yellow bg-brand-yellow/10 px-5 py-4">
           <Check className="mt-0.5 size-5 shrink-0 text-brand-purple-dark" aria-hidden />
           <p className="text-sm text-brand-purple-dark">
-            <strong className="font-semibold">Pagamento confirmado.</strong>{" "}
-            Sua assinatura está sendo ativada — recarregue se ainda aparecer
-            como trial em alguns segundos.
+            <strong className="font-semibold">
+              {checkoutBlackFriday ? "Forma de pagamento salva." : "Pagamento confirmado."}
+            </strong>{" "}
+            {checkoutBlackFriday
+              ? `Seus ${BLACK_FRIDAY_2026.diasTrial} dias gratuitos continuam completos; a primeira cobrança será feita depois que o teste terminar.`
+              : "Sua assinatura está sendo ativada — recarregue se ainda aparecer como trial em alguns segundos."}
           </p>
         </div>
       )}
@@ -116,6 +144,34 @@ export default async function AssinaturaPage(props: PageProps<"/assinatura">) {
           <p className="text-sm text-muted-foreground">
             Pagamento não concluído. Você pode tentar de novo quando quiser.
           </p>
+        </div>
+      )}
+
+      {ofertaBlackFriday && (
+        <div className="rounded-2xl border-l-4 border-brand-yellow bg-brand-yellow/10 px-5 py-4">
+          <p className="font-semibold text-brand-purple-dark">Sua oferta Black Friday está disponível.</p>
+          <p className="mt-1 text-sm text-foreground/80">R$ 39,90 por mês. Se assinar durante o teste, seus {BLACK_FRIDAY_2026.diasTrial} dias gratuitos continuam completos.</p>
+        </div>
+      )}
+
+      {ofertaBlackFridayIndisponivel && (
+        <div className="rounded-2xl border border-amber-300 bg-amber-50 px-5 py-4">
+          <p className="font-semibold text-amber-950">Sua oferta está preservada.</p>
+          <p className="mt-1 text-sm text-amber-900">
+            O pagamento de R$ 39,90 por mês está temporariamente indisponível.
+            Não vamos substituir sua oferta pelo preço normal; tente novamente
+            mais tarde ou fale com o suporte.
+          </p>
+        </div>
+      )}
+
+      {podePedirTrialBlackFriday && (
+        <div className="rounded-2xl border-l-4 border-brand-yellow bg-brand-yellow/10 px-5 py-4">
+          <p className="font-semibold text-brand-purple-dark">Você pode experimentar de novo por {BLACK_FRIDAY_2026.diasTrial} dias.</p>
+          <p className="mt-1 text-sm text-foreground/80">É opcional, começa quando você apertar e não pede cartão.</p>
+          <form action={ativarMeuTrialBlackFriday} className="mt-3">
+            <button className="rounded-full bg-brand-purple px-5 py-2 font-semibold text-white">Ativar meus {BLACK_FRIDAY_2026.diasTrial} dias</button>
+          </form>
         </div>
       )}
 
@@ -132,11 +188,16 @@ export default async function AssinaturaPage(props: PageProps<"/assinatura">) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <AssinaturaActions
-            status={statusKey}
-            temCustomerId={Boolean(sub?.stripe_customer_id)}
-            emailFiscalInicial={user.email ?? ""}
-          />
+          {!ofertaBlackFridayIndisponivel && (
+            <AssinaturaActions
+              status={statusKey}
+              temCustomerId={Boolean(sub?.stripe_customer_id)}
+              precoMensal={mensalLabel}
+              precoAnual={ofertaBlackFriday ? null : anualLabel}
+              mostrarAnual={!ofertaBlackFriday}
+              emailFiscalInicial={user.email ?? ""}
+            />
+          )}
         </CardContent>
       </Card>
 
@@ -164,21 +225,15 @@ export default async function AssinaturaPage(props: PageProps<"/assinatura">) {
         </CardContent>
       </Card>
 
-      {/* Cancelar = apagar tudo (política 23/06). Reusa o fluxo de exclusão de
-          conta (cancela o Stripe + deleta em cascata). Aviso forte + digitar
-          EXCLUIR. Falha de pagamento NÃO passa por aqui (retenção, à parte). */}
-      <Card className="rounded-3xl border-l-4 border-destructive/50 bg-destructive/[0.03]">
+      <Card className="rounded-3xl border-l-4 border-brand-yellow bg-kolo-lilas-bg-2">
         <CardHeader>
-          <CardTitle className="text-base text-destructive">Cancelar assinatura</CardTitle>
+          <CardTitle className="text-base">Cancelar ou apagar a conta</CardTitle>
           <CardDescription className="text-foreground/70">
-            Cancelar <strong>apaga sua conta e todos os registros do seu filho</strong> (diários,
-            Kolo Vivo, histórias, evolução) — <strong>para sempre, sem volta</strong>. Se só quer
-            rever o pagamento ou o cartão, use &ldquo;Gerenciar assinatura&rdquo; acima.
+            Para cancelar a renovação, use &ldquo;Gerenciar assinatura&rdquo; acima. Sua
+            conta e seus registros continuam guardados durante o acesso. Para
+            apagar definitivamente os dados, use Configurações &gt; Minha conta.
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <ExcluirContaForm />
-        </CardContent>
       </Card>
     </div>
   );

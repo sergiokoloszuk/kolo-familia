@@ -242,10 +242,12 @@ describe("a fiação — uma regra, dois chamadores", () => {
     expect(iMsg).toBeGreaterThan(iEscrita);
   });
 
-  it("MORDE: só manda se o pagamento foi RECONHECIDO", () => {
+  it("MORDE: só manda se o pagamento foi reconhecido e o trial promocional terminou", () => {
     const src = semComentarios(ler("app/api/stripe/webhook/route.ts"));
     const i = src.indexOf("talvezReceberComoAssinante(");
-    expect(src.slice(Math.max(0, i - 40), i)).toMatch(/if \(pago\)/);
+    expect(src.slice(Math.max(0, i - 80), i)).toMatch(
+      /if \(pago && !emTrialPromocional\)/,
+    );
   });
 
   it("MORDE: a função confere o estado antes de mandar", () => {

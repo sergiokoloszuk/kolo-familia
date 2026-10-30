@@ -11,6 +11,7 @@ export function AssinaturaActions({
   precoMensal = null,
   precoAnual = null,
   emailFiscalInicial = "",
+  mostrarAnual = true,
 }: {
   status: string;
   temCustomerId: boolean;
@@ -21,6 +22,7 @@ export function AssinaturaActions({
   precoMensal?: string | null;
   precoAnual?: string | null;
   emailFiscalInicial?: string;
+  mostrarAnual?: boolean;
 }) {
   const [pending, startTransition] = useTransition();
   const [erro, setErro] = useState<string | null>(null);
@@ -60,11 +62,11 @@ export function AssinaturaActions({
                 ? `Assinar mensal — ${precoMensal}/mês`
                 : "Assinar mensal"}
           </Button>
-          <Button variant="outline" onClick={() => setPlanoFiscal("anual")} disabled={pending}>
+          {mostrarAnual && <Button variant="outline" onClick={() => setPlanoFiscal("anual")} disabled={pending}>
             {precoAnual
                 ? `Assinar anual — ${precoAnual}/ano`
                 : "Assinar anual (com desconto)"}
-          </Button>
+          </Button>}
         </div>
       )}
 

@@ -28,11 +28,12 @@ import { assinaturaLiberada } from "@/lib/auth/assinatura";
 type Linha = Record<string, unknown>;
 type ErroFalso = { message: string; code?: string };
 
-function criarBanco(subscriptionAccesses: Linha[] = []) {
+function criarBanco(subscriptionAccesses: Linha[] = [], participacoesBlackFriday: Linha[] = []) {
   const tabelas: Record<string, Linha[]> = {
     subscription_accesses: subscriptionAccesses,
     assinaturas: [],
     fiscal_alertas: [],
+    black_friday_2026_participacoes: participacoesBlackFriday,
   };
   let erroProgramado: { tabela: string; restantes: number; erro: ErroFalso } | null = null;
 
@@ -190,7 +191,7 @@ function linhaTrial(opcoes: { vencido: boolean }): Linha {
   };
 }
 
-function registrarNoStripe(status: string, familyId: string | null = FAMILIA) {
+function registrarNoStripe(status: string, familyId: string | null = FAMILIA, trialEnd: number | null = null) {
   assinaturasStripe.set(ASSINATURA, {
     id: ASSINATURA,
     status,
@@ -199,6 +200,7 @@ function registrarNoStripe(status: string, familyId: string | null = FAMILIA) {
     cancel_at_period_end: false,
     metadata: familyId ? { family_account_id: familyId } : {},
     items: { data: [{ current_period_end: DAQUI_A_UM_MES }] },
+    trial_end: trialEnd,
   });
 }
 
@@ -208,24 +210,40 @@ function idEvento() {
   return `evt_${seqEvento}`;
 }
 
-function eventoCheckout(opcoes: { familyId?: string | null; pago?: boolean; id?: string } = {}) {
+function eventoCheckout(opcoes: {
+  familyId?: string | null;
+  pago?: boolean;
+  id?: string;
+  blackFriday?: boolean;
+  paymentStatus?: string;
+} = {}) {
   const familyId = opcoes.familyId === undefined ? FAMILIA : opcoes.familyId;
   return {
     id: opcoes.id ?? idEvento(),
+    created: Math.floor(AGORA / 1000),
     type: "checkout.session.completed",
     data: {
       object: {
-        metadata: familyId ? { family_account_id: familyId } : {},
+        id: opcoes.blackFriday ? "cs_bf" : "cs_normal",
+        metadata: familyId ? {
+          family_account_id: familyId,
+          ...(opcoes.blackFriday ? { campanha: "black_friday_2026" } : {}),
+        } : {},
         client_reference_id: familyId,
         customer: CLIENTE,
         subscription: ASSINATURA,
-        payment_status: opcoes.pago === false ? "unpaid" : "paid",
+        payment_status: opcoes.paymentStatus ?? (opcoes.pago === false ? "unpaid" : "paid"),
       },
     },
   };
 }
 
-function eventoAssinatura(status: string, opcoes: { tipo?: string; familyId?: string | null; id?: string } = {}) {
+function eventoAssinatura(status: string, opcoes: {
+  tipo?: string;
+  familyId?: string | null;
+  id?: string;
+  blackFriday?: boolean;
+} = {}) {
   const familyId = opcoes.familyId === undefined ? FAMILIA : opcoes.familyId;
   return {
     id: opcoes.id ?? idEvento(),
@@ -237,7 +255,10 @@ function eventoAssinatura(status: string, opcoes: { tipo?: string; familyId?: st
         customer: CLIENTE,
         current_period_end: DAQUI_A_UM_MES,
         cancel_at_period_end: false,
-        metadata: familyId ? { family_account_id: familyId } : {},
+        metadata: familyId ? {
+          family_account_id: familyId,
+          ...(opcoes.blackFriday ? { campanha: "black_friday_2026" } : {}),
+        } : {},
         items: { data: [{ current_period_end: DAQUI_A_UM_MES }] },
       },
     },
@@ -303,6 +324,39 @@ describe("pagamento confirmado libera o acesso", () => {
     expect(banco.linha(FAMILIA)?.status).toBe("active");
     expect(banco.linha(FAMILIA)?.stripe_subscription_id).toBe(ASSINATURA);
     expect(acessoLiberado()).toBe(true);
+  });
+});
+
+describe("checkout Black Friday preserva o teste", () => {
+  it("cartão cadastrado durante os 15 dias não vira pagamento antecipado", async () => {
+    const trialFim = Math.floor((AGORA + 10 * DIA) / 1000);
+    banco = criarBanco([linhaTrial({ vencido: false })], [{
+      family_account_id: FAMILIA,
+      checkout_session_id: "cs_bf",
+      checkout_expira_em: new Date(AGORA + 30 * 60 * 1000).toISOString(),
+    }]);
+    assinaturasStripe.clear();
+    registrarNoStripe("trialing", FAMILIA, trialFim);
+
+    const r = await entregar(eventoCheckout({
+      blackFriday: true,
+      paymentStatus: "no_payment_required",
+    }));
+
+    expect(r.status).toBe(200);
+    expect(banco.linha(FAMILIA)?.status).toBe("trialing");
+    expect(banco.linha(FAMILIA)?.trial_ends_at).toBe(new Date(trialFim * 1000).toISOString());
+    expect(banco.tabelas.black_friday_2026_participacoes[0]?.checkout_concluido_em).toBeTruthy();
+  });
+
+  it("recusa evento promocional que não corresponde a uma sessão registrada", async () => {
+    registrarNoStripe("trialing", FAMILIA, Math.floor((AGORA + 10 * DIA) / 1000));
+    const r = await entregar(eventoCheckout({
+      blackFriday: true,
+      paymentStatus: "no_payment_required",
+    }));
+    expect(r.status).toBe(500);
+    expect(banco.linha(FAMILIA)?.stripe_subscription_id).toBeNull();
   });
 });
 
@@ -575,6 +629,28 @@ describe("evidência negativa real continua funcionando", () => {
     expect(r.status).toBe(200);
     expect(banco.linha(FAMILIA)?.status).toBe("canceled");
     expect(acessoLiberado()).toBe(false);
+  });
+
+  it("cancelar a assinatura promocional antes da cobrança preserva os dias gratuitos", async () => {
+    const trialFim = new Date(AGORA + 5 * DIA).toISOString();
+    banco = criarBanco(
+      [{ ...linhaTrial({ vencido: false }), stripe_subscription_id: ASSINATURA }],
+      [{ family_account_id: FAMILIA, trial_fim_em: trialFim }],
+    );
+
+    const r = await entregar(eventoAssinatura("canceled", {
+      tipo: "customer.subscription.deleted",
+      blackFriday: true,
+    }));
+
+    expect(r.status).toBe(200);
+    expect(banco.linha(FAMILIA)).toMatchObject({
+      status: "trialing",
+      trial_ends_at: trialFim,
+      stripe_subscription_id: null,
+      current_period_end: null,
+    });
+    expect(acessoLiberado()).toBe(true);
   });
 
   it("quem nunca pagou é rebaixado normalmente por evidência negativa", async () => {

@@ -15,6 +15,7 @@ export type AylaTipoProativa =
   | "insight"
   | "repertorio_sugestao"
   | "trial_d3"
+  | "trial_d1"
   | "trial_d0"
   | "emocional_streak"
   | "emocional_conquista"

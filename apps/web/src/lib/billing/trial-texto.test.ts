@@ -55,7 +55,7 @@ describe("a duração do teste grátis", () => {
     // e perguntada ela chutava. 30 dias é o palpite de mercado.
     for (const f of ["src/lib/ia/prompt.ts", "src/lib/ayla/responder.ts"]) {
       expect(readFileSync(resolve(RAIZ, f), "utf8"), `${f} não recebe o fato`).toMatch(
-        /FATOS_COMERCIAIS/,
+        /FATOS_COMERCIAIS|fatosComerciaisParaFamilia/,
       );
     }
   });

@@ -17,7 +17,7 @@ export default function TermosPage() {
           <em className="not-italic text-brand-purple">Uso</em>
         </h1>
         <p className="mt-3 text-sm text-muted-foreground">
-          Última atualização: 23 de maio de 2026
+          Versão de 23 de outubro de 2026
         </p>
       </header>
 
@@ -25,8 +25,9 @@ export default function TermosPage() {
         <section>
           <h2 className="text-lg font-semibold">1. Aceitação dos Termos</h2>
           <p>
-            Ao iniciar ou utilizar o Kolo Família, você declara que leu,
-            compreendeu e concorda com estes Termos de Uso.
+            O Kolo Família é oferecido por Kolo Academy Ltda., CNPJ
+            60.374.232/0001-31, Rua Nagel, 33, Apto 82 Bloco 2, Vila
+            Leopoldina, São Paulo/SP, CEP 05315-030.
           </p>
           <p>
             Ao utilizar a plataforma, você também declara ser maior de 18 anos
@@ -40,7 +41,7 @@ export default function TermosPage() {
           <p>
             O Kolo Família é uma ferramenta prática de apoio diário para
             famílias de crianças neurodivergentes. Combina inteligência
-            artificial treinada com fundamentação especializada, registro
+            artificial, fundamentação especializada, registro
             contextual e estratégias para transformar observações do dia a dia
             em direção concreta.
           </p>
@@ -123,40 +124,57 @@ export default function TermosPage() {
             6. Teste Gratuito e Assinaturas
           </h2>
           <p>
-            O Kolo Família poderá oferecer períodos gratuitos ou promocionais.
+            O teste normal é de 7 dias. Não é necessário cadastrar cartão para
+            começar e o término do teste não gera cobrança automática.
           </p>
-          <p>Após o término do período disponibilizado:</p>
+          <p>Na Black Friday 2026:</p>
           <ul className="ml-5 list-disc space-y-1">
-            <li>o acesso poderá ser encerrado;</li>
-            <li>poderá ser necessária assinatura paga;</li>
-            <li>valores e condições poderão ser alterados futuramente.</li>
+            <li>o teste é de 15 dias completos;</li>
+            <li>o plano promocional é mensal, por R$ 39,90;</li>
+            <li>assinar durante o teste preserva os dias restantes e adia a primeira cobrança para o fim do teste;</li>
+            <li>as demais condições constam no <a href="/black-friday-2026/regulamento" className="underline">Regulamento da Black Friday 2026</a>.</li>
           </ul>
           <p>
-            Mudanças relevantes serão comunicadas previamente quando aplicável.
+            A assinatura renova mensalmente até o cancelamento. O checkout
+            apresenta preço, periodicidade e data da primeira cobrança antes da
+            confirmação.
           </p>
         </section>
 
         <section>
           <h2 className="text-lg font-semibold">7. Cancelamento</h2>
           <p>
-            O usuário poderá solicitar o encerramento da utilização do serviço a
-            qualquer momento pelos canais oficiais da Kolo.
+            O cancelamento é feito na plataforma, sem multa e sem necessidade de
+            falar com o suporte. Ele impede cobranças futuras; quando já existe
+            um período pago, o acesso permanece até o final dele.
+          </p>
+          <p>
+            Depois do fim do acesso pago, os dados familiares são excluídos,
+            ressalvados somente registros mínimos que precisem ser conservados
+            por obrigação legal ou defesa de direitos. A pessoa pode exportar
+            os dados disponíveis antes da exclusão.
           </p>
         </section>
 
         <section>
           <h2 className="text-lg font-semibold">8. Propriedade Intelectual</h2>
           <p>
-            A marca Kolo, metodologia, tecnologia, identidade visual, conteúdos
-            e estrutura pertencem exclusivamente à Kolo.
+            A contratação dá licença de acesso, não transfere o software, a
+            marca ou materiais protegidos da Kolo e de seus licenciantes.
           </p>
-          <p>É proibida reprodução, distribuição ou uso comercial sem autorização.</p>
+          <p>
+            A família pode baixar, imprimir e usar atividades e relatórios nas
+            finalidades oferecidas, inclusive compartilhar o relatório da
+            criança com profissionais autorizados. São proibidas a revenda, a
+            distribuição comercial, a extração ilícita e a cópia indevida do
+            software ou de materiais protegidos. Ideias gerais, conhecimentos
+            públicos e criação independente lícita não são apropriados pela Kolo.
+          </p>
         </section>
 
         <section>
           <h2 className="text-lg font-semibold">9. Atualizações dos Termos</h2>
-          <p>Os presentes Termos poderão ser atualizados periodicamente.</p>
-          <p>A continuidade do uso representa concordância com as versões vigentes.</p>
+          <p>Mudanças relevantes serão informadas em linguagem simples e não retiram retroativamente condições já contratadas.</p>
         </section>
 
         <section>

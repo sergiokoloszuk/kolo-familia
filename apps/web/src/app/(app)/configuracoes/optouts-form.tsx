@@ -2,47 +2,24 @@
 
 import { useState, useTransition } from "react";
 import { Label } from "@/components/ui/label";
-import { alterarOptOut } from "./actions";
+import { alterarConsentimentoMarketing } from "./actions";
 
-const CATEGORIAS = [
-  {
-    key: "informacional",
-    label: "Novidades",
-    descricao: "Novos recursos e melhorias na Kolo.",
-  },
-  {
-    key: "promocional",
-    label: "Ofertas e descontos",
-    descricao: "Promoções, campanhas e cupons.",
-  },
-  {
-    key: "avaliacao",
-    label: "Pesquisas de opinião",
-    descricao: "Perguntas rápidas sobre a sua experiência.",
-  },
-] as const;
-
-export function OptOutsForm({ optoutSet }: { optoutSet: string[] }) {
+export function OptOutsForm({ consentido }: { consentido: boolean }) {
   const [pending, startTransition] = useTransition();
   const [erro, setErro] = useState<string | null>(null);
-  const [optouts, setOptouts] = useState(new Set(optoutSet));
+  const [aceitar, setAceitar] = useState(consentido);
 
-  function alternar(categoria: "informacional" | "promocional" | "avaliacao") {
-    const optar_out = !optouts.has(categoria);
+  function alternar() {
+    const anterior = aceitar;
+    const proximo = !anterior;
+    setAceitar(proximo);
     setErro(null);
-    // Atualização otimista
-    const next = new Set(optouts);
-    if (optar_out) next.add(categoria);
-    else next.delete(categoria);
-    setOptouts(next);
-
     startTransition(async () => {
       try {
-        await alterarOptOut({ categoria, optar_out });
+        await alterarConsentimentoMarketing({ aceitar: proximo });
       } catch (e) {
-        setErro(e instanceof Error ? e.message : "Erro inesperado");
-        // Reverte
-        setOptouts(optouts);
+        setAceitar(anterior);
+        setErro(e instanceof Error ? e.message : "Não foi possível salvar.");
       }
     });
   }
@@ -54,28 +31,23 @@ export function OptOutsForm({ optoutSet }: { optoutSet: string[] }) {
           {erro}
         </div>
       )}
-      <ul className="flex flex-col gap-2">
-        {CATEGORIAS.map((c) => {
-          const aceitar = !optouts.has(c.key);
-          return (
-            <li key={c.key} className="rounded-md border p-3">
-              <label className="flex items-start gap-3">
-                <input
-                  type="checkbox"
-                  className="mt-1"
-                  checked={aceitar}
-                  disabled={pending}
-                  onChange={() => alternar(c.key)}
-                />
-                <div className="flex-1">
-                  <Label className="font-medium">{c.label}</Label>
-                  <p className="mt-1 text-xs text-muted-foreground">{c.descricao}</p>
-                </div>
-              </label>
-            </li>
-          );
-        })}
-      </ul>
+      <label className="flex items-start gap-3 rounded-md border p-3">
+        <input
+          type="checkbox"
+          className="mt-1"
+          checked={aceitar}
+          disabled={pending}
+          onChange={alternar}
+        />
+        <div className="flex-1">
+          <Label className="font-medium">Novidades e promoções</Label>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Quero receber novidades sobre novas funcionalidades, parcerias e
+            promoções. Mensagens necessárias para usar a conta não dependem
+            desta escolha.
+          </p>
+        </div>
+      </label>
     </div>
   );
 }

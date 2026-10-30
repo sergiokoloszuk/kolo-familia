@@ -24,6 +24,7 @@ function InstagramIcon(props: React.SVGProps<SVGSVGElement>) {
 import { buttonVariants } from "@/components/ui/button";
 import { Logo } from "@/components/brand/logo";
 import { cn } from "@/lib/utils";
+import { CookieChoice } from "@/components/privacy/cookie-choice";
 
 export default function PublicLayout({ children }: { children: ReactNode }) {
   return (
@@ -76,6 +77,7 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
       </header>
 
       <main className="flex-1">{children}</main>
+      <CookieChoice />
 
       {/* Footer obrigatório — Manual §17: fundo roxo-deep + contatos oficiais. */}
       <footer className="bg-brand-purple-deep text-white/70">
@@ -123,6 +125,9 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
             </Link>
             <Link href="/termos" className="text-sm text-white/75 transition-colors hover:text-white">
               Termos de uso
+            </Link>
+            <Link href="/cookies" className="text-sm text-white/75 transition-colors hover:text-white">
+              Cookies
             </Link>
           </div>
           <div className="flex flex-col gap-3">

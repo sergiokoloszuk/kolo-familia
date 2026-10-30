@@ -5,7 +5,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { IconCard } from "@/components/brand/icon-card";
 import { cn } from "@/lib/utils";
-import { createServiceRoleClient } from "@/lib/supabase/server";
+import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import {
   formatarBRL,
   lerPlanosParaExibir,
@@ -14,11 +14,15 @@ import {
 import { ctaDoEstado, estadoComercialDoVisitante } from "./cta-por-estado";
 import { MarcoOrigem } from "./marco-origem";
 import { origemValida } from "./origem";
+import { BLACK_FRIDAY_2026, janelaPublicaAberta } from "@/lib/billing/black-friday-2026";
+import { lerEstadoBlackFriday } from "@/lib/billing/estado-black-friday";
+import { lerOfertaBlackFridayNoStripe } from "@/lib/billing/oferta-black-friday";
+import { resolverOfertaDaFamilia } from "@/lib/billing/oferta-familia";
 
 export const metadata: Metadata = {
   title: "Preços · Kolo Família",
   description:
-    "Trial de 7 dias grátis sem cartão. Depois, mensalidade ou anual com desconto. Sem pegadinhas.",
+    "Teste grátis sem cartão. Depois, você escolhe se quer continuar. Sem pegadinhas.",
 };
 
 // O preço vem do Stripe, espelhado em configuracao_precos. Ver lib/billing/planos.ts.
@@ -32,14 +36,23 @@ export default async function PrecosPage({
 }) {
   const origem = origemValida((await searchParams)?.de);
   const admin = createServiceRoleClient();
+  const auth = await createClient();
   // ⚠️ O CTA depende de quem está olhando — ver `cta-por-estado.ts`. Quem chega
   // pelo convite de fim de teste não pode receber "comece um teste".
-  const [planos, estado] = await Promise.all([
+  const [planos, estado, estadoCampanha, ofertaIndividual] = await Promise.all([
     lerPlanosParaExibir(admin),
     estadoComercialDoVisitante(),
+    lerEstadoBlackFriday(admin),
+    resolverOfertaDaFamilia(auth),
   ]);
-  const cta = ctaDoEstado(estado);
-  const mensalCent = planos.mensal.centavos;
+  const campanhaPublica = estadoCampanha === "ativa" && janelaPublicaAberta(new Date())
+    ? await lerOfertaBlackFridayNoStripe()
+    : null;
+  const promocionalCentavos = ofertaIndividual?.valorCentavos
+    ?? (campanhaPublica?.ok ? campanhaPublica.valorCentavos : null);
+  const blackFriday = promocionalCentavos != null;
+  const cta = ctaDoEstado(estado, blackFriday ? BLACK_FRIDAY_2026.diasTrial : 7);
+  const mensalCent = promocionalCentavos ?? planos.mensal.centavos;
   const anualCent = planos.anual.centavos;
   const mensalLabel = formatarBRL(mensalCent);
   const anualLabel = formatarBRL(anualCent);
@@ -117,7 +130,16 @@ export default async function PrecosPage({
             </p>
           ) : null}
 
-          <div className="grid gap-6 md:grid-cols-2">
+          {blackFriday ? (
+            <div className="mx-auto mb-8 max-w-2xl rounded-2xl border-l-4 border-brand-yellow bg-brand-yellow/10 px-6 py-4 text-center">
+              <p className="font-semibold text-brand-purple-dark">Black Friday Kolo Família</p>
+              <p className="mt-1 text-sm text-foreground/80">
+                15 dias completos sem cartão. Depois, {mensalLabel} por mês se você decidir continuar.
+              </p>
+            </div>
+          ) : null}
+
+          <div className={cn("grid gap-6", blackFriday ? "mx-auto max-w-2xl" : "md:grid-cols-2")}>
             {/* Plano mensal — card lilás (não destacado). */}
             <div className="flex flex-col gap-6 rounded-3xl bg-kolo-lilas-bg-2 p-8 transition-all hover:-translate-y-1 hover:shadow-lg md:p-10">
               <div>
@@ -159,6 +181,7 @@ export default async function PrecosPage({
               </Link>
             </div>
 
+            {!blackFriday && (<>
             {/* Plano anual — destacado em gradient roxo Kolo. */}
             <div className="relative flex flex-col gap-6 overflow-hidden rounded-3xl bg-gradient-to-br from-brand-purple to-brand-purple-dark p-8 text-white shadow-2xl md:p-10">
               {selo && (
@@ -209,6 +232,7 @@ export default async function PrecosPage({
                 {cta.rotulo}
               </Link>
             </div>
+            </>)}
           </div>
 
           {/* Reassurance card. */}
@@ -230,7 +254,7 @@ export default async function PrecosPage({
           <div className="mx-auto max-w-3xl text-center">
             <Eyebrow className="justify-center">O que está incluído</Eyebrow>
             <h2 className="mt-4 font-heading text-3xl text-foreground md:text-5xl">
-              Os dois planos têm{" "}
+              {blackFriday ? "O plano tem " : "Os dois planos têm "}
               <em className="not-italic text-brand-purple">tudo isso</em>.
             </h2>
           </div>

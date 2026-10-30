@@ -129,8 +129,8 @@ describe("BOAS PRÁTICAS — repertório, pelo mecanismo existente", () => {
    */
   it("a consulta ESPERA o contexto — pela idade — e nada mais virou série", () => {
     const bloco = EXP.slice(
-      EXP.indexOf("const [ctxTurno, core, bps, estadoTrial, evidencias, docTrial] = await Promise.all(["),
-      EXP.indexOf("const msBp ="),
+      EXP.indexOf("const [ctxTurno, core, bps, estadoTrial, evidencias, docTrial"),
+      EXP.indexOf("const msParalelo ="),
     );
     // O contexto é UMA promessa só, criada antes e consumida no mesmo Promise.all.
     expect(EXP).toContain('const ctxP = cron(\n      "ctx",\n      montarContexto(');
