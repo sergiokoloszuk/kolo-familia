@@ -6664,13 +6664,17 @@ STATUS: **MEDIDA — NÃO CORRIGIDA** · Aberta em: 2026-08-21
   apresentação:** a mesma tela ainda rotula esses casos como `dia N/7`, embora
   o prazo restante já seja o de 15 dias. O benefício está aplicado, mas o
   rótulo antigo pode induzir a administradora a pensar que não está.
-  **Correção local em 01/11/2026:** o Admin passou a ler o início e o fim da
-  participação individual e a mostrar a duração real, preservando 7 dias para
-  o trial comum e exibindo 15 para a campanha. Teste dirigido **3/3** e lint
-  dos três arquivos passaram; compilação Next e TypeScript passaram. O build
-  local só parou no prerender porque este worktree não contém as variáveis do
-  Supabase. Falta CI, publicação e prova visual no Admin em produção antes de
-  considerar o rótulo corrigido.
+  **Correção comprovada em produção em 01/11/2026:** o Admin passou a ler o
+  início e o fim da participação individual e a mostrar a duração real,
+  preservando 7 dias para o trial comum e exibindo 15 para a campanha. Teste
+  dirigido **3/3**, lint, compilação e CI **3/3** passaram. O PR #153 foi
+  mesclado no SHA `d4c99e320bcb0e4e24899409c59e8f549d25036d`; o
+  `/api/health` de produção serviu exatamente esse SHA em `main`, com
+  `ok: true`. A prova visual no Admin mostrou trials da campanha como
+  `dia 4/15`, `dia 6/15`, `dia 7/15`, `dia 9/15` e `dia 10/15`, enquanto
+  trials comuns vencidos preservaram `dia 7/7`. O defeito de apresentação
+  está corrigido. A ficha permanece aberta porque o critério amplo abaixo
+  ainda exige prova longitudinal da jornada completa D0→D7.
 - **CRITÉRIO DE CONCLUSÃO:** uma coorte real percorrendo D0→D7 com registro de
   avaliação em todos os dias — prova longitudinal de 8 dias, não retrato de um
   dia.
