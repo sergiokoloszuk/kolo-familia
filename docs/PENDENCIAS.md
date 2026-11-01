@@ -155,7 +155,7 @@ substitui a prioridade atual de segurança nem a análise de produção.
 | [PEND-106](#pend-106) | O rastro do conhecimento não cobre o WhatsApp desde o rollout de 17/08 | P1 | MEDIDA — CORREÇÃO NÃO IMPLEMENTADA |
 | [PEND-107](#pend-107) | Auditoria da Rotina contra o documento aprovado | P1 | A INVESTIGAR |
 | [PEND-108](#pend-108) | Auditoria do Plano contra o documento aprovado | P1 | A INVESTIGAR |
-| [PEND-109](#pend-109) | Central de Avisos no Admin — Trial · Pós-Trial · Todos | P1 | A INVESTIGAR |
+| [PEND-109](#pend-109) | Central de Avisos no Admin — Trial · Pós-Trial · Todos | P1 | PARCIAL — ESTRUTURA EXISTE; DISPARO SEGURO BLOQUEADO |
 | [PEND-110](#pend-110) | Satisfação no D3 — perguntar, guardar e usar | P2 | DEFINIDA — NÃO CONSTRUÍDA |
 | [PEND-111](#pend-111) | Indicação — não existe, e o D3 pressupõe que exista | P2 | DECISÃO DE PRODUTO PENDENTE |
 | [PEND-112](#pend-112) | Recuperação dos Trials expirados | P1 | POPULAÇÃO MEDIDA — CAMPANHA NÃO DISPARADA |
@@ -5589,7 +5589,7 @@ STATUS: **A INVESTIGAR** · Aberta em: 2026-08-19
 ### PEND-109
 **Central de Avisos no Admin — Trial · Pós-Trial · Todos**
 Bloco: **G · Comercial** · Prioridade: **P1** · **ORDEM DA FRENTE: —**
-STATUS: **A INVESTIGAR** · Aberta em: 2026-08-19
+STATUS: **PARCIAL — ESTRUTURA EXISTE; DISPARO SEGURO BLOQUEADO** · Aberta em: 2026-08-19
 
 > Nasce da campanha de recuperação de 18/08, que ficou **não disparada** por
 > falta exatamente disto: não existe jeito seguro de mandar uma mensagem para
@@ -5619,6 +5619,23 @@ STATUS: **A INVESTIGAR** · Aberta em: 2026-08-19
   botão de disparo. O envio promocional passou a exigir aceite positivo para
   novidades e promoções; ausência de opt-out não basta. Fila gradual, canário,
   pausa de mensagens e relatório por contato continuam abertos nesta ficha.
+- **Reauditoria em produção e no SHA `d4c99e3`, 01/11/2026, sem envio:**
+  `/admin/campanhas` está publicado e não contém campanha criada. O fluxo já
+  oferece rascunho, segmento semântico `Trial vencido`, simulação, aprovação e
+  contagem agregada. Porém o botão atual processa até **200 destinatários na
+  própria requisição** e o cron até **500 por hora**; não há canário isolado,
+  pausa durante o envio, prévia do texto final com link individual, relatório
+  por contato na tela nem chave única `(campanha_id, family_account_id)` no
+  banco. O comentário promete upsert/reentrada segura, mas o código usa
+  `insert` sem essa trava. A regra de silêncio após 10 dias também bloqueia a
+  própria população antiga que a retomada pretende alcançar. O comando
+  `PARAR` não existe; `SAIR` desativa toda a Ayla, que é efeito mais amplo que
+  deixar de receber promoções. **Não usar o botão Disparar agora neste estado.**
+- **Público recomendado para a primeira campanha de retomada:** somente trial
+  vencido, com aceite positivo de marketing e WhatsApp válido; excluir trial
+  atual, assinante, cortesia, pagamento em recuperação, participante que já
+  recebeu a Black Friday, QA/staff e qualquer pedido de parada. Ex-assinantes
+  ficam em campanha separada para que resultado e mensagem não se misturem.
 - **CRITÉRIO DE BAIXA:** uma campanha real enviada por lotes, com pausa
   exercitada, sem envio duplicado e com o relatório por família.
 
