@@ -1,4 +1,3 @@
-import { differenceInCalendarDays } from "date-fns";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { Badge } from "@/components/ui/badge";
 import { requireAdmin } from "@/lib/auth/require-admin";
@@ -6,7 +5,7 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 import { capitalizarNome } from "@/lib/nome";
 import { assinaturaLiberada } from "@/lib/auth/assinatura";
 import { BloquearBtn } from "./bloquear-btn";
-import { TRIAL_DIAS } from "@/lib/billing/fatos-comerciais";
+import { resumoTrialAdmin } from "@/lib/admin/resumo-trial";
 
 /**
  * Famílias / Leads — lista única com origem, momento do trial, e se assinou.
@@ -41,6 +40,7 @@ function fmtData(d: string | null): string {
 export default async function AdminFamiliasPage() {
   await requireAdmin();
   const admin = createServiceRoleClient();
+  const hoje = new Date();
 
   const [
     { data: familias },
@@ -50,6 +50,7 @@ export default async function AdminFamiliasPage() {
     { data: convUsos },
     { data: convites },
     { data: prefs },
+    { data: participacoesBf },
   ] = await Promise.all([
     admin
       .from("family_accounts")
@@ -63,6 +64,9 @@ export default async function AdminFamiliasPage() {
     admin.from("beta_invite_uses").select("family_account_id, invite_id"),
     admin.from("beta_invites").select("id, rotulo, codigo"),
     admin.from("ayla_preferences").select("family_account_id, desativada, consentimento_em"),
+    admin
+      .from("black_friday_2026_participacoes")
+      .select("family_account_id, trial_inicio_em, trial_fim_em"),
   ]);
   // "Bloqueada de verdade" = desativada E já consentiu (opt-out/manual). Só
   // desativada (sem consentimento) = padrão do cadastro, NÃO é bloqueio.
@@ -78,7 +82,7 @@ export default async function AdminFamiliasPage() {
 
   // Famílias com alerta de possível criança/número errado (camada 1) nos últimos
   // 7 dias e que AINDA aguardam ação (revisar/bloquear).
-  const seteDias = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  const seteDias = new Date(hoje.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
   const { data: alertas } = await admin
     .from("ayla_messages")
     .select("family_account_id")
@@ -98,6 +102,9 @@ export default async function AdminFamiliasPage() {
   const subPorFam = new Map(
     (subs ?? []).map((s) => [s.family_account_id as string, s]),
   );
+  const participacaoBfPorFam = new Map(
+    (participacoesBf ?? []).map((p) => [p.family_account_id as string, p]),
+  );
   const nomePorFam = new Map(
     (perfis ?? []).map((p) => [p.family_account_id as string, (p.nome_mae as string | null) ?? null]),
   );
@@ -113,7 +120,6 @@ export default async function AdminFamiliasPage() {
     if (r) conviteRotuloPorFam.set(u.family_account_id as string, r);
   }
 
-  const hoje = new Date();
   const linhas = (familias ?? []).map((f) => {
     const id = f.id as string;
     const sub = subPorFam.get(id);
@@ -147,12 +153,17 @@ export default async function AdminFamiliasPage() {
           : status === "trialing"
             ? "trial vencido, mas liberado"
             : `status ${status} liberado`;
-    // Dia do trial: quanto já passou desde o cadastro (1..7), e quantos faltam.
-    const diasUsados = Math.min(
-      TRIAL_DIAS,
-      Math.max(1, differenceInCalendarDays(hoje, new Date(f.created_at as string)) + 1),
-    );
-    const diasRestantes = trialEnds ? differenceInCalendarDays(new Date(trialEnds), hoje) : null;
+    const resumoTrial = trialEnds
+      ? resumoTrialAdmin({
+          inicioPadrao: f.created_at as string,
+          fim: trialEnds,
+          hoje,
+          participacaoBlackFriday: participacaoBfPorFam.get(id) ?? null,
+        })
+      : null;
+    const diasUsados = resumoTrial?.diasUsados ?? 1;
+    const diasRestantes = resumoTrial?.diasRestantes ?? null;
+    const duracaoTrial = resumoTrial?.duracaoDias ?? null;
     // Estado do trial em texto: vence hoje / faltam Nd / venceu em DD/MM.
     const trialInfo =
       trialEnds == null || diasRestantes == null
@@ -184,6 +195,7 @@ export default async function AdminFamiliasPage() {
       trialing: status === "trialing",
       diasUsados,
       diasRestantes,
+      duracaoTrial,
       origem,
       criadoEm: f.created_at as string,
       irregular,
@@ -215,7 +227,7 @@ export default async function AdminFamiliasPage() {
           Famílias <em className="not-italic text-brand-purple">e leads</em>
         </h1>
         <p className="mt-2 max-w-2xl text-muted-foreground">
-          Quem entrou, em que ponto do trial de {TRIAL_DIAS} dias está, quem já assinou e de onde
+          Quem entrou, em que ponto do período de teste está, quem já assinou e de onde
           veio. {total} família(s) · {emTrial} em trial · {assinantes} assinante(s).
         </p>
       </header>
@@ -301,7 +313,7 @@ export default async function AdminFamiliasPage() {
                             : ""
                       }
                     >
-                      {l.trialing && `dia ${l.diasUsados}/${TRIAL_DIAS} · `}
+                      {l.trialing && l.duracaoTrial && `dia ${l.diasUsados}/${l.duracaoTrial} · `}
                       {l.trialInfo}
                     </span>
                   ) : (

@@ -6663,9 +6663,14 @@ STATUS: **MEDIDA — NÃO CORRIGIDA** · Aberta em: 2026-08-21
   contas recentes aparecem com 12, 10, 9, 8 e 7 dias restantes. **Defeito de
   apresentação:** a mesma tela ainda rotula esses casos como `dia N/7`, embora
   o prazo restante já seja o de 15 dias. O benefício está aplicado, mas o
-  rótulo antigo pode induzir a administradora a pensar que não está. Corrigir
-  a visualização para usar a duração real e provar no Admin com trial de 7 e
-  de 15 dias; não corrigido nesta investigação.
+  rótulo antigo pode induzir a administradora a pensar que não está.
+  **Correção local em 01/11/2026:** o Admin passou a ler o início e o fim da
+  participação individual e a mostrar a duração real, preservando 7 dias para
+  o trial comum e exibindo 15 para a campanha. Teste dirigido **3/3** e lint
+  dos três arquivos passaram; compilação Next e TypeScript passaram. O build
+  local só parou no prerender porque este worktree não contém as variáveis do
+  Supabase. Falta CI, publicação e prova visual no Admin em produção antes de
+  considerar o rótulo corrigido.
 - **CRITÉRIO DE CONCLUSÃO:** uma coorte real percorrendo D0→D7 com registro de
   avaliação em todos os dias — prova longitudinal de 8 dias, não retrato de um
   dia.
