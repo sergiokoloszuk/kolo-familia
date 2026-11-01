@@ -6656,6 +6656,16 @@ STATUS: **MEDIDA — NÃO CORRIGIDA** · Aberta em: 2026-08-21
   completo em 5min59s ([execução
   40562096888](https://github.com/sergiokoloszuk/kolo-familia/actions/runs/40562096888)).
   Faltam banco isolado, teste humano e produção.
+- **Evidência em produção de 01/11/2026 — Black Friday ativa:** o Admin da
+  campanha registra **7 participações**. A listagem de famílias confirma, sem
+  expor dados pessoais no registro, que os trials que estavam em curso na
+  ativação receberam os oito dias adicionais para completar 15 dias totais;
+  contas recentes aparecem com 12, 10, 9, 8 e 7 dias restantes. **Defeito de
+  apresentação:** a mesma tela ainda rotula esses casos como `dia N/7`, embora
+  o prazo restante já seja o de 15 dias. O benefício está aplicado, mas o
+  rótulo antigo pode induzir a administradora a pensar que não está. Corrigir
+  a visualização para usar a duração real e provar no Admin com trial de 7 e
+  de 15 dias; não corrigido nesta investigação.
 - **CRITÉRIO DE CONCLUSÃO:** uma coorte real percorrendo D0→D7 com registro de
   avaliação em todos os dias — prova longitudinal de 8 dias, não retrato de um
   dia.
