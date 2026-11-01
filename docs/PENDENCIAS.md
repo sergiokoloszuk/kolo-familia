@@ -72,7 +72,7 @@ PEND-092 → 017 → 098 → 093 → 094 → 095 → 039 → 042 → 097 → 099
 substitui a prioridade atual de segurança nem a análise de produção.
 
 <!-- PENDENCIAS-INDEX:START -->
-Índice completo gerado de 182 fichas neste arquivo. A ficha é a fonte do estado; não edite as linhas abaixo à mão. Para atualizar: `node scripts/pendencias-index.mjs --write`.
+Índice completo gerado de 183 fichas neste arquivo. A ficha é a fonte do estado; não edite as linhas abaixo à mão. Para atualizar: `node scripts/pendencias-index.mjs --write`.
 
 | ID | Pendência | Prioridade | Estado da ficha |
 |---|---|---|---|
@@ -258,6 +258,7 @@ substitui a prioridade atual de segurança nem a análise de produção.
 | [PEND-229](#pend-229) | Qualidade, profundidade e concisão da conversa da Ayla no WhatsApp | P1 | EM PRODUÇÃO — prova conversacional e latência ponta a ponta pendentes |
 | [PEND-230](#pend-230) | Confirmações sociais reabrem orientação e alongam a conversa | P1 | PUBLICADA · PROVA NATURAL PENDENTE |
 | [PEND-231](#pend-231) | Condução adaptativa no WhatsApp: descobrir possibilidades, perguntar o mínimo e aprender com o retorno | P1 | PENDENTE — missão de desenho; nenhuma oferta nova ou cadência de avaliação implementada |
+| [PEND-244](#pend-244) | Cargos do Admin são apenas rótulos e não limitam o acesso | P1 | MEDIDA EM PRODUÇÃO · NÃO CORRIGIDA |
 <!-- PENDENCIAS-INDEX:END -->
 
 ---
@@ -6655,6 +6656,21 @@ STATUS: **MEDIDA — NÃO CORRIGIDA** · Aberta em: 2026-08-21
   completo em 5min59s ([execução
   40562096888](https://github.com/sergiokoloszuk/kolo-familia/actions/runs/40562096888)).
   Faltam banco isolado, teste humano e produção.
+- **Evidência em produção de 01/11/2026 — Black Friday ativa:** o Admin da
+  campanha registra **7 participações**. A listagem de famílias confirma, sem
+  expor dados pessoais no registro, que os trials que estavam em curso na
+  ativação receberam os oito dias adicionais para completar 15 dias totais;
+  contas recentes aparecem com 12, 10, 9, 8 e 7 dias restantes. **Defeito de
+  apresentação:** a mesma tela ainda rotula esses casos como `dia N/7`, embora
+  o prazo restante já seja o de 15 dias. O benefício está aplicado, mas o
+  rótulo antigo pode induzir a administradora a pensar que não está.
+  **Correção local em 01/11/2026:** o Admin passou a ler o início e o fim da
+  participação individual e a mostrar a duração real, preservando 7 dias para
+  o trial comum e exibindo 15 para a campanha. Teste dirigido **3/3** e lint
+  dos três arquivos passaram; compilação Next e TypeScript passaram. O build
+  local só parou no prerender porque este worktree não contém as variáveis do
+  Supabase. Falta CI, publicação e prova visual no Admin em produção antes de
+  considerar o rótulo corrigido.
 - **CRITÉRIO DE CONCLUSÃO:** uma coorte real percorrendo D0→D7 com registro de
   avaliação em todos os dias — prova longitudinal de 8 dias, não retrato de um
   dia.
@@ -11174,7 +11190,41 @@ temas e frequência de avaliação. Não alterar a flag como parte deste registr
 
 ---
 
-**Proximo ID livre: PEND-232. *(PEND-225, PEND-226 e PEND-228 estão reivindicadas no worktree `ayla-conversa-valor`; PEND-227 foi incorporada nesta frente; PEND-209 a PEND-211 já estão reivindicadas por outra frente; 024 e 025 reservadas por frentes ainda nao publicadas; PEND-202 reivindicada em commit e ainda sem ficha; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
+### PEND-244
+**Cargos do Admin são apenas rótulos e não limitam o acesso**
+Bloco: **H · Segurança e governança** · Prioridade: **P1**
+STATUS: **MEDIDA EM PRODUÇÃO · NÃO CORRIGIDA** · Aberta em: 2026-11-01
+
+- **Problema em linguagem comum:** escolher “Suporte” ou “Conteúdo” dá a mesma
+  entrada ampla de “Geral”. A tela promete “Suporte (leitura +
+  observabilidade)”, mas o servidor não aplica essa limitação.
+- **Evidência no código servido:** `requireAdmin()` aceita qualquer linha ativa
+  em `controle_acessos`, independentemente do campo `role`; `is_admin()` faz a
+  mesma coisa no banco. A busca por `admin_geral`, `admin_conteudo` e
+  `admin_suporte` encontrou os cargos somente nos formulários, rótulos e setup,
+  sem autorização por função nas páginas ou ações administrativas.
+- **Impacto:** uma pessoa adicionada como Suporte pode ver dados sensíveis das
+  famílias e alcançar funções que alteram campanhas, conteúdo e configurações.
+  O nome do cargo cria falsa sensação de menor privilégio.
+- **Decisão operacional de 01/11/2026:** Karina foi avisada do acesso amplo e
+  autorizou concedê-lo ao Lauro para a auditoria da Black Friday. A tentativa
+  de cadastro não gravou nada porque o e-mail ainda não existe em
+  `auth.users`; ele precisa criar e confirmar a conta primeiro.
+- **Correção proposta:** aplicar permissões no servidor e no banco, com
+  `admin_geral` para tudo, `admin_conteudo` somente para conteúdo e
+  `admin_suporte` somente para leitura e observabilidade. Ocultar botões não é
+  segurança; cada ação e política precisa negar o cargo inadequado.
+- **Prova exigida:** matriz de leitura/escrita por cargo, testes positivos e
+  negativos no servidor e no banco, tentativa real com contas fictícias dos
+  três cargos e auditoria que prove que Suporte não lê conteúdo sensível nem
+  altera estado fora do escopo autorizado.
+- **Critério de conclusão:** as restrições estão publicadas, o SHA servido está
+  comprovado e os três cargos passam pela matriz de autorização em produção
+  com contas de QA, sem usar família real.
+
+---
+
+**Proximo ID livre: PEND-245. *(PEND-232 a PEND-243 estão reivindicadas em outras frentes; PEND-244 registra a ausência de autorização por cargo no Admin; PEND-225, PEND-226 e PEND-228 estão reivindicadas no worktree `ayla-conversa-valor`; PEND-227 foi incorporada nesta frente; PEND-209 a PEND-211 já estão reivindicadas por outra frente; 024 e 025 reservadas por frentes ainda nao publicadas; PEND-202 reivindicada em commit e ainda sem ficha; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.
