@@ -124,14 +124,14 @@ describe("NÃO TOCA — as seis garantias que você pediu", () => {
 describe("CONVIVE COM AS BOLHAS — a função roda antes de dividirEmBolhas", () => {
   it("o divisor removido não cria bolha vazia", () => {
     const bolhas = dividirEmBolhas(paraWhatsApp("Um.\n\n---\n\nDois."));
-    expect(bolhas).toEqual(["Um.", "Dois."]);
+    expect(bolhas).toEqual(["Um.\n\nDois."]);
   });
 
   it("o título convertido continua grudando no bloco que ele intitula", () => {
     // `ehSoTitulo` reconhece `*Assim*`. Se a conversão produzisse `**Assim**`
     // com dois asteriscos, ela ainda casaria — mas o canal mostraria os dois.
     const bolhas = dividirEmBolhas(paraWhatsApp("## Agora\n\nTire o prato.\n\nDepois observe."));
-    expect(bolhas).toEqual(["*Agora*\nTire o prato.", "Depois observe."]);
+    expect(bolhas).toEqual(["*Agora*\n\nTire o prato.\n\nDepois observe."]);
   });
 });
 
@@ -227,14 +227,12 @@ describe("SABOTAGEM — os testes mordem?", () => {
   });
 
   it("S6 · o colapso de linhas brancas é defensivo, e é isso que ele garante", () => {
-    // CORREÇÃO DE UMA AFIRMAÇÃO MINHA: eu havia escrito que sem o colapso o
-    // divisor removido viraria uma bolha a mais. É FALSO — `dividirEmBolhas`
-    // corta em `\n{2,}` e descarta pedaços vazios, então ele já tolera três
-    // linhas brancas. Medido: 2 bolhas com e sem colapso.
+    // Respiro não gera mensagens extras. O normalizador só limita o espaço
+    // visual; o agrupador mantém esta orientação numa mensagem completa.
     const semColapso = (t: string) =>
       t.split("\n").filter((l) => !/^\s*-{3,}\s*$/.test(l)).join("\n").trim();
-    expect(dividirEmBolhas(semColapso("Um.\n\n---\n\nDois.")).length).toBe(2);
-    expect(dividirEmBolhas(paraWhatsApp("Um.\n\n---\n\nDois.")).length).toBe(2);
+    expect(dividirEmBolhas(semColapso("Um.\n\n---\n\nDois.")).length).toBe(1);
+    expect(dividirEmBolhas(paraWhatsApp("Um.\n\n---\n\nDois.")).length).toBe(1);
 
     // O que o colapso garante DE VERDADE: o texto que sai nunca tem buraco de
     // três linhas. Importa para a prévia da Web e para o texto salvo, não para

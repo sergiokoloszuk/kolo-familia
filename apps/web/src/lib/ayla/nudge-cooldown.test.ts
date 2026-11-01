@@ -288,9 +288,11 @@ describe("invariantes", () => {
     expect(fn).toMatch(
       /from\("ayla_messages"\)[\s\S]{0,200}\.in\("tipo", TIPOS_QUE_JA_LEVARAM_O_LINK\)/,
     );
-    // `enviarEPersistir` só grava em ayla_messages quando `resultado.enviada`.
+    // Só aceites reais entram no histórico. Uma resposta agrupada pode ter
+    // aceite parcial; tentativa sem nenhuma parte aceita continua de fora.
+    expect(ORCH).toMatch(/const incompleta = !resultado\.enviada && idsBolhas\.length > 0/);
     expect(ORCH).toMatch(
-      /if \(resultado\.enviada\) \{[\s\S]{0,180}?\.from\("ayla_messages"\)/,
+      /if \(resultado\.enviada \|\| incompleta\) \{[\s\S]{0,900}?\.from\("ayla_messages"\)/,
     );
   });
 

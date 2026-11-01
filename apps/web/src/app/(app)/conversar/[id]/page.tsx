@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { loadFamilyContext } from "@/lib/auth/require-user";
-import { RespostaMarkdown, limparRespostaKolo } from "@/components/resposta-markdown";
+import { RespostaConversa } from "@/components/resposta-markdown";
 import { ofereceuPlano } from "@/lib/ia/marcadores";
 import { pedeUmPlano } from "@/lib/ia/pedido-plano";
 import { RespostaStreamer } from "./resposta-streamer";
@@ -103,10 +103,7 @@ export default async function ConversaPage(props: PageProps<"/conversar/[id]">) 
                 <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-brand-purple">
                   Kolo
                 </span>
-                <RespostaMarkdown
-                  texto={limparRespostaKolo(m.conteudo)}
-                  className="mt-2 flex flex-col gap-3 text-base text-foreground"
-                />
+                <RespostaConversa texto={m.conteudo} />
               </div>
             )}
           </li>

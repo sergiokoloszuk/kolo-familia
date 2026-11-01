@@ -14,8 +14,8 @@
  * blocos, 6 bolhas — metade delas com duas palavras. É exatamente o "10 bolhas
  * de 1 frase" que não queremos, e acontecia sozinho.
  *
- * Aqui o título viaja junto com o que ele intitula. Nada mais: o NÚMERO de
- * blocos é decidido no prompt (2 a 4 quando há entrega), não neste arquivo.
+ * Separação visual não é separação de mensagem. Uma orientação fica inteira;
+ * atividades completas podem viajar uma por mensagem. O texto não é reescrito.
  */
 
 /**
@@ -75,30 +75,82 @@ export function ehSoTitulo(pedaco: string): boolean {
   return SO_TITULO.test(pedaco) && !pedaco.includes("\n");
 }
 
-/**
- * Divide o texto da Ayla nas bolhas que vão pro WhatsApp.
- *
- * Regra única: um pedaço que seja só um título gruda no pedaço seguinte. Se o
- * título for a última coisa do texto (não deveria acontecer, mas modelo é
- * modelo), ele sai sozinho mesmo — melhor uma bolha estranha do que sumir com
- * o conteúdo.
- */
-export function dividirEmBolhas(texto: string): string[] {
-  const pedacos = texto
-    .split(/\n{2,}/)
-    .map((x) => x.trim())
-    .filter(Boolean);
+// Teto operacional conservador da aplicação, NÃO uma afirmação de limite da
+// Z-API. O endpoint send-text não documenta teto numérico. Pode ser reduzido
+// pelo chamador/teste se o provedor exigir; nunca truncamos para caber.
+export const LIMITE_OPERACIONAL_TEXTO_WHATSAPP = 4000;
 
-  const bolhas: string[] = [];
-  for (const pedaco of pedacos) {
-    const anterior = bolhas[bolhas.length - 1];
-    if (anterior !== undefined && ehSoTitulo(anterior)) {
-      // O título esperava por este conteúdo: viajam juntos, uma linha só entre
-      // eles (duas reabriria a divisão na próxima vez que isso for reprocessado).
-      bolhas[bolhas.length - 1] = `${anterior}\n${pedaco}`;
-      continue;
-    }
-    bolhas.push(pedaco);
+const CAMPO_ATIVIDADE = /^(?:tempo|dura[cç][aã]o|materia(?:l|is)|materiais|como (?:come[cç]ar|brincar|fazer)|passos?|convite|pr[oó]xima rodada|para terminar|encerramento|o que (?:exercita|fortalece|trabalha)|se n[aã]o funcionar)\b/i;
+
+function unidadesDeConteudo(texto: string): string[] {
+  const titulos: Array<{ inicio: number; fim: number }> = [];
+  const linhas = /[^\n]+/g;
+  let linha: RegExpExecArray | null;
+  while ((linha = linhas.exec(texto))) {
+    const t = linha[0].trim();
+    const titulo = t.match(/^#{1,6}\s+(.+)$/)?.[1]
+      ?? t.match(/^(?:\d+[.)]\s+)?\*{1,2}([^*]+)\*{1,2}$/)?.[1]
+      ?? t.match(/^(?:\d+[.)]|[1-9]️⃣)\s+(.{1,100})$/u)?.[1]
+      ?? t.match(/^[\p{Extended_Pictographic}\uFE0F\u200D]+\s+(.{1,100})$/u)?.[1];
+    if (!titulo || titulo.length > 120 || CAMPO_ATIVIDADE.test(titulo) || /^[“"'‘>]/.test(titulo)) continue;
+    titulos.push({ inicio: linha.index, fim: linha.index + linha[0].length });
   }
-  return bolhas;
+
+  // Primeiro localizar aberturas que apresentam material. Subtítulos internos
+  // (por exemplo “Preparação”) não podem interromper a execução da atividade.
+  const comMateriais = titulos.filter((titulo, i) => {
+    const trecho = texto.slice(titulo.fim, titulos[i + 1]?.inicio ?? texto.length);
+    return /^\s*(?:\*{1,2})?(?:materiais|material|sem material|voc[eê] (?:vai )?precisa(?:r)?|o que usar)\b/im.test(trecho);
+  });
+  const atividades = comMateriais.filter((titulo, i) =>
+    /\b(?:como (?:come[cç]ar|brincar|fazer)|comece|convite|diga|rodada|passos?)\b/i.test(
+      texto.slice(titulo.fim, comMateriais[i + 1]?.inicio ?? texto.length),
+    ),
+  );
+  if (atividades.length < 2) return [texto];
+
+  // Introdução fica com a primeira; opções finais ficam com a última.
+  const inicios = [0, ...atividades.slice(1).map((a) => a.inicio)];
+  return inicios.map((inicio, i) => texto.slice(inicio, inicios[i + 1] ?? texto.length).trim());
+}
+
+function respeitarLimite(texto: string, limite: number): string[] {
+  const partes: string[] = [];
+  let restante = texto;
+  while (restante.length > limite) {
+    const janela = restante.slice(0, limite + 1);
+    // Preferir parágrafo completo; depois linha ou palavra, sem bolhas mínimas.
+    let corte = janela.lastIndexOf("\n\n", limite);
+    if (corte < limite / 2) corte = janela.lastIndexOf("\n", limite);
+    if (corte < limite / 2) corte = janela.lastIndexOf(" ", limite);
+    if (corte < limite / 2) {
+      corte = 0;
+      // Emojis com tom de pele/ZWJ e caracteres combinados viajam juntos.
+      for (const parte of new Intl.Segmenter("pt", { granularity: "grapheme" }).segment(restante)) {
+        const fim = parte.index + parte.segment.length;
+        if (fim > limite) break;
+        corte = fim;
+      }
+      // Um único cluster patológico pode exceder o próprio teto do canal.
+      if (!corte) {
+        corte = limite;
+        if (/[\uD800-\uDBFF]/.test(restante[corte - 1])) corte--;
+      }
+    }
+    partes.push(restante.slice(0, corte).trimEnd());
+    restante = restante.slice(corte).trimStart();
+  }
+  if (restante) partes.push(restante);
+  return partes;
+}
+
+/** Orientação inteira ou uma atividade por mensagem, com exceção de tamanho. */
+export function dividirEmBolhas(
+  texto: string,
+  limite = LIMITE_OPERACIONAL_TEXTO_WHATSAPP,
+): string[] {
+  if (!Number.isInteger(limite) || limite < 32) throw new RangeError("Limite de mensagem inválido.");
+  const limpo = texto.replace(/\r\n/g, "\n").trim();
+  if (!limpo) return [];
+  return unidadesDeConteudo(limpo).flatMap((unidade) => respeitarLimite(unidade, limite));
 }
