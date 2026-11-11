@@ -2,7 +2,7 @@
 
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { getStripeClient } from "@/lib/stripe/client";
 import { trackFeature } from "@/lib/analytics/track";
 import { logServerError } from "@/lib/log";
@@ -69,10 +69,16 @@ export async function iniciarCheckoutComDadosFiscais(
     const ofertaBlackFriday = await resolverOfertaDaFamilia(supabase);
     const { data: subAcc, error: subError } = await supabase
       .from("subscription_accesses")
-      .select("stripe_customer_id")
+      .select("status, stripe_customer_id, stripe_subscription_id")
       .eq("family_account_id", familyId)
       .maybeSingle();
     if (subError) throw subError;
+    const { data: participacao, error: participacaoError } = await createServiceRoleClient()
+      .from("black_friday_2026_participacoes")
+      .select("checkout_concluido_em")
+      .eq("family_account_id", familyId)
+      .maybeSingle();
+    if (participacaoError) throw participacaoError;
 
     const checkout = await criarCheckoutFiscal({
       familyId,
@@ -80,6 +86,13 @@ export async function iniciarCheckoutComDadosFiscais(
       stripeCustomerId: (subAcc?.stripe_customer_id as string | null) ?? null,
       dados: validacao.data,
       ofertaBlackFriday,
+      estadoAtual: {
+        status: (subAcc?.status as string | null) ?? null,
+        stripeSubscriptionId: (subAcc?.stripe_subscription_id as string | null) ?? null,
+        checkoutConcluidoEm: ofertaBlackFriday
+          ? (participacao?.checkout_concluido_em as string | null) ?? null
+          : null,
+      },
       registrarCheckoutBlackFriday: ofertaBlackFriday ? async (sessionId) => {
         const { data, error } = await supabase.rpc("registrar_meu_checkout_black_friday_2026", {
           p_session_id: sessionId,

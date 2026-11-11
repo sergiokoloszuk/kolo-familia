@@ -5,6 +5,7 @@ import { dadosFiscaisSchema, primeiraMensagemDeErro } from "@/lib/fiscal/dados";
 import { trackFeature } from "@/lib/analytics/track";
 import { logServerError } from "@/lib/log";
 import { resolverOfertaDaFamilia } from "@/lib/billing/oferta-familia";
+import { createServiceRoleClient } from "@/lib/supabase/server";
 
 /**
  * Compatibilidade com o cliente antigo. Usa a mesma porta fiscal da tela:
@@ -45,7 +46,7 @@ export async function POST(request: NextRequest) {
 
   const { data: subAcc, error: subError } = await supabase
     .from("subscription_accesses")
-    .select("stripe_customer_id")
+    .select("status, stripe_customer_id, stripe_subscription_id")
     .eq("family_account_id", family.id)
     .maybeSingle();
   if (subError) {
@@ -60,6 +61,12 @@ export async function POST(request: NextRequest) {
 
   try {
     const ofertaBlackFriday = await resolverOfertaDaFamilia(supabase);
+    const { data: participacao, error: participacaoError } = await createServiceRoleClient()
+      .from("black_friday_2026_participacoes")
+      .select("checkout_concluido_em")
+      .eq("family_account_id", family.id)
+      .maybeSingle();
+    if (participacaoError) throw participacaoError;
     const origin = request.headers.get("origin") ?? process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
     const checkout = await criarCheckoutFiscal({
       familyId: family.id,
@@ -67,6 +74,13 @@ export async function POST(request: NextRequest) {
       stripeCustomerId: (subAcc?.stripe_customer_id as string | null) ?? null,
       dados: parsed.data,
       ofertaBlackFriday,
+      estadoAtual: {
+        status: (subAcc?.status as string | null) ?? null,
+        stripeSubscriptionId: (subAcc?.stripe_subscription_id as string | null) ?? null,
+        checkoutConcluidoEm: ofertaBlackFriday
+          ? (participacao?.checkout_concluido_em as string | null) ?? null
+          : null,
+      },
       registrarCheckoutBlackFriday: ofertaBlackFriday ? async (sessionId) => {
         const { data, error } = await supabase.rpc("registrar_meu_checkout_black_friday_2026", {
           p_session_id: sessionId,

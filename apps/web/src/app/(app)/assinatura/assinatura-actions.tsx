@@ -12,6 +12,7 @@ export function AssinaturaActions({
   precoAnual = null,
   emailFiscalInicial = "",
   mostrarAnual = true,
+  temAssinatura = false,
 }: {
   status: string;
   temCustomerId: boolean;
@@ -23,6 +24,7 @@ export function AssinaturaActions({
   precoAnual?: string | null;
   emailFiscalInicial?: string;
   mostrarAnual?: boolean;
+  temAssinatura?: boolean;
 }) {
   const [pending, startTransition] = useTransition();
   const [erro, setErro] = useState<string | null>(null);
@@ -44,7 +46,7 @@ export function AssinaturaActions({
     });
   }
 
-  const podeAssinar = status !== "active";
+  const podeAssinar = status !== "active" && !temAssinatura;
   const podeGerenciar = temCustomerId;
 
   return (
