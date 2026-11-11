@@ -57,6 +57,7 @@ describe("porta única do checkout fiscal", () => {
       origin: "https://kolo.test",
       stripeCustomerId: null,
       dados,
+      estadoAtual: {},
     });
 
     expect(mocks.customersCreate).toHaveBeenCalledWith(expect.objectContaining({
@@ -88,10 +89,30 @@ describe("porta única do checkout fiscal", () => {
       origin: "https://kolo.test",
       stripeCustomerId: null,
       dados: { ...dados, bairro: "" },
+      estadoAtual: {},
     })).rejects.toThrow();
 
     expect(mocks.exigirPlanoCobravel).not.toHaveBeenCalled();
     expect(mocks.customersCreate).not.toHaveBeenCalled();
+    expect(mocks.sessionsCreate).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    { status: "active" },
+    { status: "trialing", stripeSubscriptionId: "sub_existente" },
+    { status: "trialing", checkoutConcluidoEm: "2026-11-11T12:00:00.000Z" },
+  ])("recusa antes de tocar no Stripe quando a cobrança já tem dono", async (estadoAtual) => {
+    await expect(criarCheckoutFiscal({
+      familyId: "familia-1",
+      origin: "https://kolo.test",
+      stripeCustomerId: "cus_existente",
+      dados,
+      estadoAtual,
+    })).rejects.toThrow(/já possui uma assinatura ou checkout concluído/);
+
+    expect(mocks.exigirPlanoCobravel).not.toHaveBeenCalled();
+    expect(mocks.customersUpdate).not.toHaveBeenCalled();
+    expect(mocks.listTaxIds).not.toHaveBeenCalled();
     expect(mocks.sessionsCreate).not.toHaveBeenCalled();
   });
 
@@ -105,6 +126,7 @@ describe("porta única do checkout fiscal", () => {
       origin: "https://kolo.test",
       stripeCustomerId: "cus_existente",
       dados,
+      estadoAtual: {},
     });
 
     expect(mocks.customersUpdate).toHaveBeenCalledWith(
@@ -123,6 +145,7 @@ describe("porta única do checkout fiscal", () => {
       origin: "https://kolo.test",
       stripeCustomerId: null,
       dados,
+      estadoAtual: {},
       ofertaBlackFriday: {
         priceId: "price_1UTQfzPAH1xSrJeSwmrOEor2",
         valorCentavos: 3990,
@@ -150,6 +173,34 @@ describe("porta única do checkout fiscal", () => {
     expect(registrar).toHaveBeenCalledWith("cs_bf");
   });
 
+  it("mantém R$ 39,90 recorrente depois do fim da campanha para quem já contratou", async () => {
+    mocks.sessionsCreate.mockResolvedValue({ id: "cs_bf", url: "https://checkout.stripe.test/bf" });
+
+    await criarCheckoutFiscal({
+      familyId: "familia-1",
+      origin: "https://kolo.test",
+      stripeCustomerId: null,
+      dados,
+      estadoAtual: {},
+      ofertaBlackFriday: {
+        priceId: "price_1UTQfzPAH1xSrJeSwmrOEor2",
+        valorCentavos: 3990,
+        trialFimEm: "2026-11-20T12:00:00.000Z",
+        ofertaFimExclusivo: "2026-12-01T03:00:00.000Z",
+        checkoutIniciadoEm: "2026-11-10T12:00:00.000Z",
+        checkoutExpiraEm: "2026-11-10T12:30:00.000Z",
+      },
+      registrarCheckoutBlackFriday: vi.fn().mockResolvedValue(true),
+    });
+
+    const params = mocks.sessionsCreate.mock.calls[0][0];
+    expect(params.line_items).toEqual([
+      { price: "price_1UTQfzPAH1xSrJeSwmrOEor2", quantity: 1 },
+    ]);
+    expect(params.subscription_data).not.toHaveProperty("cancel_at");
+    expect(params.subscription_data).not.toHaveProperty("billing_cycle_anchor");
+  });
+
   it("fecha a sessão Stripe se o banco não confirmar o checkout promocional", async () => {
     mocks.sessionsCreate.mockResolvedValue({ id: "cs_bf", url: "https://checkout.stripe.test/bf" });
     await expect(criarCheckoutFiscal({
@@ -157,6 +208,7 @@ describe("porta única do checkout fiscal", () => {
       origin: "https://kolo.test",
       stripeCustomerId: null,
       dados,
+      estadoAtual: {},
       ofertaBlackFriday: {
         priceId: "price_1UTQfzPAH1xSrJeSwmrOEor2",
         valorCentavos: 3990,
@@ -176,6 +228,7 @@ describe("porta única do checkout fiscal", () => {
       origin: "https://kolo.test",
       stripeCustomerId: null,
       dados: { ...dados, plano: "anual" },
+      estadoAtual: {},
       ofertaBlackFriday: {
         priceId: "price_1UTQfzPAH1xSrJeSwmrOEor2",
         valorCentavos: 3990,

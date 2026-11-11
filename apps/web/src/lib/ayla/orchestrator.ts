@@ -51,6 +51,7 @@ import { gerarMensagemEspontanea } from "./mensagemEspontanea";
 import { traduzirProativa } from "./traduzir";
 import { montarPonteWhatsApp, gerarMagicLink, montarPlanoFimDeSemana } from "./ponte";
 import { fechamentoReativoRecente } from "@/lib/trial/jornada";
+import { jaPossuiAssinaturaOuCheckoutConcluido } from "@/lib/fiscal/elegibilidade-checkout";
 import {
   aguardarTurnoDaMae,
   confirmarTurnoAindaAtual,
@@ -1079,6 +1080,37 @@ export async function sendTrial(
     // Não registra evento: com quatro batidas por dia, três delas cairiam aqui
     // todo dia para toda família já atendida, e o rastro viraria ruído.
     return { enviada: false, motivo: "ja enviada hoje" };
+  }
+
+  // O trial promocional continua `trialing` depois do checkout, mas já existe
+  // uma assinatura na Stripe. A seleção do cron filtra o vínculo para poupar
+  // trabalho; esta segunda leitura, imediatamente antes do envio, fecha a
+  // corrida com o webhook e protege qualquer outro chamador de `sendTrial`.
+  const { data: assinaturaAtual, error: assinaturaError } = await supabase
+    .from("subscription_accesses")
+    .select("status, stripe_subscription_id")
+    .eq("family_account_id", familyAccountId)
+    .maybeSingle();
+  if (assinaturaError) {
+    const motivo = "assinatura indisponível para conferir";
+    await registrarTentativaTrial({
+      familyAccountId,
+      tipo,
+      diasRestantes,
+      enviada: false,
+      motivo,
+      erro: assinaturaError.message,
+    });
+    return { enviada: false, motivo };
+  }
+  if (jaPossuiAssinaturaOuCheckoutConcluido({
+    status: (assinaturaAtual?.status as string | null) ?? null,
+    stripeSubscriptionId:
+      (assinaturaAtual?.stripe_subscription_id as string | null) ?? null,
+  })) {
+    const motivo = "assinatura já existente";
+    await registrarTentativaTrial({ familyAccountId, tipo, diasRestantes, enviada: false, motivo });
+    return { enviada: false, motivo };
   }
 
   // ⚠️ CONVIVÊNCIA COM A JORNADA REATIVA (15/08/2026). O pior resultado desta

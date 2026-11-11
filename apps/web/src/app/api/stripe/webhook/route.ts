@@ -391,6 +391,23 @@ async function onInvoiceSucceeded(
   stripe: Stripe,
   event: Stripe.Event,
 ) {
+  // A abertura de uma assinatura com trial gera uma Invoice "paga" de R$ 0.
+  // Ela não é evidência de dinheiro: não ativa a conta e não entra na fila de
+  // nota fiscal. O checkout/subscription.updated preservam o trial e o vínculo.
+  if (invoice.amount_paid <= 0) {
+    await logEvent({
+      kind: "stripe_invoice_sem_valor_ignorada",
+      severity: "info",
+      persistir: true,
+      message: "Invoice sem valor pago não ativa acesso nem gera alerta fiscal",
+      payload: {
+        event_id: event.id,
+        invoice_id: invoice.id,
+        amount_paid: invoice.amount_paid,
+      },
+    });
+    return;
+  }
   const subscriptionId = getInvoiceSubscriptionId(invoice);
   if (!subscriptionId) return;
   const sub = await stripe.subscriptions.retrieve(subscriptionId);

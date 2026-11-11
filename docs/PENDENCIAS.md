@@ -72,7 +72,7 @@ PEND-092 → 017 → 098 → 093 → 094 → 095 → 039 → 042 → 097 → 099
 substitui a prioridade atual de segurança nem a análise de produção.
 
 <!-- PENDENCIAS-INDEX:START -->
-Índice completo gerado de 183 fichas neste arquivo. A ficha é a fonte do estado; não edite as linhas abaixo à mão. Para atualizar: `node scripts/pendencias-index.mjs --write`.
+Índice completo gerado de 185 fichas neste arquivo. A ficha é a fonte do estado; não edite as linhas abaixo à mão. Para atualizar: `node scripts/pendencias-index.mjs --write`.
 
 | ID | Pendência | Prioridade | Estado da ficha |
 |---|---|---|---|
@@ -259,6 +259,8 @@ substitui a prioridade atual de segurança nem a análise de produção.
 | [PEND-230](#pend-230) | Confirmações sociais reabrem orientação e alongam a conversa | P1 | PUBLICADA · PROVA NATURAL PENDENTE |
 | [PEND-231](#pend-231) | Condução adaptativa no WhatsApp: descobrir possibilidades, perguntar o mínimo e aprender com o retorno | P1 | PENDENTE — missão de desenho; nenhuma oferta nova ou cadência de avaliação implementada |
 | [PEND-244](#pend-244) | Cargos do Admin são apenas rótulos e não limitam o acesso | P1 | MEDIDA EM PRODUÇÃO · NÃO CORRIGIDA |
+| [PEND-245](#pend-245) | Black Friday permite checkout duplicado, aviso incoerente e ativação por fatura de R$ 0 | P0 | CORRIGIDA LOCALMENTE · PUBLICAÇÃO E PROVA EM PRODUÇÃO PENDENTES |
+| [PEND-246](#pend-246) | Decidir se R$ 39,90 vira preço oficial para novas adesões depois da Black Friday | P1 | DECISÃO DE PRODUTO PENDENTE · ASSINATURAS JÁ CONTRATADAS PRESERVADAS |
 <!-- PENDENCIAS-INDEX:END -->
 
 ---
@@ -11224,7 +11226,70 @@ STATUS: **MEDIDA EM PRODUÇÃO · NÃO CORRIGIDA** · Aberta em: 2026-11-01
 
 ---
 
-**Proximo ID livre: PEND-245. *(PEND-232 a PEND-243 estão reivindicadas em outras frentes; PEND-244 registra a ausência de autorização por cargo no Admin; PEND-225, PEND-226 e PEND-228 estão reivindicadas no worktree `ayla-conversa-valor`; PEND-227 foi incorporada nesta frente; PEND-209 a PEND-211 já estão reivindicadas por outra frente; 024 e 025 reservadas por frentes ainda nao publicadas; PEND-202 reivindicada em commit e ainda sem ficha; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
+### PEND-245
+**Black Friday permite checkout duplicado, aviso incoerente e ativação por fatura de R$ 0**
+Bloco: **F · Assinatura, cobrança e fiscal** · Prioridade: **P0**
+STATUS: **CORRIGIDA LOCALMENTE · PUBLICAÇÃO E PROVA EM PRODUÇÃO PENDENTES** · Aberta em: 2026-11-11
+
+**Baseline de produção (somente leitura, 2026-11-11 14:08 BRT):** 15
+participantes; nenhuma assinatura não terminal da campanha; nenhuma família ou
+Customer com duplicidade; nenhum D-1/D-0 enviado depois da assinatura; nenhum
+aviso fiscal, inclusive de valor zero. Não havia duplicata para cancelar no
+momento da medição.
+
+**Causa raiz:** a tela tratava `trialing` como elegível; os dois chamadores da
+porta fiscal não entregavam o estado atual da assinatura; o RPC liberava nova
+sessão após 30 minutos mesmo com checkout concluído; D-1/D-0 filtravam apenas o
+status bruto do trial; e o webhook tratava `invoice.payment_succeeded` de valor
+zero como pagamento real.
+
+**Correção preparada:** defesa obrigatória na porta única e nos dois chamadores;
+bloqueio no RPC por checkout concluído ou assinatura existente; exclusão dos
+assinantes no cron e conferência final da Ayla antes do envio; fatura com
+`amount_paid <= 0` registrada como ignorada, sem ativar acesso nem criar aviso
+fiscal. A assinatura promocional continua apontando para o preço recorrente de
+R$ 39,90, sem data de cancelamento ou troca automática depois da campanha.
+
+**Provas locais (2026-11-11):** 150/150 testes dirigidos; `tsc --noEmit`
+aprovado; build Next.js 16.2.5 com webpack aprovado. Na suíte integral, 226
+arquivos passaram e 3 foram ignorados; a única falha foi a preexistente
+PEND-214 em `provider.test.ts` (`fetch failed` no lugar do erro `anthropic`),
+sem relação com cobrança, Stripe, trial ou Ayla.
+
+**Prova na Stripe em modo de teste (2026-11-11):** assinatura mensal criada
+com cartão oficial de teste, 15 dias de trial, primeira fatura de R$ 0 marcada
+como paga e próxima fatura de R$ 39,90 em 26/11/2026. A duração da assinatura
+aparece como vitalícia. A data de cancelamento automático exibida em 09/02/2027
+é a política de retenção de 90 dias dos dados de teste da própria Stripe, não
+um `cancel_at` do plano nem uma regra que alcance assinaturas reais. A prova da
+semântica Stripe complementa os testes automatizados da porta fiscal, Ayla e
+webhook; não usou família real, cartão real, WhatsApp ou e-mail real.
+
+**Critério de conclusão:** migração e aplicação publicadas; CI e build verdes
+(ou ressalva externa identificada); prova agregada em produção sem cobrança,
+WhatsApp ou e-mail real; contagens de duplicidade e avisos indevidos iguais a
+zero; logs distinguindo fatura sem valor.
+
+---
+
+### PEND-246
+**Decidir se R$ 39,90 vira preço oficial para novas adesões depois da Black Friday**
+Bloco: **F · Assinatura, cobrança e fiscal** · Prioridade: **P1**
+STATUS: **DECISÃO DE PRODUTO PENDENTE · ASSINATURAS JÁ CONTRATADAS PRESERVADAS** · Aberta em: 2026-11-11
+
+Quem contratou a campanha mantém o Price recorrente de R$ 39,90 na Stripe; o
+fim da janela promocional não altera nem agenda o cancelamento dessas
+assinaturas. Oferecer R$ 39,90 também a novas famílias depois da Black Friday é
+uma decisão diferente e não será ativada implicitamente.
+
+**Critério de conclusão:** decisão explícita de produto e, se aprovada, uma
+fonte canônica de preço atualizada em conjunto na Stripe, checkout, tela,
+comunicação da Ayla e testes de cobrança; publicação com prova em modo de teste
+antes de produção.
+
+---
+
+**Proximo ID livre: PEND-247. *(PEND-232 a PEND-243 estão reivindicadas em outras frentes; PEND-244 registra a ausência de autorização por cargo no Admin; PEND-245 e PEND-246 pertencem à remediação Black Friday; PEND-225, PEND-226 e PEND-228 estão reivindicadas no worktree `ayla-conversa-valor`; PEND-227 foi incorporada nesta frente; PEND-209 a PEND-211 já estão reivindicadas por outra frente; 024 e 025 reservadas por frentes ainda nao publicadas; PEND-202 reivindicada em commit e ainda sem ficha; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.

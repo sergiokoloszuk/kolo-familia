@@ -5,6 +5,10 @@ import { dadosFiscaisSchema, enderecoStripe, type DadosFiscaisInput } from "./da
 import { normalizarCpf } from "./cpf";
 import { BLACK_FRIDAY_2026, instanteValido } from "@/lib/billing/black-friday-2026";
 import type { OfertaDaFamilia } from "@/lib/billing/oferta-familia";
+import {
+  jaPossuiAssinaturaOuCheckoutConcluido,
+  type EstadoCheckoutDaFamilia,
+} from "./elegibilidade-checkout";
 
 type CriarCheckoutFiscalArgs = {
   familyId: string;
@@ -13,6 +17,7 @@ type CriarCheckoutFiscalArgs = {
   dados: DadosFiscaisInput;
   ofertaBlackFriday?: OfertaDaFamilia | null;
   registrarCheckoutBlackFriday?: (sessionId: string) => Promise<boolean>;
+  estadoAtual: EstadoCheckoutDaFamilia;
 };
 
 /**
@@ -26,8 +31,16 @@ export async function criarCheckoutFiscal({
   dados: entrada,
   ofertaBlackFriday = null,
   registrarCheckoutBlackFriday,
+  estadoAtual,
 }: CriarCheckoutFiscalArgs): Promise<{ url: string; plano: "mensal" | "anual" }> {
   const dados = dadosFiscaisSchema.parse(entrada);
+
+  // Defesa dentro da única porta de Checkout. A Server Action também lê estes
+  // fatos do banco, mas a função não pode depender de o chamador lembrar da
+  // proteção — nem tocar em Customer/CPF antes de recusar.
+  if (jaPossuiAssinaturaOuCheckoutConcluido(estadoAtual)) {
+    throw new Error("A conta já possui uma assinatura ou checkout concluído.");
+  }
 
   // Confere o preço antes de gravar qualquer dado fiscal no processador.
   if (ofertaBlackFriday && dados.plano !== "mensal") {

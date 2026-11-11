@@ -17,6 +17,7 @@ import {
 } from "@/lib/billing/oferta-familia";
 import { BLACK_FRIDAY_2026 } from "@/lib/billing/black-friday-2026";
 import { ativarMeuTrialBlackFriday } from "./actions";
+import { jaPossuiAssinaturaOuCheckoutConcluido } from "@/lib/fiscal/elegibilidade-checkout";
 
 const STATUS_LABEL: Record<string, string> = {
   trialing: "Em trial",
@@ -196,6 +197,10 @@ export default async function AssinaturaPage(props: PageProps<"/assinatura">) {
               precoAnual={ofertaBlackFriday ? null : anualLabel}
               mostrarAnual={!ofertaBlackFriday}
               emailFiscalInicial={user.email ?? ""}
+              temAssinatura={jaPossuiAssinaturaOuCheckoutConcluido({
+                status: statusKey,
+                stripeSubscriptionId: sub?.stripe_subscription_id,
+              })}
             />
           )}
         </CardContent>
