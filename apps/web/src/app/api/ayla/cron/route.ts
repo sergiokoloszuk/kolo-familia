@@ -713,12 +713,14 @@ async function runComercial(supabase: AdminClient) {
       .from("subscription_accesses")
       .select("family_account_id, trial_ends_at")
       .eq("status", "trialing")
+      .is("stripe_subscription_id", null)
       .gte("trial_ends_at", amanha.toISOString())
       .lt("trial_ends_at", amanhaFim.toISOString()),
     supabase
       .from("subscription_accesses")
       .select("family_account_id, trial_ends_at")
       .eq("status", "trialing")
+      .is("stripe_subscription_id", null)
       .gte("trial_ends_at", hoje.toISOString())
       .lt("trial_ends_at", hojeFim.toISOString()),
   ]);

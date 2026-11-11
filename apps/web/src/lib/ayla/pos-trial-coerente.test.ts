@@ -265,6 +265,29 @@ describe("o fechamento do teste diz a verdade sobre o prazo", () => {
     await sendTrial(mundo.db.cliente(), mundo.familyId, 0, new Date(), null);
     expect(recebido(mundo)).toMatch(DIZ_ULTIMO_DIA);
   }, 30000);
+
+  it.each([1, 0] as const)(
+    "MORDE: D-%s não avisa quem já assinou durante o trial",
+    async (diasRestantes) => {
+      const mundo = familiaComFim(diasRestantes === 1 ? 24 : 6, `+55419999971${diasRestantes}`);
+      const assinatura = subDe(mundo);
+      assinatura.status = "trialing";
+      assinatura.stripe_subscription_id = "sub_trial_promocional";
+      mundoRef.atual = mundo;
+
+      const resultado = await sendTrial(
+        mundo.db.cliente(),
+        mundo.familyId,
+        diasRestantes,
+        new Date(),
+        String(assinatura.trial_ends_at),
+      );
+
+      expect(resultado).toEqual({ enviada: false, motivo: "assinatura já existente" });
+      expect(recebido(mundo)).toBe("");
+    },
+    30000,
+  );
 });
 
 // ============================================================
