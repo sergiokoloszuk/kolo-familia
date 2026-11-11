@@ -11256,6 +11256,15 @@ arquivos passaram e 3 foram ignorados; a única falha foi a preexistente
 PEND-214 em `provider.test.ts` (`fetch failed` no lugar do erro `anthropic`),
 sem relação com cobrança, Stripe, trial ou Ayla.
 
+**Prova na Stripe em modo de teste (2026-11-11):** assinatura mensal criada
+com cartão oficial de teste, 15 dias de trial, primeira fatura de R$ 0 marcada
+como paga e próxima fatura de R$ 39,90 em 26/11/2026. A duração da assinatura
+aparece como vitalícia. A data de cancelamento automático exibida em 09/02/2027
+é a política de retenção de 90 dias dos dados de teste da própria Stripe, não
+um `cancel_at` do plano nem uma regra que alcance assinaturas reais. A prova da
+semântica Stripe complementa os testes automatizados da porta fiscal, Ayla e
+webhook; não usou família real, cartão real, WhatsApp ou e-mail real.
+
 **Critério de conclusão:** migração e aplicação publicadas; CI e build verdes
 (ou ressalva externa identificada); prova agregada em produção sem cobrança,
 WhatsApp ou e-mail real; contagens de duplicidade e avisos indevidos iguais a
