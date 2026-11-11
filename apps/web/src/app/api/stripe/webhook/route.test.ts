@@ -265,11 +265,22 @@ function eventoAssinatura(status: string, opcoes: {
   };
 }
 
-function eventoFatura(tipo: "invoice.payment_succeeded" | "invoice.payment_failed") {
+function eventoFatura(
+  tipo: "invoice.payment_succeeded" | "invoice.payment_failed",
+  amountPaid = 3990,
+) {
   return {
     id: idEvento(),
     type: tipo,
-    data: { object: { id: "in_teste", customer: CLIENTE, subscription: ASSINATURA, metadata: {} } },
+    data: {
+      object: {
+        id: "in_teste",
+        customer: CLIENTE,
+        subscription: ASSINATURA,
+        amount_paid: amountPaid,
+        metadata: {},
+      },
+    },
   };
 }
 
@@ -694,5 +705,22 @@ describe("alerta fiscal", () => {
 
     expect(banco.tabelas.fiscal_alertas).toHaveLength(1);
     expect(banco.tabelas.fiscal_alertas[0]?.stripe_customer_id).toBe(CLIENTE);
+  });
+
+  it("ignora Invoice de R$ 0 do início do trial sem ativar nem criar aviso", async () => {
+    banco = criarBanco([linhaTrial({ vencido: false })]);
+
+    const resposta = await entregar(eventoFatura("invoice.payment_succeeded", 0));
+
+    expect(resposta.status).toBe(200);
+    expect(banco.linha(FAMILIA)).toMatchObject({
+      status: "trialing",
+      stripe_subscription_id: null,
+    });
+    expect(banco.tabelas.fiscal_alertas).toHaveLength(0);
+    expect(logs).toContainEqual(expect.objectContaining({
+      kind: "stripe_invoice_sem_valor_ignorada",
+      severity: "info",
+    }));
   });
 });
