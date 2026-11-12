@@ -202,9 +202,10 @@ describe("SABOTAGEM — os testes mordem?", () => {
     const t = "Faça **isso hoje.\n\nEla vai reclamar.\n\nE amanhã **aquilo**.";
 
     expect(ingenuo(t)).toBe("Faça *isso hoje.\n\nEla vai reclamar.\n\nE amanhã *aquilo**.");
-    // Presa à linha, a função converte só o negrito bem formado e deixa o
-    // órfão cru — que é o estado de hoje, não uma regressão nova.
-    expect(paraWhatsApp(t)).toBe("Faça **isso hoje.\n\nEla vai reclamar.\n\nE amanhã *aquilo*.");
+    // Presa à linha, a função converte só o negrito bem formado e remove o
+    // delimitador órfão sem apagar uma palavra nem unir parágrafos.
+    expect(paraWhatsApp(t)).toBe("Faça isso hoje.\n\nEla vai reclamar.\n\nE amanhã *aquilo*.");
+    expect(sintaxeCruaWhatsApp(paraWhatsApp(t))).toEqual([]);
   });
 
   it("S3 · sem tratar o bullet `*`, a lista vira uma ênfase atravessada", () => {
@@ -216,7 +217,7 @@ describe("SABOTAGEM — os testes mordem?", () => {
   it("S4 · sem as bordas (?!\\s), `** x **` produziria asterisco solto", () => {
     const semBorda = (t: string) => t.replace(/\*\*([^*\n]+?)\*\*/g, "*$1*");
     expect(semBorda("Isto ** não é negrito ** ok")).toBe("Isto * não é negrito * ok");
-    expect(paraWhatsApp("Isto ** não é negrito ** ok")).toBe("Isto ** não é negrito ** ok");
+    expect(paraWhatsApp("Isto ** não é negrito ** ok")).toBe("Isto não é negrito ok");
   });
 
   it("S5 · se o detector do WhatsApp acusasse `_x_`, acusaria formatação válida", () => {

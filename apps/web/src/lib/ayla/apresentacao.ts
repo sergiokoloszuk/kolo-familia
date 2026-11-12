@@ -162,7 +162,11 @@ function limparInline(l: string): string {
     .replace(RE_NEGRITO_TRIPLO, "*$1*")
     .replace(RE_NEGRITO, "*$1*")
     .replace(RE_NEGRITO_SUBLINHADO, "*$1*")
-    .replace(RE_CODIGO, "$1");
+    .replace(RE_CODIGO, "$1")
+    // Um par de ** atravessando linhas nunca vira negrito no WhatsApp.
+    // Preserve as palavras e descarte apenas os delimitadores órfãos.
+    .replace(/\*\*/g, "")
+    .replace(/[ \t]{2,}/g, " ");
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

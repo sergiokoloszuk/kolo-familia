@@ -265,6 +265,6 @@ describe("o estado chega mesmo ao prompt do GPT", () => {
     expect(EXP).toMatch(/blocoDeEstado\(estado\)/);
   });
   it("o estado entra no bloco, junto da continuidade", () => {
-    expect(EXP).toMatch(/\[\.\.\.partes, continuidade, blocoDeEstado\(estado\)\]/);
+    expect(EXP).toMatch(/\[\.\.\.partes, continuidade, respostaInicial, blocoDeEstado\(estado\)\]/);
   });
 });

@@ -543,6 +543,8 @@ export function rotuloDoSujeito(idade: number | null): string {
 
 export function montarContextoBase(params: {
   nomeResponsavel: string | null;
+  /** Idade explicitamente informada pela família quando o cadastro diverge. */
+  idadeInformada?: number | null;
   membro: {
     nome: string | null;
     data_nascimento: string | null;
@@ -569,8 +571,11 @@ export function montarContextoBase(params: {
 
   if (!membro) return { bloco: "", lacunas };
 
-  const idade = idadeAnos(membro.data_nascimento);
+  const idade = params.idadeInformada ?? idadeAnos(membro.data_nascimento);
   linhas.push(`${rotuloDoSujeito(idade)}: ${membro.nome ?? "(sem nome)"}${idade != null ? `, ${idade} anos` : ""}`);
+  if (params.idadeInformada != null && params.idadeInformada !== idadeAnos(membro.data_nascimento)) {
+    linhas.push("Idade informada explicitamente pela família; diverge da data de nascimento cadastrada. Não afirme que o cadastro foi corrigido.");
+  }
   if (idade == null) lacunas.push("data de nascimento");
 
   // ── O GÊNERO REGISTRADO CHEGA AO MODELO (17/08/2026) ─────────────────────
