@@ -22,12 +22,18 @@ export async function bootstrapAdmin() {
 
   const admin = createServiceRoleClient();
 
-  const { data: existing } = await admin
+  const { data: existing, error: consultaError } = await admin
     .from("controle_acessos")
     .select("user_id")
     .eq("ativo", true)
     .limit(1);
 
+  // ⚠️ ERRO NÃO É "NÃO EXISTE ADMIN" (12/11/2026). Sem esta checagem, uma falha
+  // transitória da consulta devolvia `existing = null` e qualquer usuário
+  // logado virava `admin_geral`.
+  if (consultaError) {
+    throw new Error(`Não foi possível verificar os admins: ${consultaError.message}`);
+  }
   if ((existing?.length ?? 0) > 0) {
     throw new Error("Já existe um admin ativo. Bootstrap bloqueado.");
   }

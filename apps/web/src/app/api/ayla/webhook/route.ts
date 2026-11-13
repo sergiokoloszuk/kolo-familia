@@ -3,12 +3,19 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 import { enviarTexto, parseZapiWebhook } from "@/lib/ayla/whatsappSender";
 import { processInbound, idiomaPorTelefone } from "@/lib/ayla/orchestrator";
 import { transcreverAudio } from "@/lib/ayla/transcribe";
+import { segredoConfere } from "@/lib/auth/segredo";
 
 // A resposta da Ayla passa por IA (Sonnet) e, num pedido de plano, ainda
 // dispara a geração completa do plano (chamada única de até 12k tokens, ~40–90s)
 // dentro do `after()`. Com 60s a função era morta no meio da geração e o plano
 // nunca chegava. 300s (máx. do plano Pro) dá fôlego pra terminar.
 export const maxDuration = 300;
+
+/** Só os 4 últimos dígitos: suficiente para correlacionar, inútil para contatar. */
+function mascararTelefone(phone: string | null | undefined): string {
+  const d = (phone ?? "").replace(/\D/g, "");
+  return d ? `***${d.slice(-4)}` : "";
+}
 
 /**
  * Webhook da Ayla — recebe mensagens do Z-API (direto ou via n8n).
@@ -23,10 +30,13 @@ export const maxDuration = 300;
  */
 export async function POST(request: NextRequest) {
   // Validação de origem
+  // ⚠️ Comparação em tempo constante (12/11/2026). O comportamento sem a
+  // variável continua o mesmo de antes — virar fail-closed exige confirmar o
+  // header no painel da Z-API/n8n (ver §16 do protocolo: criar a exigência
+  // sem o remetente mandar o header emudece o WhatsApp inteiro).
   const expectedSecret = process.env.AYLA_WEBHOOK_SECRET;
   if (expectedSecret) {
-    const got = request.headers.get("x-ayla-secret");
-    if (got !== expectedSecret) {
+    if (!segredoConfere(request.headers.get("x-ayla-secret"), expectedSecret)) {
       return NextResponse.json({ error: "unauthorized" }, { status: 401 });
     }
   }
@@ -37,13 +47,20 @@ export async function POST(request: NextRequest) {
   } catch {
     return NextResponse.json({ error: "invalid json" }, { status: 400 });
   }
-  console.log("[ayla webhook] raw payload:", JSON.stringify(payload).slice(0, 600));
+  // ⚠️ SEM CONTEÚDO NO LOG (12/11/2026). Aqui saíam os 600 primeiros caracteres
+  // do payload — texto da mãe e telefone — para os logs da Vercel, fora do
+  // banco e fora da política de retenção. Ficam só a forma do protocolo e o
+  // tamanho.
+  console.log("[ayla webhook] payload recebido:", {
+    campos: Object.keys((payload as Record<string, unknown>) ?? {}),
+    bytes: JSON.stringify(payload ?? null).length,
+  });
 
   /**
    * ⚠️ AS CHAVES DO PAYLOAD, QUANDO O REMETENTE VEM COMO LID — 14/09/2026.
    *
-   * O `console.log` acima trunca em 600 caracteres e morre com a retenção da
-   * Vercel. Para consertar o LID de verdade é preciso saber SE a Z-API manda o
+   * O `console.log` do payload (hoje só nomes de campos e tamanho) morre com a
+   * retenção da Vercel. Para consertar o LID de verdade é preciso saber SE a Z-API manda o
    * telefone real em algum outro campo — e essa pergunta não tinha como ser
    * respondida sem olhar um payload ao vivo no minuto certo.
    *
@@ -66,7 +83,10 @@ export async function POST(request: NextRequest) {
     console.log("[ayla webhook] parser retornou null — skipped");
     return NextResponse.json({ skipped: true });
   }
-  console.log("[ayla webhook] parsed:", { phone: inbound.phoneE164, texto: inbound.texto });
+  console.log("[ayla webhook] parsed:", {
+    phone: mascararTelefone(inbound.phoneE164),
+    textoChars: inbound.texto?.length ?? 0,
+  });
 
   const supabase = createServiceRoleClient();
 

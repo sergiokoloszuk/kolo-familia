@@ -32,6 +32,7 @@ import { assinaturaLiberada } from "@/lib/auth/assinatura";
 import { familiasDeStaff } from "@/lib/auth/acesso";
 import { createHash, randomBytes } from "node:crypto";
 import { enviarLinksFiscais } from "@/lib/fiscal/notificacao";
+import { cronAutorizado } from "@/lib/auth/segredo";
 
 /**
  * Cron da Ayla — chamado por scheduler externo (n8n, Vercel Cron, etc.).
@@ -58,12 +59,15 @@ export async function POST(request: NextRequest) {
 }
 
 async function handle(request: NextRequest) {
-  const expectedSecret = process.env.CRON_SECRET;
-  if (expectedSecret) {
-    const auth = request.headers.get("authorization");
-    if (auth !== `Bearer ${expectedSecret}`) {
-      return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-    }
+  // FAIL-CLOSED (12/11/2026): sem CRON_SECRET no ambiente, recusa — ver
+  // lib/auth/segredo.ts.
+  const autorizacao = cronAutorizado(request.headers.get("authorization"));
+  if (autorizacao === "sem_segredo") {
+    console.error("[ayla:cron] CRON_SECRET ausente no ambiente — execução recusada");
+    return NextResponse.json({ error: "CRON_SECRET não configurado" }, { status: 503 });
+  }
+  if (autorizacao === "negado") {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
   const url = new URL(request.url);

@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/server";
+import { cronAutorizado } from "@/lib/auth/segredo";
 
 /**
  * Cron diário (vercel.json) que puxa snapshot do gasto reportado pelo
@@ -24,12 +25,14 @@ type ResultadoProvider =
   | { ok: false; pulado: true; motivo: string };
 
 export async function GET(request: NextRequest) {
-  const cronSecret = process.env.CRON_SECRET;
-  if (cronSecret) {
-    const auth = request.headers.get("authorization");
-    if (auth !== `Bearer ${cronSecret}`) {
-      return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-    }
+  // FAIL-CLOSED (12/11/2026): sem CRON_SECRET no ambiente, recusa — ver
+  // lib/auth/segredo.ts.
+  const autorizacao = cronAutorizado(request.headers.get("authorization"));
+  if (autorizacao === "sem_segredo") {
+    return NextResponse.json({ error: "CRON_SECRET não configurado" }, { status: 503 });
+  }
+  if (autorizacao === "negado") {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
   const supabase = createServiceRoleClient();

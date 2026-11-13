@@ -37,6 +37,7 @@ import { logServerError, logEvent } from "@/lib/log";
 import { fronteiraAtravessada } from "@/lib/conducao/fronteiras";
 import { comRetentativaCurta } from "@/lib/conducao/retentativa";
 import { pronomesPara, type Genero, type CuidadorDescrito } from "./pronomes";
+import { mensagemPedeSeguranca, textoSegurancaSemAcesso } from "./estado-seguranca";
 // NÚCLEO DE CONDUÇÃO — fonte única compartilhada com as Estratégias (web):
 // identidade + norte, princípios, regra de sequência, exemplos, piso e tom.
 // Ver lib/conducao/diretrizes.ts. A Ayla adiciona só o que é do WhatsApp
@@ -872,7 +873,14 @@ Se for uma TAREFA da escola/terapia:
  * atrapalhe, em qualquer contexto. Sem vocativo quebrado ("Tô com você, oi") e
  * sem comemorar nada, porque aqui a Ayla não leu a mensagem de verdade.
  */
-function fallbackSimples(p: RespostaParams): string {
+export function fallbackSimples(p: RespostaParams): string {
+  // ⚠️ CRISE NÃO RECEBE "me conta mais" (12/11/2026). Este texto sai quando o
+  // modelo falhou; se a mensagem pedia ajuda de segurança, ou o estado de
+  // segurança está aberto, a resposta fixa é o encaminhamento — o mesmo texto
+  // do piso de quem está sem acesso. Sem comercial, sem pergunta.
+  if (p.notaDeSeguranca || mensagemPedeSeguranca(p.mensagem)) {
+    return textoSegurancaSemAcesso(p.nomeMae);
+  }
   const nome = p.nomeMembro ?? pronomesPara(p.generoMembro).sujeito;
   const voc = p.nomeMae?.trim() ? `, ${p.nomeMae.trim()}` : "";
   if (p.precisaEscolherMembro) {

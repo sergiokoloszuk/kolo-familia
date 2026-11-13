@@ -1,9 +1,27 @@
 import { createHash } from "node:crypto";
 import { notFound } from "next/navigation";
+import { headers } from "next/headers";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { getStripeClient } from "@/lib/stripe/client";
 
 export const dynamic = "force-dynamic";
+
+// Página com CPF e endereço: fora de buscador, e o endereço (que carrega o
+// token) não vaza como Referer para nenhum link externo.
+export const metadata = {
+  title: "Nota fiscal — Kolo Família",
+  robots: "noindex, nofollow",
+  referrer: "no-referrer",
+};
+
+/**
+ * Robôs de prévia de link (o próprio WhatsApp, ao montar o cartão da mensagem)
+ * abrem a URL antes da pessoa. Como o link é de uso único, a prévia CONSUMIA o
+ * token e a Rosângela recebia "não encontrado" (12/11/2026). Para esses
+ * agentes a página responde 404 sem tocar no banco.
+ */
+const AGENTE_DE_PREVIA =
+  /WhatsApp|facebookexternalhit|Facebot|TelegramBot|Slackbot|Discordbot|Twitterbot|LinkedInBot|SkypeUriPreview|Googlebot|bingbot/i;
 
 /**
  * Link fiscal administrativo de uso único. Só o hash do token fica no banco;
@@ -12,6 +30,7 @@ export const dynamic = "force-dynamic";
 export default async function NotaFiscalPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   if (!/^[A-Za-z0-9_-]{40,60}$/.test(token)) notFound();
+  if (AGENTE_DE_PREVIA.test((await headers()).get("user-agent") ?? "")) notFound();
 
   const tokenHash = createHash("sha256").update(token).digest("hex");
   const agora = new Date().toISOString();
