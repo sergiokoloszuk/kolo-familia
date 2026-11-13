@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Eyebrow } from "@/components/brand/eyebrow";
+import { MudarEscolhaDeCookies } from "@/components/privacy/mudar-escolha-cookies";
 
 export const metadata: Metadata = {
   title: "Política de Cookies · Kolo Família",
@@ -55,9 +56,11 @@ export default function CookiesPage() {
           <p>
             O aviso oferece duas escolhas: aceitar opcionais ou recusá-los. As
             duas mantêm o acesso ao serviço. A escolha fica salva por até 12
-            meses; você pode apagá-la nas configurações do navegador para
-            escolher novamente. Bloquear cookies essenciais impede o login.
+            meses. Você pode mudar a escolha a qualquer momento pelo botão
+            abaixo, ou apagá-la nas configurações do navegador. Bloquear
+            cookies essenciais impede o login.
           </p>
+          <MudarEscolhaDeCookies />
         </section>
 
         <section>

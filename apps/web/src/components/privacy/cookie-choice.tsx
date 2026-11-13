@@ -5,19 +5,19 @@ import { useSyncExternalStore } from "react";
 import Link from "next/link";
 import { UtmCapture } from "@/components/tracking/utm-capture";
 
-const COOKIE = "kolo_cookie_choice";
+export const COOKIE = "kolo_cookie_choice";
 const GTM_ID = "GTM-PR4NGFW2";
 type Escolha = "aceitos" | "recusados" | null;
-const EVENTO_ESCOLHA = "kolo-cookie-choice";
+export const EVENTO_ESCOLHA = "kolo-cookie-choice";
 
-function lerEscolha(): Escolha {
+export function lerEscolha(): Escolha {
   if (typeof document === "undefined") return null;
   const valor = document.cookie.split("; ").find((item) => item.startsWith(`${COOKIE}=`))
     ?.split("=")[1];
   return valor === "aceitos" || valor === "recusados" ? valor : null;
 }
 
-function observarEscolha(onChange: () => void) {
+export function observarEscolha(onChange: () => void) {
   window.addEventListener("storage", onChange);
   window.addEventListener(EVENTO_ESCOLHA, onChange);
   return () => {
