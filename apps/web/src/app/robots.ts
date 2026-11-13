@@ -26,6 +26,8 @@ export default function robots(): MetadataRoute.Robots {
           "/configuracoes",
           "/assinatura",
           "/admin",
+          "/dashboards",
+          "/fiscal",
           "/onboarding",
           "/api",
           "/auth",

@@ -5,6 +5,7 @@ import { lerModo } from "@/lib/onboarding/modo";
 import { OnboardingExperiencia } from "./preview";
 import { OnboardingEditor } from "./editor";
 import { TestarCadastroNovo } from "./testar-cadastro";
+import { requireDashboard } from "@/lib/auth/require-dashboard";
 
 /**
  * Dashboards → Onboarding. A experiência inicial do lead (cadastro conversacional
@@ -16,6 +17,9 @@ import { TestarCadastroNovo } from "./testar-cadastro";
 export const dynamic = "force-dynamic";
 
 export default async function DashboardsOnboardingPage() {
+  // Guarda AQUI, antes de qualquer consulta: o layout roda em paralelo e não
+  // impede esta página de buscar dados (ver lib/auth/require-dashboard.ts).
+  await requireDashboard();
   const admin = createServiceRoleClient();
   const [copy, isAdmin, modo] = await Promise.all([
     carregarCopy(admin),

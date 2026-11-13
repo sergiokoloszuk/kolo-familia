@@ -5,10 +5,14 @@ import { carregarCadencia } from "@/lib/crm/ayla-cadencia";
 import { CrmNav } from "../crm-nav";
 import { ConfigForm } from "./config-form";
 import { CadenciaForm } from "./cadencia-form";
+import { requireDashboard } from "@/lib/auth/require-dashboard";
 
 export const dynamic = "force-dynamic";
 
 export default async function CrmConfigPage() {
+  // Guarda AQUI, antes de qualquer consulta: o layout roda em paralelo e não
+  // impede esta página de buscar dados (ver lib/auth/require-dashboard.ts).
+  await requireDashboard();
   const admin = createServiceRoleClient();
   const [scripts, cadencia, isAdmin] = await Promise.all([
     carregarFaseScripts(admin),

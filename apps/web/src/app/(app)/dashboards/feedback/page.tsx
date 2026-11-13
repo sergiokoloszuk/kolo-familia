@@ -4,6 +4,7 @@ import { ehAdmin } from "@/lib/auth/require-admin";
 import { carregarFeedbacks, type FeedbackItem } from "@/lib/analytics/feedback";
 import { Bloco, Vazio } from "@/components/dashboard/blocos";
 import { FeedbackAcoes } from "./acoes";
+import { requireDashboard } from "@/lib/auth/require-dashboard";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +26,9 @@ function dataHora(iso: string): string {
 }
 
 export default async function FeedbackPage() {
+  // Guarda AQUI, antes de qualquer consulta: o layout roda em paralelo e não
+  // impede esta página de buscar dados (ver lib/auth/require-dashboard.ts).
+  await requireDashboard();
   const admin = createServiceRoleClient();
   const [feedbacks, isAdmin] = await Promise.all([carregarFeedbacks(admin), ehAdmin()]);
 

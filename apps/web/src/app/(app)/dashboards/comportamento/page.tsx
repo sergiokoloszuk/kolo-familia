@@ -4,6 +4,7 @@ import { carregarComportamento, type FamRow } from "@/lib/analytics/dashboard";
 import { Bloco, BarList, Stat, TabelaFamilias, Vazio } from "@/components/dashboard/blocos";
 import { ehAdmin } from "@/lib/auth/require-admin";
 import { AnalisePlanos } from "./analise-planos";
+import { requireDashboard } from "@/lib/auth/require-dashboard";
 
 /**
  * Dashboard 2 — Comportamento & Uso. Responde: "o que as famílias mais fazem?"
@@ -13,6 +14,9 @@ import { AnalisePlanos } from "./analise-planos";
 export const dynamic = "force-dynamic";
 
 export default async function ComportamentoUsoPage() {
+  // Guarda AQUI, antes de qualquer consulta: o layout roda em paralelo e não
+  // impede esta página de buscar dados (ver lib/auth/require-dashboard.ts).
+  await requireDashboard();
   const [d, isAdmin] = await Promise.all([
     carregarComportamento(createServiceRoleClient()),
     ehAdmin(),

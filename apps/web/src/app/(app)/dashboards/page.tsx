@@ -7,6 +7,7 @@ import { carregarFichaFamilia } from "@/lib/analytics/ficha";
 import { carregarComportamentoDiario } from "@/lib/crm/comportamento-diario";
 import { Bloco, BarList, Stat, Vazio } from "@/components/dashboard/blocos";
 import { ComportamentoDiarioTabela } from "@/components/dashboard/comportamento-diario-tabela";
+import { requireDashboard } from "@/lib/auth/require-dashboard";
 
 /**
  * Dashboard 1 — Aquisição & Jornada. Números de topo + a jornada de trial (fase
@@ -47,6 +48,9 @@ export default async function AquisicaoJornadaPage({
 }: {
   searchParams: Promise<{ seg?: string; fam?: string }>;
 }) {
+  // Guarda AQUI, antes de qualquer consulta: o layout roda em paralelo e não
+  // impede esta página de buscar dados (ver lib/auth/require-dashboard.ts).
+  await requireDashboard();
   const admin = createServiceRoleClient();
   const [d, j] = await Promise.all([carregarComportamento(admin), carregarJornadaTrial(admin)]);
   const assinantes = d.statusCount.active ?? 0;
