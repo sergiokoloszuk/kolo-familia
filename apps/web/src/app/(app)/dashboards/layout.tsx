@@ -1,6 +1,4 @@
-import { redirect } from "next/navigation";
-import { loadFamilyContext } from "@/lib/auth/require-user";
-import { createServiceRoleClient } from "@/lib/supabase/server";
+import { requireDashboard } from "@/lib/auth/require-dashboard";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { DashboardTabs } from "./tabs";
 
@@ -17,24 +15,9 @@ export default async function DashboardsLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, supabase } = await loadFamilyContext();
-
-  // Co-acesso casa por user_id OU e-mail (o admin pode ter cadastrado o e-mail
-  // antes de a pessoa criar a conta). Service-role pra enxergar a linha com
-  // user_id nulo.
-  const admin = createServiceRoleClient();
-  const emailLower = user.email?.toLowerCase() ?? null;
-  const orCoAcesso = emailLower
-    ? `user_id.eq.${user.id},email.eq.${emailLower}`
-    : `user_id.eq.${user.id}`;
-
-  const [{ data: acesso }, { data: coAcesso }] = await Promise.all([
-    supabase.from("controle_acessos").select("ativo").eq("user_id", user.id).maybeSingle(),
-    admin.from("family_acessos").select("id").eq("ativo", true).or(orCoAcesso).limit(1),
-  ]);
-  const isAdmin = Boolean(acesso?.ativo);
-  const isAnalista = (coAcesso?.length ?? 0) > 0;
-  if (!isAdmin && !isAnalista) redirect("/painel");
+  // A mesma guarda roda em cada página — o layout sozinho não protege dados
+  // (ver lib/auth/require-dashboard.ts).
+  await requireDashboard();
 
   return (
     <div className="flex flex-col gap-8">

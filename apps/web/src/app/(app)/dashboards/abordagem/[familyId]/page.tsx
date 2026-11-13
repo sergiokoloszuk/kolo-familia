@@ -8,6 +8,7 @@ import { ComportamentoDiarioTabela } from "@/components/dashboard/comportamento-
 import { carregarFaseScripts, faseDoLead, FASE_LABEL } from "@/lib/crm/fase-scripts";
 import { Copiloto } from "./copiloto";
 import { EstadoAbordagem } from "./estado";
+import { requireDashboard } from "@/lib/auth/require-dashboard";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +17,9 @@ export default async function AbordagemPage({
 }: {
   params: Promise<{ familyId: string }>;
 }) {
+  // Guarda AQUI, antes de qualquer consulta: o layout roda em paralelo e não
+  // impede esta página de buscar dados (ver lib/auth/require-dashboard.ts).
+  await requireDashboard();
   const { familyId } = await params;
 
   if (!(await ehAdmin())) {

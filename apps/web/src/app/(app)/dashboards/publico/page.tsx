@@ -1,6 +1,7 @@
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { carregarPublico } from "@/lib/analytics/publico";
 import { Bloco, BarList, Stat, Vazio } from "@/components/dashboard/blocos";
+import { requireDashboard } from "@/lib/auth/require-dashboard";
 
 /**
  * Dashboard 3 — Público. "Quem estamos atingindo?" — perfil dos filhos, laudo,
@@ -10,6 +11,9 @@ import { Bloco, BarList, Stat, Vazio } from "@/components/dashboard/blocos";
 export const dynamic = "force-dynamic";
 
 export default async function PublicoPage() {
+  // Guarda AQUI, antes de qualquer consulta: o layout roda em paralelo e não
+  // impede esta página de buscar dados (ver lib/auth/require-dashboard.ts).
+  await requireDashboard();
   const d = await carregarPublico(createServiceRoleClient());
   const idadeMae = d.idadeMediaResponsavel;
 

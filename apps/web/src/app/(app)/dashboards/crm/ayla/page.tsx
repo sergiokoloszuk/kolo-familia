@@ -5,6 +5,7 @@ import { carregarRadarCrm, type RadarLead } from "@/lib/crm/radar";
 import { carregarFaseScripts, FASE_ORDER, FASE_LABEL } from "@/lib/crm/fase-scripts";
 import { CrmNav } from "../crm-nav";
 import { Bloco, Vazio } from "@/components/dashboard/blocos";
+import { requireDashboard } from "@/lib/auth/require-dashboard";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +27,9 @@ function Reagiu({ r }: { r: boolean | null }) {
 }
 
 export default async function CrmAylaPage() {
+  // Guarda AQUI, antes de qualquer consulta: o layout roda em paralelo e não
+  // impede esta página de buscar dados (ver lib/auth/require-dashboard.ts).
+  await requireDashboard();
   const admin = createServiceRoleClient();
   const [radar, scripts, isAdmin] = await Promise.all([
     carregarRadarCrm(admin),

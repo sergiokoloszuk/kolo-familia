@@ -1,4 +1,5 @@
 import { createServiceRoleClient } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/auth/require-admin";
 import {
   carregarJornadaAdmin,
   type FaseTrial,
@@ -8,7 +9,12 @@ import {
 /**
  * Jornada do Trial — ADMIN (com nomes + contato). Espelha a versão anônima da
  * agência, mas nominal: pra a Karina agir (mensagem custom no WhatsApp, já
- * preenchida por fase). Só admin (gate no layout /admin).
+ * preenchida por fase). Só admin.
+ *
+ * ⚠️ O LAYOUT /admin NÃO TEM GATE — 12/11/2026. Este comentário dizia que tinha,
+ * e a página respondia sem login: medido em produção, 282 telefones distintos
+ * no HTML. A guarda é `requireAdmin()` no corpo, antes da consulta, como nas
+ * demais páginas do Admin.
  */
 export const dynamic = "force-dynamic";
 
@@ -54,6 +60,7 @@ function waLink(whatsapp: string | null, msg: string | null): string | null {
 }
 
 export default async function AdminJornadaPage() {
+  await requireAdmin();
   const d = await carregarJornadaAdmin(createServiceRoleClient());
 
   return (
