@@ -28,7 +28,7 @@ describe("a resposta da clarificação retoma o pedido", () => {
     // `meta` já existia e vai pro ayla_send_log (auditoria). Estado que a
     // próxima mensagem precisa ler tem que estar em `ayla_messages.metadata`.
     expect(ORCH).toMatch(/metadataMensagem\?: Record<string, unknown>;/);
-    expect(ORCH).toMatch(/registroDeEnvio\(idsBolhas, params\.metadataMensagem \?\? null\)/);
+    expect(ORCH).toMatch(/registroDeEnvio\(idsBolhas, incompleta \? null : params\.metadataMensagem \?\? null\)/);
 
     // ⚠️ E TEM QUE CONVIVER COM O REGISTRO DE ENTREGA — PEND-182, 08/09/2026.
     //
@@ -42,9 +42,11 @@ describe("a resposta da clarificação retoma o pedido", () => {
     // que sobrevivia ao `insert`. Quem prova a sobrevivencia e
     // `metadata-persistencia-e2e.test.ts`, lendo a linha gravada. O que fica
     // aqui e a trava estrutural: ninguem volta a espalhar os dois lado a lado.
-    const i = ORCH.indexOf('from("ayla_messages").insert({', ORCH.indexOf("async function enviarEPersistir"));
-    const literal = ORCH.slice(i, ORCH.indexOf("});", i) + 1);
-    expect(literal).not.toMatch(/\{ metadata:/);
+    const envio = ORCH.slice(ORCH.indexOf("export async function enviarEPersistir"));
+    const literal = envio.match(/\.from\("ayla_messages"\)\s*\.insert\(\{([\s\S]*?)\}\)/)?.[1];
+    expect(literal).toBeDefined();
+    expect(literal).toContain("...registro");
+    expect(literal).not.toMatch(/\bmetadata\s*:/);
   });
 
   it("a retomada devolve o TEXTO ORIGINAL ao roteamento", () => {

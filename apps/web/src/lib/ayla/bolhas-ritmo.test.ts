@@ -82,7 +82,7 @@ describe("nada além do timing mudou", () => {
   it("o texto e o número de bolhas continuam vindo de dividirEmBolhas", () => {
     const t = "Primeiro bloco aqui.\n\nSegundo bloco aqui.\n\nTerceiro bloco aqui.";
     const b = dividirEmBolhas(t);
-    expect(b.length).toBe(3);
+    expect(b).toEqual([t]);
     // O ritmo é calculado SOBRE as bolhas — não as cria, não as junta.
     expect(ritmoDasBolhas(b).length).toBe(b.length);
     expect(b.join("")).toBe(dividirEmBolhas(t).join(""));
