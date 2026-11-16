@@ -78,7 +78,16 @@ export class BancoMemoria {
 }
 
 function passa(l: Linha, f: Filtro): boolean {
-  const v = l[f.col];
+  // PostgREST aceita caminho JSON nas colunas de filtro, como
+  // `metadata->interacao=is.null`. Sem reproduzi-lo, o duplo trataria o
+  // caminho como coluna inexistente e aprovaria um lote que engole cliques.
+  const v = f.col.includes("->")
+    ? f.col.split("->").reduce<unknown>((valor, chave) =>
+        valor && typeof valor === "object"
+          ? (valor as Record<string, unknown>)[chave]
+          : undefined,
+      l)
+    : l[f.col];
   switch (f.op) {
     case "eq":
       return v === f.val;
