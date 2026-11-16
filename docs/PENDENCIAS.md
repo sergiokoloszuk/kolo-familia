@@ -1775,9 +1775,12 @@ Aberta em: 2026-08-08 · Origem: decisão de produto (2026-08-08)
   endpoint real retornou 200 e 86.566 bytes; **75/75 testes diretamente
   afetados** e regressão **4305 passando, 7 pulados** (excluído apenas o teste
   live de provider); typecheck, lint dos arquivos alterados e build
-  Next/Webpack com 108 páginas passaram. **Ainda não
-  baixar:** falta publicação, health/SHA e prova em produção; o reteste humano
-  deve usar o botão de retry do artefato já criado, sem duplicar a rotina.
+  Next/Webpack com 108 páginas passaram. Publicada pelo PR #160, squash
+  `0ae4a8d`; a Vercel concluiu o deploy e `/api/health` confirmou esse mesmo
+  SHA em `main`, ambiente `production`, com banco saudável em 16/11/2026.
+  **Não baixar:** falta o reteste humano; usar o botão de retry do artefato já
+  criado, sem duplicar a rotina, e provar as cinco imagens persistidas e
+  visíveis na reabertura.
 - **Correção local do falso `pronto` no formulário principal (16/11/2026).**
   O caminho `criarRotinaVisual` ainda não obedecia ao portão publicado em
   29/09: ignorava erro ao inserir tarefas, aceitava `imagem_url=null` e marcava
