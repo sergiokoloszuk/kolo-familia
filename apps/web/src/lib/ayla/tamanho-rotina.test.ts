@@ -448,7 +448,7 @@ describe("o avatar entra depois, com o cartão já na mão", () => {
   );
 
   it("o caminho da Ayla deixou de passar usarAvatar:false fixo", () => {
-    expect(ROTA).toMatch(/\{ tema, atividades, idade, nomeRotina, usarAvatar \}/);
+    expect(ROTA).toMatch(/tema,\s*atividades,\s*idade,\s*nomeRotina,\s*usarAvatar,/);
     expect(ROTA).not.toMatch(/usarAvatar: false/);
   });
 

@@ -1759,6 +1759,22 @@ conflito. Esta ficha é o registro de estado; o laudo é a prova.
 Categoria: Produto · Prioridade: **P2** · Estado: **AGUARDANDO VALIDAÇÃO**
 Aberta em: 2026-08-08 · Origem: decisão de produto (2026-08-08)
 
+- **Correção local do falso `pronto` no formulário principal (16/11/2026).**
+  O caminho `criarRotinaVisual` ainda não obedecia ao portão publicado em
+  29/09: ignorava erro ao inserir tarefas, aceitava `imagem_url=null` e marcava
+  a rotina `pronto` sem reler o banco. A geração agora passa por um único
+  portão compartilhado pelo formulário, retry do app e endpoint da Ayla:
+  quantidade exata, nenhuma imagem nula, toda escrita conferida, releitura com
+  os mesmos IDs e transição condicional `gerando → pronto`. A página também
+  converte `gerando` abandonado após seis minutos e `pronto` histórico
+  incompleto em `erro` recuperável, sem redesenhar nem sobrescrever arte válida.
+  Evidência local na branch `codex/rotina-visual-cards`: **159/159** testes
+  diretamente afetados; regressão **4300 passando, 7 pulados**, excluído apenas
+  `provider.test.ts`, que depende de rede externa e falhou isoladamente com
+  `fetch failed`; build Next 16/Webpack completo, TypeScript e 108 páginas
+  passaram. **Não baixar:** ainda faltam PR/checks, deploy por SHA e prova
+  controlada no formulário real com banco, Storage, URL assinada, reabertura e
+  limpeza do dado de QA.
 - **Etapa 1 consolidada e publicada em 30/09/2026 (`b24eb93`).** O fluxo agora
   parte da situação concreta, oferece jornada inteira versus trecho difícil,
   explica que a proposta é editável antes das imagens, preserva o filho em foco

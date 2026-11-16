@@ -7,6 +7,7 @@ import { capitalizarNome } from "@/lib/nome";
 import { idadeAnos } from "@/lib/idade";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { RotinaEditor } from "./rotina-editor";
+import { statusSeguroDosCards } from "@/lib/ludico/rotina-cards";
 
 // A geração dos cards (história + N ilustrações) roda em segundo plano e pode
 // levar ~2 min. 300s = teto, igual às Histórias/Planos.
@@ -23,7 +24,7 @@ export default async function RotinaPage({
   const { data: rotina } = await supabase
     .from("rotinas")
     .select(
-      "id, nome, tema, historia, cards_status, modo_exibicao, dia_semana, membro_atipico_id, resultado, membros_atipicos(nome, data_nascimento)",
+      "id, nome, tema, historia, cards_status, modo_exibicao, dia_semana, membro_atipico_id, resultado, updated_at, membros_atipicos(nome, data_nascimento)",
     )
     .eq("id", id)
     .eq("family_account_id", family!.id)
@@ -68,6 +69,30 @@ export default async function RotinaPage({
     .eq("rotina_id", rotina.id)
     .order("ordem", { ascending: true });
 
+  // `after()` pode ser interrompido pelo runtime. Além disso, versões antigas
+  // marcavam `pronto` mesmo com imagem nula. Na visita, esses dois estados
+  // deixam de prender a família em polling ou numa tela de cartões vazios e
+  // viram `erro`, que já oferece o retry idempotente.
+  const statusPersistido = ((rotina.cards_status as string | null) ?? "nenhum");
+  let cardsStatus = statusSeguroDosCards({
+    status: statusPersistido,
+    updatedAt: rotina.updated_at as string,
+    imagens: (tarefas ?? []).map((tarefa) => (tarefa.imagem_url as string | null) ?? null),
+  });
+  if (cardsStatus !== statusPersistido) {
+    const { data: reconciliada, error: reconciliacaoErro } = await supabase
+      .from("rotinas")
+      .update({ cards_status: cardsStatus })
+      .eq("id", rotina.id)
+      .eq("family_account_id", family!.id)
+      .eq("cards_status", statusPersistido)
+      .select("id")
+      .maybeSingle();
+    // Se outra execução terminou no intervalo, a escrita condicional não toca
+    // nada e o próximo polling traz o estado novo. Não exibimos erro falso.
+    if (reconciliacaoErro || !reconciliada) cardsStatus = statusPersistido;
+  }
+
   // Bucket privado → assina as ilustrações dos cards na leitura.
   const tarefasUrls = await assinarImagens(
     supabase,
@@ -96,7 +121,7 @@ export default async function RotinaPage({
       </div>
 
       <RotinaEditor
-        key={(rotina.cards_status as string) ?? "nenhum"}
+        key={cardsStatus}
         rotinaId={rotina.id as string}
         membroAtipicoId={membroId as string}
         diaSemana={(rotina.dia_semana as number | null) ?? null}
@@ -107,7 +132,7 @@ export default async function RotinaPage({
         tema={(rotina.tema as string | null) ?? null}
         historia={(rotina.historia as string | null) ?? null}
         resultadoInicial={(rotina.resultado as string | null) ?? null}
-        cardsStatus={((rotina.cards_status as string | null) ?? "nenhum") as
+        cardsStatus={cardsStatus as
           | "nenhum"
           | "aguardando"
           | "revisao"
