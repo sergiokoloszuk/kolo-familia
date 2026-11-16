@@ -29,7 +29,10 @@ const SECAO = readFileSync(
 
 describe("o erro cru não chega na tela", () => {
   it("os dois caminhos de geração passam pelo tradutor", () => {
-    expect(GEN.match(/throw erroDeImagem\(/g)?.length).toBe(2);
+    // Geração e edição entram no MESMO executor. Assim um modelo removido,
+    // moderação ou congestionamento não ganha traduções divergentes.
+    expect(GEN.match(/await chamarImagemComFailover\(/g)?.length).toBe(2);
+    expect(GEN).toMatch(/ultimoErro = erroDeImagem\(/);
     expect(GEN).not.toMatch(/throw new Error\(`OpenAI imagem/);
   });
 

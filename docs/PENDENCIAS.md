@@ -1759,6 +1759,25 @@ conflito. Esta ficha é o registro de estado; o laudo é a prova.
 Categoria: Produto · Prioridade: **P2** · Estado: **AGUARDANDO VALIDAÇÃO**
 Aberta em: 2026-08-08 · Origem: decisão de produto (2026-08-08)
 
+- **Incidente real e causa raiz do zero cartão da Manu (16/11/2026).** A
+  rotina `804ca251-fbc8-4d79-9e28-2800e9ed139f`, tema Cozinha e cinco passos,
+  gerou o roteiro textual e terminou corretamente em `cards_status=erro`, sem
+  nenhuma `imagem_url`: o portão de 16/11 impediu o antigo falso `pronto`.
+  Avatar e Storage estavam íntegros. Um smoke sintético, sem dado de família,
+  reproduziu no mesmo `/v1/images/edits` o erro `400 invalid_value — The model
+  'gpt-image-1' does not exist`; a documentação oficial registra o desligamento
+  desse modelo em 23/10/2026. A correção local foi feita no gerador central,
+  portanto cobre avatar, galeria/desenhos, histórias e cartões: cadeia
+  `gpt-image-2.5-sunburst → gpt-image-2.5-flare → gpt-image-2`, failover apenas
+  para modelo removido, 429 ou 5xx, sem contornar moderação; sucesso registra o
+  modelo realmente usado e falha final persiste status, código, request ID e
+  modelos tentados, sem prompt ou imagem. Smoke sintético do novo primário no
+  endpoint real retornou 200 e 86.566 bytes; **75/75 testes diretamente
+  afetados** e regressão **4305 passando, 7 pulados** (excluído apenas o teste
+  live de provider); typecheck, lint dos arquivos alterados e build
+  Next/Webpack com 108 páginas passaram. **Ainda não
+  baixar:** falta publicação, health/SHA e prova em produção; o reteste humano
+  deve usar o botão de retry do artefato já criado, sem duplicar a rotina.
 - **Correção local do falso `pronto` no formulário principal (16/11/2026).**
   O caminho `criarRotinaVisual` ainda não obedecia ao portão publicado em
   29/09: ignorava erro ao inserir tarefas, aceitava `imagem_url=null` e marcava

@@ -168,7 +168,7 @@ const vestirSchema = z.object({
  * "Vestir" o avatar (Sérgio/Karina, jun/2026): mantém EXATAMENTE o mesmo
  * personagem (mesma cara, cabelo, estilo) e troca só a roupa/figurino pra uma
  * ocasião — festa junina, aniversário, Natal, tema do mês… Usa a imagem do
- * avatar como referência (gpt-image-1 /edits), igual às Histórias. Salva como
+ * avatar como referência (GPT Image /edits), igual às Histórias. Salva como
  * um NOVO avatar (a versão original continua na galeria) e já o deixa em uso.
  */
 export async function vestirAvatar(

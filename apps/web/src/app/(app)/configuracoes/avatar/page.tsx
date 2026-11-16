@@ -9,7 +9,7 @@ import { idadeAnos } from "@/lib/idade";
 import { AvatarMembroSecao } from "./secao-membro";
 import { coerceEstilo, type AvatarDescricao } from "@/lib/imagem/avatar-prompt";
 
-// A geração de imagem (gpt-image-1) roda na action a partir desta rota; dá
+// A geração de imagem (GPT Image) roda na action a partir desta rota; dá
 // fôlego pra não estourar o timeout.
 export const maxDuration = 60;
 

@@ -43,7 +43,7 @@ export const PRICE_TABLE: Record<string, PriceEntry> = {
    */
   "gpt-5.6-luna": { kind: "token", input_per_million: 0.249, output_per_million: 1.199 },
 
-  // OpenAI — imagem (gpt-image-1, 1024x1024 medium quality, por imagem gerada)
+  // OpenAI — imagem histórica (modelo desligado em 23/10/2026).
   "gpt-image-1": { kind: "per_call", usd: 0.04 },
 
   // OpenAI — STT (whisper-1, por minuto de áudio — caller passa minutos como "n_calls")

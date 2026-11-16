@@ -1,32 +1,47 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { logarUsoApi } from "@/lib/billing/logar";
+import { logEvent } from "@/lib/log";
+import { deveTentarProximoModelo, resolverModelosImagem } from "./models";
 
 /**
- * Geração de imagem via OpenAI (modelo gpt-image-1).
+ * Geração de imagem via OpenAI (família GPT Image).
  *
  * Fluxo:
- *   1. Chama POST /v1/images/generations (gpt-image-1 → devolve base64)
+ *   1. Chama POST /v1/images/generations (devolve base64)
  *   2. Decodifica o base64 em bytes
  *   3. Faz upload pro bucket 'imagens' do Supabase Storage
  *   4. Retorna a URL pública (permanente)
  *
  * Path: imagens/{family_id}/{tipo}/{uuid}.png
  *
- * Nota: trocamos dall-e-3 → gpt-image-1 porque a conta OpenAI atual não
- * tem acesso ao dall-e-3 (só aos modelos gpt-image-*). Modelo e qualidade
- * são sobrescrevíveis por env.
+ * O modelo não é um ponto único de falha. A OpenAI desligou `gpt-image-1` em
+ * 23/10/2026; por isso, geração e edição usam a mesma cadeia de modelos
+ * compatíveis e avançam automaticamente só em falha técnica/modelo removido.
+ * Moderação NÃO faz failover: trocar de modelo não pode contornar segurança.
  */
 
 const OPENAI_BASE = "https://api.openai.com/v1";
-const IMAGE_MODEL = process.env.OPENAI_IMAGE_MODEL || "gpt-image-1";
 const IMAGE_QUALITY = process.env.OPENAI_IMAGE_QUALITY || "medium";
+
+/**
+ * Sunburst primeiro porque o Lúdico depende de edição precisa para preservar
+ * a identidade do avatar. Flare é o segundo caminho rápido, e GPT-Image-2 é o
+ * fallback de família diferente. Todos suportam generation + edits e o mesmo
+ * contrato de saída usado aqui.
+ *
+ * `OPENAI_IMAGE_MODELS` aceita uma lista separada por vírgula. O legado
+ * `OPENAI_IMAGE_MODEL` continua aceito, mas nunca consegue prender produção ao
+ * `gpt-image-1` desligado. Os padrões são anexados à lista configurada para que
+ * uma troca de env não recrie um ponto único de falha.
+ */
+const IMAGE_MODELS = resolverModelosImagem();
 
 // Formato de SAÍDA — JPEG comprimido corta ~6x o peso vs PNG (1024px vira
 // ~150-250KB no lugar de ~1,5MB). Resolve a lentidão pra CARREGAR as imagens
 // no navegador (rotina com 9 cartões: ~1,8MB no lugar de ~13MB). Escolhemos
 // JPEG (não WebP) porque os cartões vão pra PDF (varalzinho) e o pdf-lib só
 // embute PNG/JPEG — WebP quebraria o PDF. Ilustrações têm fundo, não precisam
-// de transparência. O /edits do gpt-image-1 aceita JPEG como referência.
+// de transparência. Os modelos GPT Image aceitam JPEG como referência.
 const IMAGE_FORMAT = (process.env.OPENAI_IMAGE_FORMAT || "jpeg").toLowerCase();
 const IMAGE_COMPRESSION = Number(process.env.OPENAI_IMAGE_COMPRESSION || "78");
 const FORMAT_COMPRIMIVEL = IMAGE_FORMAT === "webp" || IMAGE_FORMAT === "jpeg";
@@ -67,17 +82,138 @@ export type GerarImagemResult = {
  * sempre é do RESULTADO, não do pedido — costuma bastar tentar outra descrição.
  * O detalhe técnico continua no log; o que muda é o que ela lê.
  */
-function erroDeImagem(status: number, corpo: string, onde: string): Error {
+type ErroImagem = Error & {
+  status?: number;
+  code?: string | null;
+  requestId?: string | null;
+  modelosTentados?: string[];
+};
+
+function codigoDoErro(corpo: string): string | null {
+  try {
+    const parsed = JSON.parse(corpo) as { error?: { code?: unknown } };
+    return typeof parsed.error?.code === "string" ? parsed.error.code : null;
+  } catch {
+    return null;
+  }
+}
+
+function erroDeImagem(
+  status: number,
+  corpo: string,
+  onde: string,
+  detalhes?: { requestId?: string | null; modelosTentados?: string[] },
+): ErroImagem {
   console.warn(`[imagem] ${onde} ${status}: ${corpo.slice(0, 500)}`);
+  let mensagem: string;
   if (/moderation_blocked|safety system/i.test(corpo)) {
-    return new Error(
-      "A geração dessa imagem foi bloqueada pelo filtro de conteúdo — costuma acontecer com fantasias e personagens conhecidos, e não é nada que você tenha feito de errado. Tente descrever de outro jeito (por exemplo, \"capa de super-herói\" em vez do nome de um personagem).",
-    );
+    mensagem =
+      "A geração dessa imagem foi bloqueada pelo filtro de conteúdo — costuma acontecer com fantasias e personagens conhecidos, e não é nada que você tenha feito de errado. Tente descrever de outro jeito (por exemplo, \"capa de super-herói\" em vez do nome de um personagem).";
+  } else if (status === 429 || status >= 500) {
+    mensagem = "O gerador de imagens está congestionado agora. Tenta de novo em um minutinho?";
+  } else {
+    mensagem = "Não consegui gerar a imagem agora. Tenta de novo — e se continuar, me avisa.";
   }
-  if (status === 429 || status >= 500) {
-    return new Error("O gerador de imagens está congestionado agora. Tenta de novo em um minutinho?");
+  return Object.assign(new Error(mensagem), {
+    status,
+    code: codigoDoErro(corpo),
+    requestId: detalhes?.requestId ?? null,
+    modelosTentados: detalhes?.modelosTentados ?? [],
+  });
+}
+
+type UsoImagem = {
+  input_tokens?: number;
+  output_tokens?: number;
+  total_tokens?: number;
+  input_tokens_details?: { text_tokens?: number; image_tokens?: number };
+};
+
+type RespostaImagemApi = {
+  data: Array<{ b64_json?: string; url?: string; revised_prompt?: string }>;
+  usage?: UsoImagem;
+};
+
+async function chamarImagemComFailover(
+  onde: string,
+  executar: (modelo: string) => Promise<Response>,
+): Promise<{ resposta: RespostaImagemApi; modelo: string; modelosTentados: string[] }> {
+  const modelosTentados: string[] = [];
+  let ultimoErro: ErroImagem | null = null;
+
+  for (const modelo of IMAGE_MODELS) {
+    modelosTentados.push(modelo);
+    const res = await executar(modelo);
+    if (res.ok) {
+      return {
+        resposta: (await res.json()) as RespostaImagemApi,
+        modelo,
+        modelosTentados,
+      };
+    }
+
+    const corpo = await res.text().catch(() => "");
+    ultimoErro = erroDeImagem(res.status, corpo, `${onde}/${modelo}`, {
+      requestId: res.headers.get("x-request-id"),
+      modelosTentados: [...modelosTentados],
+    });
+    if (!deveTentarProximoModelo(res.status, corpo)) throw ultimoErro;
   }
-  return new Error("Não consegui gerar a imagem agora. Tenta de novo — e se continuar, me avisa.");
+
+  throw ultimoErro ?? new Error("Nenhum modelo de imagem está configurado.");
+}
+
+function custoImagem25(modelo: string, uso?: UsoImagem): number | undefined {
+  if (!modelo.startsWith("gpt-image-2.5-") || !uso) return undefined;
+  const texto = uso.input_tokens_details?.text_tokens ?? 0;
+  const imagem = uso.input_tokens_details?.image_tokens ?? 0;
+  const saida = uso.output_tokens ?? 0;
+  return (texto * 5 + imagem * 8 + saida * 30) / 1_000_000;
+}
+
+async function registrarFalhaImagem(params: {
+  familyAccountId: string;
+  feature: string;
+  endpoint: "generations" | "edits";
+  erro: unknown;
+}): Promise<void> {
+  const erro = params.erro as ErroImagem;
+  await logEvent({
+    kind: "imagem_geracao_falhou",
+    severity: "error",
+    family_account_id: params.familyAccountId,
+    message: `${params.feature} falhou em /images/${params.endpoint}`,
+    payload: {
+      feature: params.feature,
+      endpoint: params.endpoint,
+      status: erro.status ?? null,
+      code: erro.code ?? null,
+      request_id: erro.requestId ?? null,
+      modelos_tentados: erro.modelosTentados ?? [],
+    },
+  });
+}
+
+async function registrarFailoverImagem(params: {
+  familyAccountId: string;
+  feature: string;
+  endpoint: "generations" | "edits";
+  modelo: string;
+  modelosTentados: string[];
+}): Promise<void> {
+  if (params.modelosTentados.length < 2) return;
+  await logEvent({
+    kind: "imagem_modelo_fallback",
+    severity: "warn",
+    family_account_id: params.familyAccountId,
+    message: `${params.feature} continuou com ${params.modelo}`,
+    payload: {
+      feature: params.feature,
+      endpoint: params.endpoint,
+      modelo_usado: params.modelo,
+      modelos_tentados: params.modelosTentados,
+    },
+  });
 }
 
 export async function gerarImagem(
@@ -93,33 +229,37 @@ export async function gerarImagem(
 
   const size = params.size ?? "1024x1024";
 
-  // 1. Gera a imagem (gpt-image-1 devolve base64 direto, sem URL temporária)
-  const genRes = await fetch(`${OPENAI_BASE}/images/generations`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: IMAGE_MODEL,
-      prompt: params.prompt,
-      n: 1,
-      size,
-      quality: IMAGE_QUALITY,
-      output_format: IMAGE_FORMAT,
-      ...(FORMAT_COMPRIMIVEL ? { output_compression: IMAGE_COMPRESSION } : {}),
-    }),
-  });
-
-  if (!genRes.ok) {
-    const t = await genRes.text().catch(() => "");
-    throw erroDeImagem(genRes.status, t, "geração");
+  let chamada: Awaited<ReturnType<typeof chamarImagemComFailover>>;
+  try {
+    chamada = await chamarImagemComFailover("geração", (modelo) =>
+      fetch(`${OPENAI_BASE}/images/generations`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: modelo,
+          prompt: params.prompt,
+          n: 1,
+          size,
+          quality: IMAGE_QUALITY,
+          output_format: IMAGE_FORMAT,
+          ...(FORMAT_COMPRIMIVEL ? { output_compression: IMAGE_COMPRESSION } : {}),
+        }),
+      }),
+    );
+  } catch (erro) {
+    await registrarFalhaImagem({
+      familyAccountId: params.familyAccountId,
+      feature: params.feature ?? `imagem_${params.tipo}`,
+      endpoint: "generations",
+      erro,
+    });
+    throw erro;
   }
 
-  const genJson = (await genRes.json()) as {
-    data: Array<{ b64_json?: string; url?: string; revised_prompt?: string }>;
-  };
-  const item = genJson.data?.[0];
+  const item = chamada.resposta.data?.[0];
   if (!item?.b64_json) throw new Error("O modelo de imagem não retornou conteúdo.");
 
   // 2. Decodifica + sobe no Storage
@@ -135,10 +275,26 @@ export async function gerarImagem(
   await logarUsoApi(supabase, {
     family_account_id: params.familyAccountId,
     provider: "openai",
-    model: IMAGE_MODEL,
+    model: chamada.modelo,
     feature: params.feature ?? `imagem_${params.tipo}`,
-    quantidade: 1,
-    meta: { size, quality: IMAGE_QUALITY, tipo: params.tipo },
+    input_tokens: chamada.resposta.usage?.input_tokens,
+    output_tokens: chamada.resposta.usage?.output_tokens,
+    custo_usd: custoImagem25(chamada.modelo, chamada.resposta.usage),
+    meta: {
+      size,
+      quality: IMAGE_QUALITY,
+      tipo: params.tipo,
+      modelos_tentados: chamada.modelosTentados,
+      usage: chamada.resposta.usage ?? null,
+    },
+  });
+
+  await registrarFailoverImagem({
+    familyAccountId: params.familyAccountId,
+    feature: params.feature ?? `imagem_${params.tipo}`,
+    endpoint: "generations",
+    modelo: chamada.modelo,
+    modelosTentados: chamada.modelosTentados,
   });
 
   return { url, prompt_revisado: item.revised_prompt, storage_path };
@@ -146,7 +302,7 @@ export async function gerarImagem(
 
 /**
  * Gera uma imagem usando UMA imagem de referência (o avatar) — mantém o
- * personagem consistente em cenas novas. Usa /v1/images/edits do gpt-image-1.
+ * personagem consistente em cenas novas. Usa /v1/images/edits.
  * É o que dá ao "livro de histórias" o mesmo personagem em todas as páginas.
  */
 export async function gerarImagemComReferencia(
@@ -170,26 +326,40 @@ export async function gerarImagemComReferencia(
   const quality = params.quality ?? IMAGE_QUALITY;
   const refMime = sniffMime(params.referencia);
   const refExt = refMime === "image/webp" ? "webp" : refMime === "image/jpeg" ? "jpg" : "png";
-  const fd = new FormData();
-  fd.append("model", IMAGE_MODEL);
-  fd.append("image", new Blob([new Uint8Array(params.referencia)], { type: refMime }), `ref.${refExt}`);
-  fd.append("prompt", params.prompt);
-  fd.append("size", params.size ?? "1024x1024");
-  fd.append("quality", quality);
-  fd.append("output_format", IMAGE_FORMAT);
-  if (FORMAT_COMPRIMIVEL) fd.append("output_compression", String(IMAGE_COMPRESSION));
-
-  const res = await fetch(`${OPENAI_BASE}/images/edits`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${apiKey}` },
-    body: fd,
-  });
-  if (!res.ok) {
-    const t = await res.text().catch(() => "");
-    throw erroDeImagem(res.status, t, "geração com referência");
+  let chamada: Awaited<ReturnType<typeof chamarImagemComFailover>>;
+  try {
+    chamada = await chamarImagemComFailover("geração com referência", (modelo) => {
+      // FormData não pode ser reaproveitado depois de uma tentativa; cada
+      // modelo recebe um corpo novo com os mesmos bytes e parâmetros.
+      const fd = new FormData();
+      fd.append("model", modelo);
+      fd.append(
+        "image",
+        new Blob([new Uint8Array(params.referencia)], { type: refMime }),
+        `ref.${refExt}`,
+      );
+      fd.append("prompt", params.prompt);
+      fd.append("size", params.size ?? "1024x1024");
+      fd.append("quality", quality);
+      fd.append("output_format", IMAGE_FORMAT);
+      if (FORMAT_COMPRIMIVEL) fd.append("output_compression", String(IMAGE_COMPRESSION));
+      return fetch(`${OPENAI_BASE}/images/edits`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${apiKey}` },
+        body: fd,
+      });
+    });
+  } catch (erro) {
+    await registrarFalhaImagem({
+      familyAccountId: params.familyAccountId,
+      feature: params.feature ?? `imagem_${params.tipo}`,
+      endpoint: "edits",
+      erro,
+    });
+    throw erro;
   }
-  const json = (await res.json()) as { data: Array<{ b64_json?: string }> };
-  const b64 = json.data?.[0]?.b64_json;
+
+  const b64 = chamada.resposta.data?.[0]?.b64_json;
   if (!b64) throw new Error("O modelo de imagem não retornou conteúdo (ref).");
 
   const bytes = Buffer.from(b64, "base64");
@@ -204,10 +374,27 @@ export async function gerarImagemComReferencia(
   await logarUsoApi(supabase, {
     family_account_id: params.familyAccountId,
     provider: "openai",
-    model: IMAGE_MODEL,
+    model: chamada.modelo,
     feature: params.feature ?? `imagem_${params.tipo}`,
-    quantidade: 1,
-    meta: { size: params.size ?? "1024x1024", quality, tipo: params.tipo, com_referencia: true },
+    input_tokens: chamada.resposta.usage?.input_tokens,
+    output_tokens: chamada.resposta.usage?.output_tokens,
+    custo_usd: custoImagem25(chamada.modelo, chamada.resposta.usage),
+    meta: {
+      size: params.size ?? "1024x1024",
+      quality,
+      tipo: params.tipo,
+      com_referencia: true,
+      modelos_tentados: chamada.modelosTentados,
+      usage: chamada.resposta.usage ?? null,
+    },
+  });
+
+  await registrarFailoverImagem({
+    familyAccountId: params.familyAccountId,
+    feature: params.feature ?? `imagem_${params.tipo}`,
+    endpoint: "edits",
+    modelo: chamada.modelo,
+    modelosTentados: chamada.modelosTentados,
   });
 
   return { url, storage_path };
