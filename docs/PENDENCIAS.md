@@ -1781,6 +1781,19 @@ Aberta em: 2026-08-08 · Origem: decisão de produto (2026-08-08)
   **Não baixar:** falta o reteste humano; usar o botão de retry do artefato já
   criado, sem duplicar a rotina, e provar as cinco imagens persistidas e
   visíveis na reabertura.
+- **Segundo reteste e gate de versão antiga (16/11/2026).** As tentativas das
+  20h15 e 20h16 geraram os cinco textos, mas os logs da Vercel provaram dez
+  chamadas de edição com `gpt-image-1`, todas `400`, no deployment de produção
+  `b357d7f` (`dpl_71RQyRFmuKLGNUQTvmeHAaz1uwii`). Não era regressão do código
+  publicado: o celular ainda estava versionado no servidor anterior pela Skew
+  Protection. Foi aplicado o **Skew Protection Threshold** no primeiro
+  deployment corrigido, `0ae4a8d`. A prova posterior apontou explicitamente ao
+  deployment antigo e recebeu `/api/health` do SHA atual `8a7110d`, `main`,
+  `production`, banco saudável. O gate permanente de continuidade para todo o
+  Lúdico ficou documentado em
+  [docs/specs/imagens-ludico.md](specs/imagens-ludico.md). **Continua aguardando
+  validação:** falta o novo clique humano produzir, persistir e reabrir as
+  cinco imagens; o agente não dispara geração em conta real.
 - **Correção local do falso `pronto` no formulário principal (16/11/2026).**
   O caminho `criarRotinaVisual` ainda não obedecia ao portão publicado em
   29/09: ignorava erro ao inserir tarefas, aceitava `imagem_url=null` e marcava
