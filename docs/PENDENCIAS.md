@@ -1768,13 +1768,17 @@ Aberta em: 2026-08-08 · Origem: decisão de produto (2026-08-08)
   os mesmos IDs e transição condicional `gerando → pronto`. A página também
   converte `gerando` abandonado após seis minutos e `pronto` histórico
   incompleto em `erro` recuperável, sem redesenhar nem sobrescrever arte válida.
-  Evidência local na branch `codex/rotina-visual-cards`: **159/159** testes
-  diretamente afetados; regressão **4300 passando, 7 pulados**, excluído apenas
-  `provider.test.ts`, que depende de rede externa e falhou isoladamente com
-  `fetch failed`; build Next 16/Webpack completo, TypeScript e 108 páginas
-  passaram. **Não baixar:** ainda faltam PR/checks, deploy por SHA e prova
-  controlada no formulário real com banco, Storage, URL assinada, reabertura e
-  limpeza do dado de QA.
+  Evidência local: **159/159** testes diretamente afetados; regressão **4300
+  passando, 7 pulados**, excluído apenas `provider.test.ts`, que depende de
+  rede externa e falhou isoladamente com `fetch failed`; build Next 16/Webpack
+  completo, TypeScript e 108 páginas passaram. Publicada pelo PR #157: checks
+  `build` e Vercel verdes, merge squash `ae4d903`; o `/api/health` confirmou
+  esse mesmo SHA em `main`, ambiente `production`, com banco saudável em
+  16/11/2026. **Não baixar:** ainda falta a prova controlada no formulário real
+  com banco, Storage, URL assinada, reabertura e limpeza do dado de QA. A conta
+  descartável documentada em `QA-CONTA-DEDICADA.md` continua bloqueada pela
+  ausência de um número de WhatsApp próprio; contas de famílias reais e as duas
+  contas antigas sem proprietário inequívoco não foram usadas.
 - **Etapa 1 consolidada e publicada em 30/09/2026 (`b24eb93`).** O fluxo agora
   parte da situação concreta, oferece jornada inteira versus trecho difícil,
   explica que a proposta é editável antes das imagens, preserva o filho em foco
