@@ -5,7 +5,10 @@ import { after } from "next/server";
 import { z } from "zod";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { idadeAnos } from "@/lib/idade";
-import { gerarRoteiroRotina, ilustrarCards } from "@/lib/ludico/gerar";
+import {
+  gerarEConfirmarCardsRotina,
+  marcarGeracaoCardsComoErro,
+} from "@/lib/ludico/rotina-cards";
 import { resolveFamily } from "@/lib/auth/current-family";
 import { gravarResultadoDaRotina } from "@/lib/ludico/rotina-resultado";
 import { requireActiveWrite } from "@/lib/auth/require-active-write";
@@ -705,12 +708,14 @@ export async function gerarCardsVisuais(
     const membro = rel ? (Array.isArray(rel) ? rel[0] ?? null : rel) : null;
     const idade = idadeAnos(membro?.data_nascimento ?? null);
 
-    const { error: inicioErro } = await supabase
+    const { data: iniciou, error: inicioErro } = await supabase
       .from("rotinas")
       .update({ tema, cards_status: "gerando" })
       .eq("id", rotinaId)
-      .eq("family_account_id", family.id);
-    if (inicioErro) {
+      .eq("family_account_id", family.id)
+      .select("id")
+      .maybeSingle();
+    if (inicioErro || !iniciou) {
       return { ok: false, error: "Não consegui iniciar os cartões agora. Tente de novo daqui a pouco." };
     }
     revalidatePath(`/ludico/rotinas/${rotinaId}`);
@@ -729,58 +734,24 @@ export async function gerarCardsVisuais(
     after(async () => {
       const svc = createServiceRoleClient();
       try {
-        const roteiro = await gerarRoteiroRotina(
-          { tema: temaParaRoteiro, atividades, idade, nomeRotina, usarAvatar },
-          { supabase: svc, family_account_id: familyId },
-        );
-        const { mascoteUrl, imagens } = await ilustrarCards(svc, {
+        await gerarEConfirmarCardsRotina(svc, {
+          rotinaId,
           familyAccountId: familyId,
           tema: temaParaRoteiro,
-          mascoteDescricao: roteiro.mascote,
-          cards: roteiro.cards,
+          atividades,
+          idade,
+          nomeRotina,
+          usarAvatar,
+          tarefaIds,
           referenciaUrl,
         });
-        // `pronto` só pode significar que todos os cartões existem e podem
-        // ser abertos. A rota da Ayla já tinha este portão; o clique no app
-        // precisa obedecer ao mesmo contrato, ou a tela vira falso sucesso.
-        if (roteiro.cards.length !== tarefaIds.length || imagens.length !== tarefaIds.length || imagens.some((url) => !url)) {
-          throw new Error(`cartões incompletos: ${imagens.filter(Boolean).length}/${tarefaIds.length}`);
-        }
-        const escritas = await Promise.all(
-          tarefaIds.map((id, i) => {
-            const card = roteiro.cards[i];
-            if (!card) return Promise.resolve();
-            return svc
-              .from("rotina_tarefas")
-              .update({
-                nome_tematico: card.nome_tematico,
-                cena: card.cena,
-                imagem_url: imagens[i] ?? null,
-              })
-              .eq("id", id);
-          }),
-        );
-        if (escritas.some((r) => r?.error)) throw new Error("falha ao salvar imagem de cartão");
-        const { data: gravadas, error: leituraErro } = await svc
-          .from("rotina_tarefas")
-          .select("imagem_url")
-          .eq("rotina_id", rotinaId);
-        if (leituraErro || gravadas?.length !== tarefaIds.length || gravadas.some((t) => !t.imagem_url)) {
-          throw new Error("cartões salvos incompletos");
-        }
-        const { error: conclusaoErro } = await svc
-          .from("rotinas")
-          .update({
-            historia: roteiro.historia,
-            mascote_url: mascoteUrl,
-            cards_status: "pronto",
-          })
-          .eq("id", rotinaId);
-        if (conclusaoErro) throw conclusaoErro;
       } catch (e) {
-        console.error("[gerarCardsVisuais]", e);
-        const { error: erroFinal } = await svc.from("rotinas").update({ cards_status: "erro" }).eq("id", rotinaId);
-        if (erroFinal) console.error("[gerarCardsVisuais] não conseguiu registrar erro:", erroFinal.message);
+        await marcarGeracaoCardsComoErro(svc, {
+          rotinaId,
+          familyAccountId: familyId,
+          origem: "gerarCardsVisuais",
+          erro: e,
+        });
       }
     });
 
@@ -794,8 +765,8 @@ export async function gerarCardsVisuais(
 // A FÓRMULA ÚNICA — nome (opcional) + passos + tema + personagem
 //
 // Substitui as três portas antigas (assistente, criar dia, nova rotina). Não é
-// um segundo sistema: reusa `gerarRoteiroRotina` e `ilustrarCards`, que já são
-// os mesmos que a Ayla usa. O que sai daqui é o que sempre saiu — cartões,
+// um segundo sistema: reusa o mesmo portão de geração que a Ayla usa. O que
+// sai daqui é o que sempre saiu — cartões,
 // historinha e PDF —, só que num passo.
 //
 // Sem horário, de propósito: o campo era a maior fonte de rotina barrada
@@ -839,6 +810,9 @@ export async function criarRotinaVisual(
     const avatarUrl = usarAvatar
       ? await avatarDaCrianca(supabase, { membroId: membroAtipicoId, familyId: family.id })
       : null;
+    // Só ilustra quando há tema OU avatar — sem eles a rotina existe como
+    // lista, e a família escolhe o tema depois na própria tela.
+    const temaParaRoteiro = tema.trim() || (avatarUrl ? "do dia a dia" : "");
 
     const { data: nova, error: insErr } = await supabase
       .from("rotinas")
@@ -851,14 +825,17 @@ export async function criarRotinaVisual(
         dia_semana: null,
         tema: tema.trim() || null,
         modo_exibicao: "cartoes",
-        cards_status: "nenhum",
+        // A intenção de gerar nasce atomicamente com a rotina. Assim não há
+        // janela em que o formulário responde sucesso, mas falha ao marcar o
+        // trabalho como iniciado.
+        cards_status: temaParaRoteiro ? "gerando" : "nenhum",
       })
       .select("id")
       .single();
     if (insErr || !nova) return { ok: false, error: "Não consegui criar a rotina agora." };
     const rotinaId = nova.id as string;
 
-    await supabase.from("rotina_tarefas").insert(
+    const { error: tarefasErro } = await supabase.from("rotina_tarefas").insert(
       limpos.map((texto, i) => ({
         rotina_id: rotinaId,
         texto,
@@ -868,67 +845,58 @@ export async function criarRotinaVisual(
         ordem: i,
       })),
     );
+    if (tarefasErro) {
+      // Compensa a primeira escrita: uma rotina recém-criada sem nenhum passo
+      // não é um resultado útil e não deve ficar como falso sucesso na lista.
+      const { error: limpezaErro } = await supabase
+        .from("rotinas")
+        .delete()
+        .eq("id", rotinaId)
+        .eq("family_account_id", family.id);
+      if (limpezaErro) {
+        console.error("[criarRotinaVisual] não conseguiu remover rotina incompleta:", limpezaErro.message);
+      }
+      return { ok: false, error: "Não consegui salvar os passos da rotina agora." };
+    }
 
     revalidatePath("/ludico/rotinas");
     after(() =>
       trackFeature({ familyId: family.id, evento: "ludico_gerado", detalhe: { tipo: "rotina" } }),
     );
 
-    // Só ilustra quando há tema OU avatar — o gerador precisa de um dos dois
-    // pra ter o que desenhar. Sem eles a rotina existe como lista, e a mãe
-    // escolhe o tema depois na própria tela.
-    const temaParaRoteiro = tema.trim() || (avatarUrl ? "do dia a dia" : "");
     if (temaParaRoteiro) {
       const familyId = family.id;
       const idade = idadeAnos((membro.data_nascimento as string | null) ?? null);
-      await supabase.from("rotinas").update({ cards_status: "gerando" }).eq("id", rotinaId);
 
       after(async () => {
         const svc = createServiceRoleClient();
         try {
-          const roteiro = await gerarRoteiroRotina(
-            {
-              tema: temaParaRoteiro,
-              atividades: limpos,
-              idade,
-              nomeRotina: titulo,
-              usarAvatar: Boolean(avatarUrl),
-            },
-            { supabase: svc, family_account_id: familyId },
-          );
-          const { mascoteUrl, imagens } = await ilustrarCards(svc, {
-            familyAccountId: familyId,
-            tema: temaParaRoteiro,
-            mascoteDescricao: roteiro.mascote,
-            cards: roteiro.cards,
-            referenciaUrl: avatarUrl ?? undefined,
-          });
-          const { data: linhas } = await svc
+          const { data: linhas, error: linhasErro } = await svc
             .from("rotina_tarefas")
             .select("id, ordem")
             .eq("rotina_id", rotinaId)
             .order("ordem", { ascending: true });
-          await Promise.all(
-            (linhas ?? []).map((l, i) => {
-              const card = roteiro.cards[i];
-              if (!card) return Promise.resolve();
-              return svc
-                .from("rotina_tarefas")
-                .update({
-                  nome_tematico: card.nome_tematico,
-                  cena: card.cena,
-                  imagem_url: imagens[i] ?? null,
-                })
-                .eq("id", l.id as string);
-            }),
-          );
-          await svc
-            .from("rotinas")
-            .update({ historia: roteiro.historia, mascote_url: mascoteUrl, cards_status: "pronto" })
-            .eq("id", rotinaId);
+          if (linhasErro || linhas?.length !== limpos.length) {
+            throw new Error("passos da rotina incompletos antes da geração");
+          }
+          await gerarEConfirmarCardsRotina(svc, {
+            rotinaId,
+            familyAccountId: familyId,
+            tema: temaParaRoteiro,
+            atividades: limpos,
+            idade,
+            nomeRotina: titulo,
+            usarAvatar: Boolean(avatarUrl),
+            tarefaIds: linhas.map((linha) => linha.id as string),
+            referenciaUrl: avatarUrl ?? undefined,
+          });
         } catch (e) {
-          console.warn("[rotina:visual] ilustração falhou:", e instanceof Error ? e.message : e);
-          await svc.from("rotinas").update({ cards_status: "erro" }).eq("id", rotinaId);
+          await marcarGeracaoCardsComoErro(svc, {
+            rotinaId,
+            familyAccountId: familyId,
+            origem: "criarRotinaVisual",
+            erro: e,
+          });
         }
       });
     }

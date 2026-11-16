@@ -136,8 +136,10 @@ describe("Manu: sequência ditada já define o recorte da rotina", () => {
 
   it("não marca pronta uma rotina com qualquer cartão sem imagem", () => {
     const rota = readFileSync(new URL("../../app/api/ludico/gerar-rotina/route.ts", import.meta.url), "utf8");
-    expect(rota).toContain("imagens.some((url) => !url)");
-    expect(rota).toContain("gravadas.some((t) => !t.imagem_url)");
-    expect(rota.indexOf("gravadas.some((t) => !t.imagem_url)")).toBeLessThan(rota.indexOf('cards_status: "pronto"'));
+    const portao = readFileSync(new URL("../ludico/rotina-cards.ts", import.meta.url), "utf8");
+    expect(rota).toContain("gerarEConfirmarCardsRotina");
+    expect(portao).toContain("imagens.some((url) => !url)");
+    expect(portao).toContain("!tarefa.imagem_url");
+    expect(portao.indexOf("!tarefa.imagem_url")).toBeLessThan(portao.indexOf('cards_status: "pronto"'));
   });
 });

@@ -17,6 +17,10 @@ const PAGE = readFileSync(
   resolve(__dirname, "../../app/(app)/ludico/rotinas/page.tsx"),
   "utf8",
 );
+const DETAIL = readFileSync(
+  resolve(__dirname, "../../app/(app)/ludico/rotinas/[id]/page.tsx"),
+  "utf8",
+);
 const FORM = readFileSync(
   resolve(__dirname, "../../app/(app)/ludico/rotinas/criar-rotina-visual.tsx"),
   "utf8",
@@ -24,6 +28,10 @@ const FORM = readFileSync(
 const ACTIONS = readFileSync(
   resolve(__dirname, "../../app/(app)/ludico/rotinas/actions.ts"),
   "utf8",
+);
+const CARDS = readFileSync(resolve(__dirname, "rotina-cards.ts"), "utf8");
+const CRIAR_ROTINA_VISUAL = ACTIONS.slice(
+  ACTIONS.indexOf("export async function criarRotinaVisual"),
 );
 const INTERESSES = readFileSync(resolve(__dirname, "interesses.ts"), "utf8");
 
@@ -218,9 +226,10 @@ describe("nome em branco vira título coerente", () => {
 
 describe("reusa o que já funcionava", () => {
   it("mesmo gerador de cartões e mesma historinha", () => {
-    expect(ACTIONS).toMatch(/gerarRoteiroRotina\(/);
-    expect(ACTIONS).toMatch(/ilustrarCards\(/);
-    expect(ACTIONS).toMatch(/historia: roteiro\.historia/);
+    expect(ACTIONS).toMatch(/gerarEConfirmarCardsRotina\(/);
+    expect(CARDS).toMatch(/gerarRoteiroRotina/);
+    expect(CARDS).toMatch(/ilustrarCards/);
+    expect(CARDS).toMatch(/historia: roteiro\.historia/);
   });
 
   it("a rotina nova abre em cartões", () => {
@@ -229,28 +238,43 @@ describe("reusa o que já funcionava", () => {
 
   it("sem tema e sem avatar, existe como lista — não trava a criação", () => {
     expect(ACTIONS).toMatch(/if \(temaParaRoteiro\) \{/);
-    expect(ACTIONS).toMatch(/a mãe\n\s*\/\/ escolhe o tema depois na própria tela/);
+    expect(ACTIONS).toMatch(/a família escolhe o tema depois na própria tela/);
   });
 
   it("falha na ilustração não perde a rotina — marca erro e segue", () => {
-    expect(ACTIONS).toMatch(/cards_status: "erro"/);
+    expect(ACTIONS).toMatch(/marcarGeracaoCardsComoErro\(/);
+    expect(CARDS).toMatch(/cards_status: "erro"/);
   });
 
-  it("o clique no app só declara pronto depois de conferir todos os cartões gravados", () => {
-    // A rota interna da Ayla já fazia essa conferência. Sem ela aqui, a mãe
-    // via a rotina como pronta mesmo com imagem ausente ou escrita recusada.
-    expect(ACTIONS).toMatch(/cartões incompletos/);
-    expect(ACTIONS).toMatch(/escritas\.some\(\(r\) => r\?\.error\)/);
-    expect(ACTIONS).toMatch(/gravadas\?\.length !== tarefaIds\.length/);
-    expect(ACTIONS).toMatch(/gravadas\.some\(\(t\) => !t\.imagem_url\)/);
-    expect(ACTIONS.indexOf("gravadas.some((t) => !t.imagem_url)")).toBeLessThan(
-      ACTIONS.indexOf('cards_status: "pronto"'),
+  it("todas as portas usam o único portão que pode declarar pronto", () => {
+    // O teste antigo procurava essas frases no arquivo inteiro e podia achar a
+    // proteção de outra função. Agora o formulário é isolado e não pode
+    // escrever `pronto` por conta própria.
+    expect(CRIAR_ROTINA_VISUAL).toMatch(/await gerarEConfirmarCardsRotina\(/);
+    expect(CRIAR_ROTINA_VISUAL).not.toMatch(/cards_status: "pronto"/);
+    expect(CARDS).toMatch(/cartões incompletos/);
+    expect(CARDS).toMatch(/escritas\.some\(\(resultado\) => resultado\.error\)/);
+    expect(CARDS).toMatch(/gravadas\?\.length !== params\.tarefaIds\.length/);
+    expect(CARDS.indexOf("gravadas?.length !== params.tarefaIds.length")).toBeLessThan(
+      CARDS.indexOf('cards_status: "pronto"'),
     );
   });
 
   it("não confirma início de geração se a escrita de gerando falhar", () => {
-    expect(ACTIONS).toMatch(/const \{ error: inicioErro \} = await supabase/);
-    expect(ACTIONS).toMatch(/if \(inicioErro\) \{[\s\S]{0,180}?Não consegui iniciar os cartões agora/);
+    expect(ACTIONS).toMatch(/const \{ data: iniciou, error: inicioErro \} = await supabase/);
+    expect(ACTIONS).toMatch(/if \(inicioErro \|\| !iniciou\) \{[\s\S]{0,180}?Não consegui iniciar os cartões agora/);
+  });
+
+  it("o formulário nasce gerando e confere a inserção dos passos", () => {
+    expect(CRIAR_ROTINA_VISUAL).toMatch(/cards_status: temaParaRoteiro \? "gerando" : "nenhum"/);
+    expect(CRIAR_ROTINA_VISUAL).toMatch(/const \{ error: tarefasErro \} = await supabase/);
+    expect(CRIAR_ROTINA_VISUAL).toMatch(/if \(tarefasErro\)/);
+  });
+
+  it("ao reabrir, geração abandonada ou pronto incompleto vira retry", () => {
+    expect(DETAIL).toMatch(/statusSeguroDosCards\(/);
+    expect(DETAIL).toMatch(/updated_at/);
+    expect(DETAIL).toMatch(/\.eq\("cards_status", statusPersistido\)/);
   });
 
   it("nada nasce na semana por este caminho", () => {

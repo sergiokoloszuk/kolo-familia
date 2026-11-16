@@ -1,7 +1,10 @@
 import { NextResponse, type NextRequest, after } from "next/server";
 import { timingSafeEqual, createHash } from "node:crypto";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { gerarRoteiroRotina, ilustrarCards } from "@/lib/ludico/gerar";
+import {
+  gerarEConfirmarCardsRotina,
+  marcarGeracaoCardsComoErro,
+} from "@/lib/ludico/rotina-cards";
 import { idadeAnos } from "@/lib/idade";
 
 /**
@@ -129,61 +132,43 @@ export async function POST(request: NextRequest) {
   const usarAvatar = Boolean(avatarUrl);
   if (usarAvatar) console.log("[rotina:cards] avatar da criança como personagem");
 
-  const { error: inicioErro } = await svc.from("rotinas").update({ tema, cards_status: "gerando" }).eq("id", rotinaId);
-  if (inicioErro) {
-    console.error("[ludico:gerar-rotina] falha ao iniciar geração:", inicioErro.message);
+  const { data: iniciou, error: inicioErro } = await svc
+    .from("rotinas")
+    .update({ tema, cards_status: "gerando" })
+    .eq("id", rotinaId)
+    .eq("family_account_id", familyId)
+    .select("id")
+    .maybeSingle();
+  if (inicioErro || !iniciou) {
+    console.error(
+      "[ludico:gerar-rotina] falha ao iniciar geração:",
+      inicioErro?.message ?? "rotina não encontrada",
+    );
     return NextResponse.json({ error: "não iniciou geração" }, { status: 500 });
   }
 
   after(async () => {
     try {
-      const roteiro = await gerarRoteiroRotina(
-        { tema, atividades, idade, nomeRotina, usarAvatar },
-        { supabase: svc, family_account_id: familyId },
-      );
-      const { mascoteUrl, imagens } = await ilustrarCards(svc, {
+      await gerarEConfirmarCardsRotina(svc, {
+        rotinaId,
         familyAccountId: familyId,
         tema,
-        mascoteDescricao: roteiro.mascote,
-        cards: roteiro.cards,
+        atividades,
+        idade,
+        nomeRotina,
+        usarAvatar,
+        tarefaIds,
         referenciaUrl: preservar ? (mascoteAtual ?? undefined) : (avatarUrl ?? undefined),
         arteExistente,
+        preservarArte: preservar,
       });
-      // "pronto" significa que a família pode abrir TODOS os cartões. O
-      // ilustrador devolve null depois dos retries; sem este portão, o banco
-      // marcava pronto mesmo quando a página só tinha ícones vazios.
-      if (roteiro.cards.length !== tarefaIds.length || imagens.length !== tarefaIds.length || imagens.some((url) => !url)) {
-        throw new Error(`cartões incompletos: ${imagens.filter(Boolean).length}/${tarefaIds.length}`);
-      }
-      const escritas = await Promise.all(
-        tarefaIds.map((id, i) => {
-          const card = roteiro.cards[i];
-          if (!card) return Promise.resolve();
-          // Card preservado NÃO é reescrito: o nome temático é o que a mãe já
-          // leu no cartão impresso; trocar por um sinônimo novo só confunde.
-          if (preservar && arteExistente?.[i]) return Promise.resolve();
-          return svc
-            .from("rotina_tarefas")
-            .update({ nome_tematico: card.nome_tematico, cena: card.cena, imagem_url: imagens[i] ?? null })
-            .eq("id", id);
-        }),
-      );
-      if (escritas.some((r) => r?.error)) throw new Error("falha ao salvar imagem de cartão");
-      const { data: gravadas, error: leituraErro } = await svc
-        .from("rotina_tarefas")
-        .select("imagem_url")
-        .eq("rotina_id", rotinaId);
-      if (leituraErro || gravadas?.length !== tarefaIds.length || gravadas.some((t) => !t.imagem_url)) {
-        throw new Error("cartões salvos incompletos");
-      }
-      const { error: conclusaoErro } = await svc
-        .from("rotinas")
-        .update({ historia: roteiro.historia, mascote_url: mascoteUrl, cards_status: "pronto" })
-        .eq("id", rotinaId);
-      if (conclusaoErro) throw conclusaoErro;
     } catch (e) {
-      console.error("[api gerar-rotina]", e instanceof Error ? e.message : e);
-      await svc.from("rotinas").update({ cards_status: "erro" }).eq("id", rotinaId);
+      await marcarGeracaoCardsComoErro(svc, {
+        rotinaId,
+        familyAccountId: familyId,
+        origem: "api gerar-rotina",
+        erro: e,
+      });
     }
   });
 
