@@ -11,7 +11,7 @@ import { carregarIntencaoLudico } from "@/lib/ludico/intencao";
 
 export const metadata = { title: "Criar história — Kolo Família" };
 
-// Geração escreve + ilustra várias páginas (gpt-image-1). O trabalho pesado
+// Geração escreve + ilustra várias páginas (GPT Image). O trabalho pesado
 // roda em after() e HERDA este maxDuration — 60s não cabia (5 imgs paralelas
 // em pares + roteiro passava do limite e matava o container antes do catch
 // marcar status='erro', prendendo o usuário no skeleton).

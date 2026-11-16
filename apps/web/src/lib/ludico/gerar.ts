@@ -10,10 +10,10 @@ import { pathDeImagem } from "@/lib/storage/imagens";
  * A família define o TEMA e a SEQUÊNCIA de atividades — a IA NÃO muda a rotina,
  * só veste cada atividade no universo do tema e escreve uma historinha. Depois
  * gera um MASCOTE do tema (1 imagem) e ilustra cada card usando o mascote como
- * referência (gpt-image-1 /edits), mantendo o personagem consistente — igual ao
+ * referência (GPT Image /edits), mantendo o personagem consistente — igual ao
  * que as Histórias fazem com o avatar.
  *
- * O NOME do card NÃO é queimado na imagem (o gpt-image-1 erra texto com acento):
+ * O NOME do card NÃO é queimado na imagem (modelos de imagem erram texto com acento):
  * a tela e o A4 desenham o nome por cima da ilustração.
  */
 

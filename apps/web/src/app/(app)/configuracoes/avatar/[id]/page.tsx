@@ -11,7 +11,7 @@ import { coerceEstilo, type AvatarDescricao } from "@/lib/imagem/avatar-prompt";
 import { normalizarDestino } from "@/lib/auth/destino-link";
 import { carregarIntencaoLudico } from "@/lib/ludico/intencao";
 
-// Geração de imagem (gpt-image-1) leva ~15-25s; evita timeout da action.
+// Geração de imagem (GPT Image) leva dezenas de segundos; evita timeout da action.
 export const maxDuration = 60;
 
 export default async function AvatarMembroPage(

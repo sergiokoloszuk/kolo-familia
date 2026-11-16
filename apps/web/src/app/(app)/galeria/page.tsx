@@ -9,7 +9,7 @@ import { assinarImagens } from "@/lib/storage/imagens";
 import { cn } from "@/lib/utils";
 import { GaleriaItem } from "./galeria-item";
 
-// Geração de cena (gpt-image-1) leva ~15-25s; evita timeout da action.
+// Geração de cena (GPT Image) leva dezenas de segundos; evita timeout da action.
 export const maxDuration = 60;
 
 const TIPOS_LABEL: Record<string, string> = {
