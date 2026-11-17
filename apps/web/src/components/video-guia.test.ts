@@ -226,10 +226,10 @@ describe("a Ayla oferece o vídeo uma vez, e por último", () => {
   });
 
   it("o link vem DEPOIS da ajuda, nunca antes", () => {
-    const iAjuda = TEMPLATES.indexOf("Você não precisa saber o que pedir");
+    const iAjuda = TEMPLATES.indexOf("Ou me conte o que está pegando hoje");
     const iLink = TEMPLATES.indexOf("params.linkGuia");
     expect(iLink).toBeGreaterThan(iAjuda);
-    expect(TEMPLATES).toMatch(/se ela\n    \/\/ abrir com "assista nosso vídeo", virou propaganda/);
+    expect(TEMPLATES).toMatch(/Guia da Kolo, se quiser ver depois/);
   });
 
   it("sem link, a mensagem continua exatamente como era", () => {

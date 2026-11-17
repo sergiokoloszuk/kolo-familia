@@ -24,6 +24,7 @@ const registros: Registro[] = [];
 const mundoRef: { atual: Mundo | null; alvo: string | null } = { atual: null, alvo: null };
 /** Quantas vezes cada caminho gerou texto neste turno. */
 const chamadas = { experimental: 0, legacy: 0, decisao: 0,};
+const promptsExperimentais: string[] = [];
 
 vi.mock("./whatsappSender", () => ({
   enviarTexto: async (p: { phoneE164: string; texto: string }) => {
@@ -57,7 +58,10 @@ vi.mock("@/lib/ia/provider", () => ({
         tokensIn: 10, tokensOut: 10, cacheRead: 0, cacheWrite: 0, ms: 1,
       };
     }
-    if (sys.includes("Você é **AYLA**")) chamadas.experimental++;
+    if (sys.includes("Você é **AYLA**")) {
+      chamadas.experimental++;
+      promptsExperimentais.push(sys);
+    }
     else chamadas.legacy++;
     return {
       // ⚠️ O CAMINHO NOVO PEDE ENVELOPE — PEND-187B, 10/09/2026. Devolver texto
@@ -107,6 +111,7 @@ beforeEach(() => {
   chamadas.experimental = 0;
   chamadas.legacy = 0;
   registros.length = 0;
+  promptsExperimentais.length = 0;
 });
 afterEach(() => {
   if (ENV_ORIGINAL === undefined) delete process.env.AYLA_EXPERIMENTAL_FAMILY_IDS;
@@ -154,6 +159,123 @@ describe("o portão: quem entra", () => {
 });
 
 describe("UMA resposta, nunca duas", () => {
+  it("aceite da abertura faz uma pergunta etária; resposta concreta recebe ajuda sem repetir boas-vindas", async () => {
+    const mundo = familia();
+    process.env.AYLA_EXPERIMENTAL_FAMILY_IDS = mundo.familyId;
+    mundo.db.semear("ayla_messages", [{
+      id: "boas-vindas-sintetica",
+      family_account_id: mundo.familyId,
+      membro_atipico_id: mundo.membros.Daniel,
+      direcao: "outbound",
+      tipo: "boas_vindas",
+      texto: "Oi! Se topar, faço até 3 perguntas rápidas.",
+      created_at: new Date(Date.now() - 60_000).toISOString(),
+    }]);
+
+    await processInbound(mundo.db.cliente(), inboundDe(mundo, "sim"));
+    expect(mundo.enviadas).toHaveLength(1);
+    expect(mundo.enviadas[0].texto).toContain("momento da tarefa");
+    expect(mundo.db.linhas("ayla_messages").at(-1)?.tipo).toBe("primeiro_contato_pergunta");
+    expect(chamadas.experimental + chamadas.legacy).toBe(0);
+
+    await processInbound(mundo.db.cliente(), inboundDe(mundo, "Ao guardar o brinquedo para sair de casa."));
+    expect(chamadas.experimental).toBe(1);
+    expect(promptsExperimentais.at(-1)).toContain("<resposta_primeiro_contato>");
+    expect(promptsExperimentais.at(-1)).toContain("momento certo, ação pequena");
+    expect(mundo.enviadas).toHaveLength(2);
+  });
+
+  it("recusar perguntas depois da abertura encerra sem insistir nem chamar modelo", async () => {
+    const mundo = familia();
+    process.env.AYLA_EXPERIMENTAL_FAMILY_IDS = mundo.familyId;
+    mundo.db.semear("ayla_messages", [{
+      id: "boas-vindas-sintetica",
+      family_account_id: mundo.familyId,
+      membro_atipico_id: mundo.membros.Daniel,
+      direcao: "outbound",
+      tipo: "boas_vindas",
+      texto: "Oi! Se topar, faço até 3 perguntas rápidas.",
+      created_at: new Date(Date.now() - 60_000).toISOString(),
+    }]);
+    await processInbound(mundo.db.cliente(), inboundDe(mundo, "agora não"));
+    expect(mundo.enviadas).toHaveLength(1);
+    expect(mundo.enviadas[0].texto).toContain("Tudo bem");
+    expect(mundo.db.linhas("ayla_messages").at(-1)?.tipo).toBe("primeiro_contato_recusa");
+    expect(chamadas.experimental + chamadas.legacy).toBe(0);
+  });
+
+  it("idade corrigida pela família prevalece hoje e no turno seguinte sem mudar o nascimento", async () => {
+    const mundo = familia();
+    process.env.AYLA_EXPERIMENTAL_FAMILY_IDS = mundo.familyId;
+
+    await processInbound(mundo.db.cliente(), inboundDe(mundo, "Daniel tem 4 anos. Na hora de sair, ele quer continuar brincando."));
+    const evento = mundo.db.linhas("ayla_messages").find((m) => m.tipo === "idade_reportada");
+    expect(evento?.membro_atipico_id).toBe(mundo.membros.Daniel);
+    expect((evento?.metadata as { idade_reportada?: { anos: number } })?.idade_reportada?.anos).toBe(4);
+    expect(promptsExperimentais.at(-1)).toContain("Daniel, 4 anos");
+    expect(promptsExperimentais.at(-1)).toContain("diverge da data de nascimento cadastrada");
+    expect(mundo.db.linhas("membros_atipicos")[0].data_nascimento).toBe("2016-03-19");
+
+    await processInbound(mundo.db.cliente(), inboundDe(mundo, "E amanhã, antes de chamar para sair?"));
+    expect(promptsExperimentais.at(-1)).toContain("Daniel, 4 anos");
+    expect(mundo.db.linhas("ayla_messages").filter((m) => m.tipo === "idade_reportada")).toHaveLength(1);
+
+    await processInbound(mundo.db.cliente(), inboundDe(mundo, "Corrigindo: Daniel tem 10 anos."));
+    await processInbound(mundo.db.cliente(), inboundDe(mundo, "E agora, antes de sair?"));
+    expect(promptsExperimentais.at(-1)).toContain("Daniel, 10 anos");
+  });
+
+  it("idade nomeada de uma criança não corrige a idade da irmã", async () => {
+    const mundo = montarMundo({
+      nomeMae: "Ana",
+      criancas: [
+        { nome: "Lia", nascimento: "2024-02-10", genero: "feminino" },
+        { nome: "Bia", nascimento: "2019-04-10", genero: "feminino" },
+      ],
+    });
+    mundoRef.atual = mundo;
+    mundoRef.alvo = mundo.membros.Lia;
+    process.env.AYLA_EXPERIMENTAL_FAMILY_IDS = mundo.familyId;
+
+    await processInbound(mundo.db.cliente(), inboundDe(mundo, "Lia tem 4 anos. Como ajudo Lia a sair da brincadeira?"));
+    const evento = mundo.db.linhas("ayla_messages").find((m) => m.tipo === "idade_reportada");
+    expect(evento?.membro_atipico_id).toBe(mundo.membros.Lia);
+    expect((evento?.metadata as { idade_reportada?: { anos: number } })?.idade_reportada?.anos).toBe(4);
+    expect(promptsExperimentais.at(-1)).toContain("Lia, 4 anos");
+    expect(promptsExperimentais.at(-1)).not.toContain("Bia, 4 anos");
+  });
+
+  it("idade e vínculo corrigidos no mesmo turno sobrevivem sem atribuição à irmã", async () => {
+    const mundo = montarMundo({
+      nomeMae: "Ana",
+      criancas: [
+        { nome: "Lia", nascimento: "2024-02-10", genero: "feminino" },
+        { nome: "Bia", nascimento: "2019-04-10", genero: "feminino" },
+      ],
+    });
+    mundoRef.atual = mundo;
+    mundoRef.alvo = mundo.membros.Lia;
+    process.env.AYLA_EXPERIMENTAL_FAMILY_IDS = mundo.familyId;
+
+    await processInbound(mundo.db.cliente(), inboundDe(mundo, "Não sou mãe da Lia, sou tia dela. Lia tem 4 anos."));
+    const registro = mundo.db.linhas("ayla_messages").find((m) => m.tipo === "identidade_reportada");
+    expect(registro?.membro_atipico_id).toBe(mundo.membros.Lia);
+    const meta = registro?.metadata as { idade_reportada?: { anos: number }; vinculo_reportado?: { tipo: string } };
+    expect(meta?.idade_reportada?.anos).toBe(4);
+    expect(meta?.vinculo_reportado?.tipo).toBe("tia");
+    expect(promptsExperimentais.at(-1)).toContain("Lia, 4 anos");
+    expect(promptsExperimentais.at(-1)).toContain("tia (informado pela família");
+    expect(promptsExperimentais.at(-1)).not.toContain("Vínculo da pessoa que escreve com Bia");
+
+    await processInbound(mundo.db.cliente(), inboundDe(mundo, "E como posso ajudar Lia amanhã?"));
+    expect(promptsExperimentais.at(-1)).toContain("Lia, 4 anos");
+    expect(promptsExperimentais.at(-1)).toContain("tia (informado pela família");
+
+    await processInbound(mundo.db.cliente(), inboundDe(mundo, "Correção: não sou tia da Lia."));
+    await processInbound(mundo.db.cliente(), inboundDe(mundo, "E Lia amanhã?"));
+    expect(promptsExperimentais.at(-1)).not.toContain("tia (informado pela família");
+  });
+
   it("MORDE: família NA allowlist é respondida SÓ pela experimental", async () => {
     const mundo = familia();
     process.env.AYLA_EXPERIMENTAL_FAMILY_IDS = mundo.familyId;

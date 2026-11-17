@@ -108,43 +108,42 @@ describe("a abertura ensina o que a Ayla faz", () => {
     expect(m).toContain("Eu sou a Ayla");
   });
 
-  it("diz a que veio, com a criança nomeada", () => {
-    expect(m).toContain("te ajudar nos desafios do dia a dia com o Bruno");
+  it("diz a que veio, com a criança nomeada e sem promessa clínica", () => {
+    expect(m).toContain("Quero conhecer melhor Bruno para adaptar a ajuda");
   });
 
   it("devolve os TRÊS desafios que a família marcou", () => {
     expect(m).toContain("a comunicação");
     expect(m).toContain("a alimentação");
     expect(m).toContain("as emoções e as crises");
-    expect(m).toContain("Pelo que você contou quando entrou");
+    expect(m).toContain("Você marcou");
   });
 
-  it("explica o território: estratégias, o que fazer/falar, brincadeiras", () => {
-    expect(m).toContain("estratégias práticas");
-    expect(m).toContain("o que fazer e o que falar");
-    expect(m).toContain("brincadeiras e atividades");
-    expect(m).toContain("trabalhar essas habilidades");
+  it("não repete catálogo nem vira uma apresentação longa", () => {
+    expect(m.length).toBeLessThan(400);
+    expect(m).not.toMatch(/estratégias práticas|brincadeiras e atividades|plano estratégico/i);
   });
 
-  it("pergunta por onde começar, convida áudio e promete entrega", () => {
-    expect(m).toContain("Por qual você quer começar?");
-    expect(m).toContain("*áudio*");
-    expect(m).toContain("primeira ideia prática");
+  it("oferece perguntas opcionais ou relato livre com ajuda no próximo turno", () => {
+    expect(m).toContain("até 3 perguntas rápidas");
+    expect(m).toContain("me conte o que está pegando hoje");
+    expect(m).toContain("já começamos por isso");
+    expect(m).toContain("por áudio");
   });
 
   it("não vira catálogo nem promete artefato", () => {
     expect(m).not.toMatch(/relatório|PDF|plano estratégico/i);
   });
 
-  it("com um desafio só, concorda no singular", () => {
+  it("com um desafio só, devolve a escolha sem atribuir emoção", () => {
     const um = templateBoasVindasComDesafio({
       nomeMae: "Renata",
       nomeMembro: "Lia",
       genero: "feminino",
       desafios: ["sono"],
     });
-    expect(um).toContain("tem pesado é o sono");
-    expect(um).toContain("com a Lia");
+    expect(um).toContain("Você marcou o sono");
+    expect(um).toContain("conhecer melhor Lia");
   });
 
   it("sem nome utilizável da criança, a frase não fica quebrada", () => {
@@ -155,6 +154,6 @@ describe("a abertura ensina o que a Ayla faz", () => {
       desafios: ["sono"],
     });
     expect(semNome).not.toContain("Cuido de várias");
-    expect(semNome).toContain("nos desafios do dia a dia.");
+    expect(semNome).toContain("conhecer melhor a pessoa que você acompanha");
   });
 });

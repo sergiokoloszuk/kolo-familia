@@ -111,20 +111,20 @@ describe("a primeira mensagem não pede que a mãe saiba pedir", () => {
   });
 
   it("diz, com todas as letras, que ela não precisa saber o que pedir", () => {
-    expect(intro).toMatch(/Você não precisa saber o que pedir/);
+    expect(intro).toMatch(/me conte o que está pegando hoje e já começamos por isso/);
   });
 
   it("mostra que já conhece a criança pelo cadastro", () => {
-    expect(intro).toMatch(/Pelo que você contou quando entrou/);
+    expect(intro).toMatch(/Você marcou .+ quando entrou/);
   });
 
   it("NÃO nomeia nenhuma ferramenta", () => {
     expect(intro).not.toMatch(/plano estratégico|rotina visual|relatório|história social/i);
   });
 
-  it("continua oferecendo áudio e prometendo a primeira ideia prática", () => {
-    expect(intro).toContain("*áudio*");
-    expect(intro).toMatch(/primeira ideia prática/);
+  it("continua oferecendo áudio e ajuda sem perguntas obrigatórias", () => {
+    expect(intro).toContain("por áudio");
+    expect(intro).toMatch(/Ou me conte .+ já começamos por isso/);
   });
 
   it("ainda cita os desafios reais — e só eles", () => {

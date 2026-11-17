@@ -145,41 +145,38 @@ describe("família nova — a introdução ensina o território", () => {
   });
 
   it("deixa claro que veio do que ELA contou — não é inferência da Ayla", () => {
-    expect(intro).toMatch(/Pelo que você contou quando entrou/);
+    expect(intro).toMatch(/Você marcou .+ quando entrou/);
   });
 
-  it("delimita o território e pergunta por onde começar", () => {
-    expect(intro).toMatch(/estratégias práticas/);
-    expect(intro).toMatch(/brincadeiras e atividades/);
-    expect(intro).toMatch(/Por qual você quer começar\?/);
+  it("oferece ajuda a partir da situação concreta ou perguntas opcionais", () => {
+    expect(intro).toMatch(/Quero conhecer melhor Théo para adaptar a ajuda/);
+    expect(intro).toMatch(/até 3 perguntas rápidas/);
+    expect(intro).toMatch(/Ou me conte o que está pegando hoje/);
   });
 
-  it("promete uma primeira ideia prática, não um questionário", () => {
-    expect(intro).toMatch(/primeira ideia prática/);
-    expect(intro).toContain("*áudio*");
+  it("não obriga questionário nem adia a ajuda se houver um relato", () => {
+    expect(intro).toContain("já começamos por isso");
+    expect(intro).toContain("por áudio");
   });
 
   it("NÃO lista o catálogo de recursos nem promete artefato", () => {
     expect(intro).not.toMatch(/relatório|PDF|história|plano estratégico/i);
   });
 
-  it("usa o nome da criança e concorda o gênero", () => {
-    // A abertura de 02/08 nomeia a criança na APRESENTAÇÃO ("com o Théo"), e
-    // não mais na frase dos desafios — que ficou mais limpa por isso.
-    expect(intro).toContain("com o Théo");
-    expect(intro).toContain("pro Théo");
+  it("usa o primeiro nome da criança sem presumir gênero", () => {
+    expect(intro).toContain("conhecer melhor Théo");
     expect(intro).toContain("Eu sou a Ayla");
   });
 
-  it("com um desafio só, a frase fica no singular", () => {
+  it("com um desafio só, devolve a escolha sem atribuir sentimento", () => {
     const um = templateBoasVindasComDesafio({
       nomeMae: "Ana",
       nomeMembro: "Lia",
       genero: "feminino",
       desafios: ["nutricional"],
     });
-    expect(um).toContain("é a alimentação");
-    expect(um).toContain("com a Lia");
+    expect(um).toContain("Você marcou a alimentação");
+    expect(um).toContain("conhecer melhor Lia");
   });
 
   it("o orquestrador manda a lista inteira, não o [0]", () => {
