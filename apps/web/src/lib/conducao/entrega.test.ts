@@ -43,19 +43,17 @@ describe("montagem das bolhas", () => {
     ].join("\n");
 
     const bolhas = dividirEmBolhas(texto);
-    expect(bolhas).toHaveLength(2);
-    expect(bolhas[0]).toBe("*O que eu faria primeiro*\nTire a comida nova do prato dele.");
-    expect(bolhas[1]).toContain("*Uma ideia pro fim de semana*\n");
+    expect(bolhas).toEqual([texto]);
   });
 
-  it("uma resposta de 4 blocos cabe em 4 bolhas, não em 8", () => {
+  it("uma orientação com quatro seções mantém seu respiro numa mensagem", () => {
     const texto = ["*A*", "", "um", "", "*B*", "", "dois", "", "*C*", "", "três", "", "*D*", "", "quatro"].join("\n");
-    expect(dividirEmBolhas(texto)).toHaveLength(4);
+    expect(dividirEmBolhas(texto)).toEqual([texto]);
   });
 
-  it("prosa corrida continua se dividindo como sempre — nada regrediu", () => {
+  it("parágrafos de uma orientação não viram bolhas separadas", () => {
     const texto = "Primeira ideia.\n\nSegunda ideia.\n\nTerceira.";
-    expect(dividirEmBolhas(texto)).toEqual(["Primeira ideia.", "Segunda ideia.", "Terceira."]);
+    expect(dividirEmBolhas(texto)).toEqual([texto]);
   });
 
   it("título com emoji também gruda", () => {
@@ -71,7 +69,7 @@ describe("montagem das bolhas", () => {
 
   it("título no fim do texto não engole o conteúdo nem some", () => {
     const bolhas = dividirEmBolhas("Alguma coisa.\n\n*Título órfão*");
-    expect(bolhas).toEqual(["Alguma coisa.", "*Título órfão*"]);
+    expect(bolhas).toEqual(["Alguma coisa.\n\n*Título órfão*"]);
   });
 
   it("o orquestrador usa o divisor — não o split cru", () => {
@@ -260,17 +258,17 @@ describe("formas de entrega", () => {
     expect(wa).toMatch(/Na dúvida, prosa/);
   });
 
-  it("NÃO reabre a resposta multi-frente que fechamos em 01/08", () => {
+  it("cuidados do mesmo episódio cabem juntos, sem abrir dificuldades independentes", () => {
     // Este é o risco número um da camada inteira.
-    expect(wa).toMatch(/NÃO abra duas dificuldades no turno/);
-    expect(wa).toMatch(/escolha UM e entregue bem/);
+    expect(wa).toMatch(/Cuidados do mesmo episódio podem ser tratados juntos/);
+    expect(wa).toMatch(/priorize dificuldades independentes sem esquecê-las/);
   });
 
-  it("um tipo de ajuda só = texto corrido, sem título nenhum", () => {
+  it("acolhimento usa prosa e cuidados paralelos usam bullets", () => {
     // A válvula de escape virou a regra: título só quando separa naturezas
     // diferentes. "Na dúvida, prosa" é a instrução, não a exceção.
     expect(wa).toMatch(/Na dúvida, prosa/);
-    expect(wa).toMatch(/são um parágrafo/);
+    expect(wa).toMatch(/cuidados paralelos usam bullets/);
   });
 
   it("a sintaxe do título é a do canal — e cada canal tem UMA", () => {

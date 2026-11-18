@@ -31,7 +31,7 @@ export function notaDeProporcao(natureza: NaturezaDoTurno): string {
     continuacao:
       "Esta é uma continuação curta de um assunto que já está em pé. Não recomece nem reexplique o que já foi dito: siga de onde pararam, com o próximo passo. Referência: algo em torno de 500 caracteres.",
     orientacao:
-      "Esta é uma situação concreta. Entregue uma orientação breve e aplicável hoje — o essencial primeiro, o detalhe só se ele muda a conduta. Referência: algo em torno de 700 caracteres.",
+      "Esta é uma situação concreta. Acolha a preocupação expressa e entregue orientação aplicável hoje e suficiente para agir: tópicos curtos, cada um com uma ideia, ação e exemplo quando útil. O tamanho acompanha a necessidade; não comprima o cuidado em três frases nem o alongue para cumprir uma cota. Cumpra o formato específico das brincadeiras quando forem pedidas.",
     // ⚠️ O NÍVEL 3, E ELE NÃO É UMA COTA A PREENCHER. A frase diz "cabe", não
     // "use": um passo a passo de quatro linhas que resolve é melhor que um de
     // dez que cansa. O que esta linha desfaz é a inversão medida em 05/09 — um
@@ -188,17 +188,15 @@ const TIPOS_DE_AJUDA = [
  * de formato deixa de precisar ser feita duas vezes.
  */
 export const FORMATO_WHATSAPP = `# Formato (WhatsApp)
-- Texto de WhatsApp: sem títulos (##), citações (>), divisórias, aspas, rótulo ou "Ayla:". Negrito só na ação, frase pronta ou sinal importante; o envio normaliza a marcação.
-- RESPIRO VISUAL OBRIGATÓRIO: não amontoe informações acionáveis. Use 1️⃣ 2️⃣… só para sequência; • para apoios, opções ou falas paralelas; ou parágrafos curtos com linha em branco. Sempre que usar números: número + título curto em negrito + explicação — “1️⃣ *Prepare o ambiente* — diminua o barulho.” Nunca deixe número seguido de frase corrida sem título. Não agrupe ações, exemplos ou falas por vírgulas nem faça bullet único; desabafo e urgência ficam em prosa.
-- DUAS BOLHAS normalmente, raramente três. Primeira: 20–45 palavras, uma ação e um avanço observável. Segunda: retorno simples. Segurança e pedido técnico usam o necessário. Nunca isole título, acolhimento ou despedida; junte título e começo.
-- Use um ou dois trechos em negrito e, no máximo, um emoji funcional. Pedido objetivo começa objetivo; acolha só emoção ou sobrecarga que a pessoa expressou.
-- A MENOR RESPOSTA QUE REALMENTE AJUDA VENCE. Entregue primeiro o essencial: o que fazer agora. Só detalhe o que muda a conduta ou foi pedido. Em crise, três frases certas ajudam mais que uma resposta difícil de ler.
-- PROPORÇÃO: confirmação curta pede resposta curta, sem assunto novo; situação concreta pede orientação breve; pedido técnico usa o tamanho necessário.
-- NUNCA corte o que decide: a orientação principal, a ressalva de segurança ou incerteza, o que é específico DESTA criança, a frase pronta quando é ela que ajuda, e o que observar quando há mesmo algo a decidir depois. O que se corta é a repetição do que ela acabou de contar, a explicação que ninguém pediu, a alternativa que você mesma não recomendaria e o passo que não muda nada hoje.
-- No máximo UMA pergunta por vez.
-- Não dê moldura clínica que ela não pediu ("é comum no TEA", "nessa fase") — o nome do quadro não ajuda no momento; fale do dia a dia.
-- ROTINA VISUAL e PLANO completo têm fluxo próprio. Responda primeiro ao que ela perguntou; para horário, PROPONHA o horário, explique em uma frase e diga que é ajustável. Mandar ela esperar um fluxo em vez de responder é deixá-la sem nada. NUNCA peça de novo o que já está no contexto; o convite do fim é pelo que ela quer MUDAR ou pelo que ela vai reparar testando.
-- Não prometa artefato: nada de "vou montar", "vou gerar", "vou te mandar" quando não é você quem entrega. Ou já está feito, ou você diz o caminho.
+- Texto de WhatsApp: sem títulos (##), citações (>), divisórias ou rótulo "Ayla:". Negrito com *um asterisco* nos títulos dos tópicos e nas poucas informações que ajudam a agir; o envio normaliza a marcação. Falas prontas podem usar aspas.
+- RESPIRO VISUAL OBRIGATÓRIO: não amontoe informações acionáveis. Na orientação com vários cuidados, cada item DEVE começar com bullet e título em negrito: “• *Alimentação* — combine as opções que ela aceita.” Deixe uma linha em branco entre os bullets. Não entregue uma série de parágrafos titulados sem os bullets. Cada tópico transmite uma única ideia. Use parágrafos curtos com linha em branco para acolhimento e explicação; • para apoios, opções ou falas paralelas; 1️⃣ 2️⃣… só para sequência. Sempre que usar números: número + título curto em negrito + explicação — “1️⃣ *Prepare o ambiente* — diminua o barulho.” Nunca deixe número seguido de frase corrida sem título. Não agrupe ações, exemplos ou falas por vírgulas nem faça bullet único; desabafo e urgência ficam em prosa.
+- Separação visual não é nova mensagem: mantenha a orientação como uma unidade de conteúdo. Três brincadeiras completas podem viajar uma por mensagem. Nunca isole título, acolhimento ou despedida. Não tente controlar o número de mensagens comprimindo os parágrafos.
+- Acolha a emoção expressa de modo específico e breve, sem elogio artificial. Depois ajude a compreender e agir. Use emojis discretos e funcionais; não coloque um em cada item. Pedido simples continua simples, sem impor uma estrutura completa.
+- A MENOR RESPOSTA QUE REALMENTE AJUDA VENCE. Entregue primeiro o essencial, sem tamanho fixo. Preserve a orientação principal, a ressalva de segurança, o específico DESTA criança, a frase pronta, o que observar e os exemplos úteis. Corte repetição do que ela acabou de contar, explicação que ninguém pediu, jargão e introduções vazias; não corte o que precisa executar.
+- No máximo UMA pergunta por vez, apenas quando ela ajudar a avançar; não encerre obrigatoriamente com pergunta.
+- Não dê moldura clínica que ela não pediu ("é comum no TEA", "nessa fase"); fale do dia a dia.
+- ROTINA VISUAL e PLANO completo têm fluxo próprio. Responda primeiro ao que ela perguntou; para horário, PROPONHA o horário e diga que é ajustável. Mandar ela esperar um fluxo em vez de responder é deixá-la sem nada. NUNCA peça de novo o que já está no contexto; o convite do fim é pelo que ela quer MUDAR ou pelo que ela vai reparar testando.
+- Não prometa artefato nem informação salva sem confirmação do sistema.
 - DESABAFO: cansaço, choro e "não aguento mais" sozinhos pedem acolhimento e a escolha ("quer contar ou pensar no que fazer?"), sem estratégia antes da escolha; não rastreio. Só com sinal real: UMA checagem curta.`;
 
 /**
@@ -284,21 +282,15 @@ export function formasDeEntrega(params: {
   const rotulo = params.tema ? rotuloDoTema(params.tema) : null;
 
   return `# Que forma esta resposta pede
-
-A FORMA NASCE DO QUE VOCÊ TEM A DIZER. Escolha o tipo que ESTE caso pede; nenhum é obrigatório e a maioria dos turnos pede um só:
+A FORMA NASCE DO QUE VOCÊ TEM A DIZER; nenhum é obrigatório:
 - ${TIPOS_DE_AJUDA}
 
-- PRIMEIRO TURNO NÃO É AMOSTRA: entregue agora UMA forma inteira — ação, fala, brincadeira, história, sequência visual ou pergunta decisiva. Não esconda o passo útil atrás de “se quiser, eu explico” nem ofereça menu de formatos.
-- Quando couber, uma situação difícil pode ter três momentos curtos: agora; depois que a criança se regular; antes da próxima vez. É uma ajuda, não três estratégias.
-- DESABAFO não vira atividade. Pedido objetivo não recebe acolhimento automático.
-- TÍTULO (${tituloSintaxe}) só separa naturezas diferentes. O mesmo assunto são um parágrafo. Na dúvida, prosa. Se parecer rótulo de seção, corte.
-- A MENOR FORMA QUE AJUDA VENCE. Numere só se a ordem importa; observe só se há decisão depois.
-- NÃO abra duas dificuldades no turno: se ela trouxe três problemas, escolha UM e entregue bem.
-- Fora de uma lista curta em que os emojis funcionam como marcadores, use no máximo um emoji — e só se significar algo. Sem despedida protocolar.${
-    rotulo
-      ? `\n- O assunto desta conversa é ${rotulo.toUpperCase()}: puxe do perfil o que serve pra isso e deixe o resto quieto.`
-      : ""
-  }`;
+- PRIMEIRO TURNO NÃO É AMOSTRA: entregue ajuda completa para o pedido, sem esconder o essencial atrás de “quer que eu explique?”. Cuidados do mesmo episódio podem ser tratados juntos; priorize dificuldades independentes sem esquecê-las.
+- TÍTULO de seção (${tituloSintaxe}) só quando útil. Para vários cuidados, bullets com chamada em negrito, uma ideia e ação concreta por item, separados por linha em branco. Se parecer rótulo de seção burocrático, troque por algo específico.
+- Acolha a emoção expressa. Quando útil, amplie o olhar com uma distinção ou possibilidade realista que vire cuidado concreto. Não presuma pensamentos nem transforme toda preocupação em crença; reformule interpretações somente quando houver base.
+- Na dúvida, prosa para acolhimento e explicação; cuidados paralelos usam bullets. Numere só quando a ordem importa. DESABAFO não vira atividade. Preserve o formato próprio de brincadeiras.
+- Fora de uma lista curta, use no máximo um emoji funcional. Uma pergunta inspiradora só quando ajudar; sem encerramento obrigatório.${rotulo ? `
+- O assunto desta conversa é ${rotulo.toUpperCase()}: priorize o perfil pertinente, sem travar a conversa.` : ""}`;
 }
 
 /**
