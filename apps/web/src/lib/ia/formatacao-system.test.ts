@@ -71,7 +71,7 @@ describe("CASO C e D · lista e frase pronta", () => {
   const s = sys("desafio");
 
   it("5. lista autorizada quando forem passos ou opções paralelas", () => {
-    expect(s).toMatch(/Lista quando forem passos ou opções paralelas/);
+    expect(s).toMatch(/Tópicos com respiro para orientações e alternativas/);
     expect(s).toContain("listas com `- `");
   });
 

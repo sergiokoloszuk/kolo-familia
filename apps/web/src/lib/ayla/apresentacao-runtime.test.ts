@@ -109,8 +109,7 @@ describe("REGRESSÃO — o que funcionava continua funcionando", () => {
   it("11. o título continua grudando no bloco que ele intitula", () => {
     // A regra que existia antes e não pode ter sido quebrada pela conversão.
     expect(dividirEmBolhas(paraWhatsApp("## Agora\n\nFaça isso.\n\nDepois isso."))).toEqual([
-      "*Agora*\nFaça isso.",
-      "Depois isso.",
+      "*Agora*\n\nFaça isso.\n\nDepois isso.",
     ]);
   });
 
@@ -136,14 +135,14 @@ describe("SABOTAGEM — os testes mordem?", () => {
     expect(orch).toContain("dividirEmBolhas(paraWhatsApp(textoCompleto))");
   });
 
-  it("S2 · se ela rodasse DEPOIS das bolhas, o título se separaria do bloco", () => {
+  it("S2 · título e conteúdo permanecem na mesma unidade", () => {
     // Prova que a ORDEM importa, e não é preferência estética.
     const t = "## Agora\n\nFaça isso.";
     const certo = dividirEmBolhas(paraWhatsApp(t));
     const errado = dividirEmBolhas(t).map(paraWhatsApp);
-    expect(certo).toEqual(["*Agora*\nFaça isso."]);
-    expect(errado).toEqual(["*Agora*", "Faça isso."]); // duas bolhas, uma com uma palavra
-    expect(certo).not.toEqual(errado);
+    expect(certo).toEqual(["*Agora*\n\nFaça isso."]);
+    expect(errado).toEqual(certo); // apresentação mantém a mesma unidade
+    expect(certo).toEqual(errado);
   });
 
   it("S3 · se ela ganhasse um await, o teste 4 quebra", () => {

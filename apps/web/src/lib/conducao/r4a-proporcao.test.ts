@@ -76,10 +76,11 @@ describe("PROPORÇÃO — cada natureza recebe a instrução certa", () => {
     expect(n).toMatch(/500/);
   });
 
-  it("6. situação concreta pede orientação breve e aplicável hoje", () => {
+  it("6. situação concreta preserva orientação aplicável e não impõe teto de 700 caracteres", () => {
     const n = notaDeProporcao("orientacao");
     expect(n).toMatch(/aplicável hoje/i);
-    expect(n).toMatch(/700/);
+    expect(n).not.toMatch(/700/);
+    expect(n).toMatch(/tamanho acompanha a necessidade/);
   });
 
   it("7. MORDE: pedido técnico NÃO pede brevidade — encurtar ali é errar", () => {

@@ -11042,6 +11042,18 @@ etapas, família ou criança. Esses totais não ligam tema, clique e cartões
 Bloco: **B · Ayla / A · Condução** · Prioridade: **P1**
 STATUS: **EM PRODUÇÃO — prova conversacional e latência ponta a ponta pendentes** · Aberta em: 2026-10-01
 
+**Candidata de 18/11/2026 — sem publicação e sem baixa:** resposta natural
+autorizada em dois parágrafos foi comparada com o modelo real e contexto
+reconstruído congelado. A candidata troca as restrições de entrega por
+bullets, títulos em negrito, respiro e orientação suficiente ao pedido,
+preservando Core v12, DNA, skills, perfil, memória e acervo. Reaproveita o
+agrupador isolado da PR visual, sem trazer as demais alterações da frente.
+Suíte final: 4.335 aprovados, sete pulados; build e typecheck passaram.
+As duas gerações finais trouxeram quatro bullets; a qualidade inspiradora
+e a apresentação no canal real ainda dependem de avaliação humana.
+Preview, CI, merge e produção são portões separados. A ficha continua aberta.
+Detalhes e limites: [relatório](auditorias/ayla-entrega-2026-11-18.md).
+
 O Core ativo v11 orienta aprofundamento progressivo, amostra no primeiro turno
 e convites como “se quiser, eu explico”. Isso conflita com a experiência
 aprovada: primeira ajuda curta e completa, uma forma escolhida pela Ayla, dois

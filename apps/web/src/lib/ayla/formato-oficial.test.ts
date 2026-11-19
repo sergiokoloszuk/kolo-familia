@@ -122,10 +122,10 @@ describe("A · a regra de formato chegou ao caminho OFICIAL", () => {
     expect(FORMATO_WHATSAPP).toMatch(/número \+ título curto em negrito \+ explicação/);
     expect(FORMATO_WHATSAPP).toMatch(/sem título/);
     expect(FORMATO_WHATSAPP).not.toMatch(/sem listas com - ou •/i);
-    expect(FORMATO_WHATSAPP).toMatch(/DUAS BOLHAS/);
-    expect(FORMATO_WHATSAPP).toMatch(/20–45 palavras/);
-    expect(FORMATO_WHATSAPP).toMatch(/um ou dois trechos em negrito/i);
-    expect(FORMATO_WHATSAPP).toMatch(/no máximo, um emoji funcional/i);
+    expect(FORMATO_WHATSAPP).toMatch(/unidade de conteúdo/);
+    expect(FORMATO_WHATSAPP).not.toMatch(/20–45 palavras/);
+    expect(FORMATO_WHATSAPP).toMatch(/nos títulos dos tópicos/);
+    expect(FORMATO_WHATSAPP).toMatch(/emojis discretos e funcionais/i);
   });
 
   it("3b. MORDE: negrito só é liberado porque o envio normaliza a marcação", () => {
@@ -134,7 +134,7 @@ describe("A · a regra de formato chegou ao caminho OFICIAL", () => {
     // é exatamente o defeito medido em 65,2% das respostas após o rollout de
     // 17/08. Se alguém remover `paraWhatsApp` de `enviarTexto`, este teste cai
     // e a regra do prompt precisa voltar atrás no mesmo commit.
-    expect(FORMATO_WHATSAPP).toMatch(/Negrito só na ação, frase pronta ou sinal importante/);
+    expect(FORMATO_WHATSAPP).toMatch(/o envio normaliza a marcação/);
     const sender = readFileSync(
       resolve(process.cwd(), "src/lib/ayla/whatsappSender.ts"),
       "utf8",
