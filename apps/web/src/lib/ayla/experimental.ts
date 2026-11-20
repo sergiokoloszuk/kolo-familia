@@ -95,10 +95,17 @@ import {
   rotulosConhecidos,
   fatosDisponiveis,
   interessesAtuais,
+  type LinhaPerfilVivo,
 } from "./experimental-contexto";
 import { pronomesPara, type Genero } from "./pronomes";
 import { resolverFoco, blocoDeFoco, type Foco } from "./experimental-foco";
 import { lerEventos, eventosRelevantes, blocoDeEventos } from "./experimental-memoria";
+import {
+  classificarInteresses,
+  etiquetaDaFala,
+  lerMencoesRecentes,
+  LEGENDA_FALAS_DATADAS,
+} from "./memoria-temporal";
 import { BLOCO_PEDIDO_BRINCADEIRA, auditarBrincadeiras, blocoMecanicasBrincadeira, pedidoExplicitoDeBrincadeira } from "./pedido-brincadeira";
 import { DIRETRIZES_BRINCADEIRA, REGRA_BRINCADEIRA_SE_SURGIR } from "@/lib/conducao/brincadeira-diretrizes";
 import { recuperarBoasPraticas, blocoBoasPraticas } from "@/lib/conhecimento/recuperar";
@@ -254,6 +261,8 @@ type Fala = {
   texto: string | null;
   membro_atipico_id: string | null;
   metadata?: Record<string, unknown> | null;
+  /** A idade da fala decide se ela entra na conversa recente (ver `etiquetaDaFala`). */
+  created_at?: string | null;
 };
 
 export type TurnoExperimental = {
@@ -513,7 +522,7 @@ async function montarContexto(
   // `Promise.all` só, ignorando as dependências. Esse número era um teto
   // teórico, não uma promessa.
   const tOnda1 = Date.now();
-  const [{ data: perfilFamilia }, { data: membros }, { data: falas }, perfilDaFamilia] =
+  const [{ data: perfilFamilia }, { data: membros }, { data: falas }, perfilDaFamilia, mencoes] =
     await Promise.all([
     supabase
       .from("family_profiles")
@@ -530,12 +539,15 @@ async function montarContexto(
       .from("ayla_messages")
       // ⚠️ `metadata` NA MESMA CONSULTA — Gate B. É onde viaja a lacuna que o
       // turno anterior perguntou. Uma coluna a mais, nenhuma query nova.
-      .select("direcao, texto, membro_atipico_id, metadata")
+      .select("direcao, texto, membro_atipico_id, metadata, created_at")
       .eq("family_account_id", familyId)
       .order("created_at", { ascending: false })
       .limit(12),
     // Só depende de `familyId` — nada aqui espera a criança ser resolvida.
     lerPerfilFamilia(supabase, familyId),
+    // ⚠️ A EVIDÊNCIA DE QUE UM INTERESSE AINDA VALE — 19/11/2026. Corre ao lado
+    // das outras: nenhuma espera nova em série. Ver `memoria-temporal.ts`.
+    lerMencoesRecentes(supabase, familyId),
   ]);
 
   const lista = (membros ?? []) as Membro[];
@@ -586,6 +598,17 @@ async function montarContexto(
   // encerrado não paga mais. Aqui entra só identidade: quem é a criança.
   const rotulosPorMembro: string[] = [];
   let fatosDoTurno = 0;
+  // Interesse sem evidência dos últimos 90 dias não chega ao modelo.
+  const interessesRecentesDe = (pv: LinhaPerfilVivo | null, membroId: string) =>
+    classificarInteresses({
+      interesses: interessesAtuais(pv),
+      mencoes,
+      membroId,
+      perfilCriadoEm: pv?.created_at ?? null,
+      preferenciasAtualizadasEm: String(
+        ((pv?.categorias_extras?.preferencias ?? {}) as { atualizado_em?: unknown }).atualizado_em ?? "",
+      ) || null,
+    }).recentes;
   emFoco.forEach((m, i) => {
     const membroCompleto = lista.find((x) => x.id === m.id) ?? null;
     if (modo === "pos_trial") {
@@ -598,7 +621,7 @@ async function montarContexto(
         i === 0 && nomeResponsavel ? `Responsável: ${nomeResponsavel}` : "",
         `Criança: ${membroCompleto?.nome ?? "(sem nome)"}${idade != null ? `, ${idade} anos` : ""}`,
         p.generoDefinido ? `Como falar dela: ${p.sujeito}/${p.possessivo}` : "",
-        interessesAtuais(pv).length ? `Interesses: ${interessesAtuais(pv).join(", ")}` : "",
+        interessesRecentesDe(pv, m.id).length ? `Interesses: ${interessesRecentesDe(pv, m.id).join(", ")}` : "",
       ]
         .filter(Boolean)
         .join("\n");
@@ -609,6 +632,7 @@ async function montarContexto(
       nomeResponsavel: i === 0 ? nomeResponsavel : null,
       membro: membroCompleto,
       perfilVivo: perfis[i] ?? null,
+      interessesRecentes: interessesRecentesDe(perfis[i] ?? null, m.id),
       // O assunto do turno decide QUAL domínio ganha profundidade. Já veio do
       // classificador que rodou acima — nenhuma consulta, nenhum modelo novo.
       skills,
@@ -676,17 +700,27 @@ async function montarContexto(
   // dono foi o que produziu o caso Mario→Manu de 07/08/2026.
   const nomePorId = new Map(lista.map((m) => [m.id, m.nome ?? "?"]));
   const idsEmFoco = new Set(emFoco.map((m) => m.id));
+  // ⚠️ A CONVERSA RECENTE TEM IDADE — 19/11/2026. Até 72 h entra como de
+  // agora; de 3 a 30 dias entra datada; depois disso não entra (perfil e
+  // eventos guardam o que ficou). Antes, a troca de seis meses atrás chegava
+  // aqui sem data, como se fosse de ontem. Ver `memoria-temporal.ts`.
+  const agoraDoTurno = new Date();
+  let haFalaDatada = false;
   const historico = ((falas ?? []) as Fala[])
     .slice()
     .reverse()
     .filter((f) => (f.texto ?? "").trim())
-    .map((f) => {
+    .flatMap((f) => {
+      const etiqueta = etiquetaDaFala(f.created_at, agoraDoTurno);
+      if (etiqueta === null) return [];
+      if (etiqueta) haFalaDatada = true;
       const quem = f.direcao === "inbound" ? "Responsável" : "Ayla";
       const dono = f.membro_atipico_id;
       // Só etiqueta o que é de OUTRA criança: marcar a da vez em toda linha
       // vira ruído e ensina o modelo a repetir o nome.
       const sobre = dono && !idsEmFoco.has(dono) ? nomePorId.get(dono) : null;
-      return sobre ? `${quem} (sobre ${sobre}): ${f.texto}` : `${quem}: ${f.texto}`;
+      const prefixo = etiqueta ? `${etiqueta} ` : "";
+      return [sobre ? `${prefixo}${quem} (sobre ${sobre}): ${f.texto}` : `${prefixo}${quem}: ${f.texto}`];
     });
 
   // ⚠️ A CONVERSA DO SIMULADOR ENTRA AQUI, NO FIM — depois do histórico real e
@@ -719,7 +753,7 @@ async function montarContexto(
             : "",
           blocoDeFoco(foco),
           historico.length
-            ? `<conversa_recente>${NL}${historico.slice(-10).join(NL)}${NL}</conversa_recente>`
+            ? `<conversa_recente>${NL}${haFalaDatada ? LEGENDA_FALAS_DATADAS + NL : ""}${historico.slice(-10).join(NL)}${NL}</conversa_recente>`
             : "",
         ]
       : [
@@ -742,7 +776,7 @@ async function montarContexto(
           blocoDaFamilia(perfilDaFamilia),
           blocoDeEventos(eventosRelevantes(eventos, mensagem)),
           historico.length
-            ? `<conversa_recente>${NL}${historico.slice(-10).join(NL)}${NL}</conversa_recente>`
+            ? `<conversa_recente>${NL}${haFalaDatada ? LEGENDA_FALAS_DATADAS + NL : ""}${historico.slice(-10).join(NL)}${NL}</conversa_recente>`
             : "",
         ];
   // ⚠️ A CONTINUIDADE VEM DEPOIS DO HISTÓRICO, E POR ISSO — 05/09/2026.
@@ -806,7 +840,8 @@ async function montarContexto(
   // confirmações) ficam abaixo de 200. Um menu não conta por mais longo que
   // seja — é exatamente o que esta rede existe para não confundir com ajuda.
   const jaHouveOrientacao = historico.some((l) => {
-    if (!l.startsWith("Ayla")) return false;
+    // A etiqueta de data não muda quem falou.
+    if (!/^(\[há \d+ dias\] )?Ayla/.test(l)) return false;
     const corpo = l.slice(l.indexOf(":") + 1).trim();
     return corpo.length >= 200 && !ehMenuDeAlternativas(corpo);
   });

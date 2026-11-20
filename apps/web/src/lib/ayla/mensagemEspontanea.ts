@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { classificarInteresses, lerMencoesRecentes } from "./memoria-temporal";
 import { getAylaAnthropicClient, AYLA_MODEL } from "./anthropic";
 import { logarUsoApi } from "@/lib/billing/logar";
 import {
@@ -182,6 +183,7 @@ async function loadContext(
     { data: conta },
     { data: sub },
     { data: inbound },
+    mencoes,
   ] = await Promise.all([
     supabase
       .from("family_profiles")
@@ -196,13 +198,14 @@ async function loadContext(
       .order("created_at", { ascending: true }),
     supabase
       .from("perfil_vivo_membro")
-      .select("essencial, como_e, corpo_rotina, desafios_regulacao, sensorial, categorias_extras")
+      .select("essencial, como_e, corpo_rotina, desafios_regulacao, sensorial, categorias_extras, created_at")
       .eq("membro_atipico_id", membroFocoId)
       .maybeSingle(),
     supabase.from("planos").select("id").eq("family_account_id", familyId).limit(1),
     supabase.from("family_accounts").select("created_at").eq("id", familyId).maybeSingle(),
     supabase.from("subscription_accesses").select("status").eq("family_account_id", familyId).maybeSingle(),
     supabase.from("ayla_messages").select("id").eq("family_account_id", familyId).eq("direcao", "inbound").limit(1),
+    lerMencoesRecentes(supabase, familyId),
   ]);
 
   if (!membros || membros.length === 0) return null;
@@ -235,11 +238,22 @@ async function loadContext(
     .filter((k) => textoDe(k))
     .map((k) => ({ dominio: k, label: DOMINIO_LABEL[k], texto: textoDe(k) }));
   const temasSemInfo = DOMINIOS_CRIANCA.filter((k) => !textoDe(k)).map((k) => DOMINIO_LABEL[k]);
-  const interesses = (
+  const interessesDoPerfil = (
     ((extras.preferencias as { temas?: unknown } | undefined)?.temas as string[] | undefined) ??
     ((kv as { como_e?: { interesses?: unknown } } | null)?.como_e?.interesses as string[] | undefined) ??
     []
   ).filter((x): x is string => typeof x === "string" && !!x.trim());
+  // ⚠️ SÓ O INTERESSE COM EVIDÊNCIA DOS ÚLTIMOS 90 DIAS — 19/11/2026. A
+  // espontânea "você sabe que ele ama: álbum da Copa" seis meses depois era
+  // uma das portas do defeito, e o texto dela voltava ao histórico.
+  const interesses = classificarInteresses({
+    interesses: interessesDoPerfil,
+    mencoes,
+    membroId: membroFocoId,
+    perfilCriadoEm: (kv as { created_at?: string | null } | null)?.created_at ?? null,
+    preferenciasAtualizadasEm:
+      ((extras.preferencias as { atualizado_em?: string } | undefined)?.atualizado_em ?? null),
+  }).recentes;
 
   // PRIMEIRO nome, sempre. Com o nome cru, a Ayla escrevia "Ryan Lucas de
   // Oliveira Feitosa" três vezes na MESMA mensagem (caso real, 27-29/07) —
