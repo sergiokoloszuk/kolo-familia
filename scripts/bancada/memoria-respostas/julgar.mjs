@@ -23,9 +23,13 @@ for (const l of readFileSync(resolve(RAIZ, "apps/web/.env.local"), "utf8").split
 instalarFetch();
 
 const VERSAO = process.env.VERSAO ?? "v0";
-const JUIZ = process.env.JUIZ ?? "claude-sonnet-4-6";
+// JUIZ_PROVIDER=openai: juiz cruzado para respostas geradas por Claude — o juiz
+// padrão (Sonnet) julgaria a própria família. Vai para arquivo separado, para
+// não misturar com o painel, que segue com o juiz Anthropic.
+const JUIZ_PROVIDER = process.env.JUIZ_PROVIDER ?? "anthropic";
+const JUIZ = process.env.JUIZ ?? (JUIZ_PROVIDER === "openai" ? "gpt-5.6-luna" : "claude-sonnet-4-6");
 const RES = resolve(MON, "resultados", `${VERSAO}.json`);
-const ARQ = resolve(MON, "resultados", `${VERSAO}.julgamentos.json`);
+const ARQ = resolve(MON, "resultados", `${VERSAO}.julgamentos${JUIZ_PROVIDER === "openai" ? ".openai" : ""}.json`);
 const res = JSON.parse(readFileSync(RES, "utf8"));
 const jul = existsSync(ARQ) ? JSON.parse(readFileSync(ARQ, "utf8")) : { versao: VERSAO, juiz: JUIZ, itens: {} };
 
@@ -80,6 +84,24 @@ function descreverCaso(c) {
 async function julgar(item) {
   const c = POR_ID[item.caso];
   const conteudo = `${descreverCaso(c)}\n\nMENSAGEM DA FAMÍLIA (turno ${item.turno}):\n"${item.mensagem}"\n\nRESPOSTA DA AYLA:\n"""\n${item.texto || "(sem resposta)"}\n"""`;
+  if (JUIZ_PROVIDER === "openai") {
+    const r = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: JUIZ,
+        max_completion_tokens: 4000,
+        reasoning_effort: "medium",
+        response_format: { type: "json_object" },
+        messages: [{ role: "system", content: RUBRICA }, { role: "user", content: conteudo }],
+      }),
+    });
+    const j = await r.json();
+    if (!r.ok) throw new Error(`juiz HTTP ${r.status}: ${j?.error?.message ?? ""}`);
+    const txt = j.choices?.[0]?.message?.content ?? "";
+    const m = txt.match(/\{[\s\S]*\}/);
+    return JSON.parse(m ? m[0] : txt);
+  }
   const r = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: { "x-api-key": process.env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json" },

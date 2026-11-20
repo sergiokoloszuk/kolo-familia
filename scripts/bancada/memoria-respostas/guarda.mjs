@@ -75,12 +75,67 @@ export const ultima = { corpo: null, custo: 0 };
 let emVoo = 0;
 let fila = Promise.resolve();
 
+/**
+ * COMPARAÇÃO DE MODELOS SEM TOCAR NO CÓDIGO DE PRODUÇÃO.
+ *
+ * O caminho oficial fixa `openai`/`gpt-5.6-luna`/esforço `low`. Para medir
+ * outro modelo, a bancada troca a chamada AQUI, na rede, e o turno inteiro
+ * (contexto, Core, envelope, fronteiras) continua byte a byte o de produção.
+ *   MODELO_BANCADA=luna-medium → mesmo corpo, `reasoning_effort: "medium"`;
+ *   MODELO_BANCADA=sonnet → o corpo chat/completions vira /v1/messages da
+ *     Anthropic e a resposta volta no formato da OpenAI. O envelope JSON
+ *     (`response_format`) não existe lá: o esquema vai como instrução no system
+ *     e o JSON é recortado do texto — adaptação da bancada, não do produto.
+ */
+const MODELO_BANCADA = process.env.MODELO_BANCADA ?? "luna-low";
+
+async function chamarComoSonnet(rede, init) {
+  const corpo = JSON.parse(init.body);
+  const [sys, ...msgs] = corpo.messages;
+  const esquema = corpo.response_format?.json_schema?.schema;
+  const system =
+    sys.content +
+    (esquema
+      ? `\n\nResponda SOMENTE com um objeto JSON válido, sem texto fora dele, neste esquema:\n${JSON.stringify(esquema)}`
+      : "");
+  const r = await rede("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "x-api-key": process.env.ANTHROPIC_API_KEY ?? "",
+      "anthropic-version": "2023-06-01",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-6",
+      max_tokens: corpo.max_completion_tokens ?? 1200,
+      system,
+      messages: msgs.map((m) => ({ role: m.role, content: m.content })),
+    }),
+    signal: AbortSignal.timeout(120000),
+  });
+  const j = await r.json();
+  if (!r.ok) return { r: new Response(JSON.stringify(j), { status: r.status }), j };
+  let texto = (j.content ?? []).filter((b) => b.type === "text").map((b) => b.text).join("");
+  if (esquema) texto = texto.match(/\{[\s\S]*\}/)?.[0] ?? texto;
+  const conv = {
+    choices: [{ message: { content: texto }, finish_reason: j.stop_reason === "max_tokens" ? "length" : "stop" }],
+    usage: { prompt_tokens: j.usage?.input_tokens ?? 0, completion_tokens: j.usage?.output_tokens ?? 0 },
+  };
+  return { r: new Response(JSON.stringify(conv), { status: 200, headers: { "content-type": "application/json" } }), j };
+}
+
 export function instalarFetch() {
   const rede = globalThis.fetch;
   globalThis.fetch = async (input, init) => {
     const url = String(input?.url ?? input);
-    const provider = Object.entries(ENDPOINTS).find(([p]) => url.startsWith(p))?.[1];
+    let provider = Object.entries(ENDPOINTS).find(([p]) => url.startsWith(p))?.[1];
     if (!provider) throw new Error("rede fora do endpoint autorizado: " + url.split("?")[0]);
+    const comoSonnet = provider === "openai" && MODELO_BANCADA === "sonnet" && !init?.juiz;
+    if (comoSonnet) provider = "anthropic";
+    if (provider === "openai" && MODELO_BANCADA === "luna-medium" && !init?.juiz) {
+      const c = JSON.parse(init.body);
+      if (c.reasoning_effort) init = { ...init, body: JSON.stringify({ ...c, reasoning_effort: "medium" }) };
+    }
     // Fila: se o próprio turno disparar duas chamadas juntas, a segunda espera.
     const vez = fila;
     let liberar;
@@ -92,6 +147,15 @@ export function instalarFetch() {
       let corpo = null;
       try { corpo = JSON.parse(init?.body ?? "null"); } catch {}
       ultima.corpo = corpo;
+      if (comoSonnet) {
+        const { r, j } = await chamarComoSonnet(rede, init);
+        if (r.status === 429) {
+          writeFileSync(resolve(MON, "PARAR"), `429 do provider anthropic em ${new Date().toISOString()}\n`);
+          throw new Parada("429 (limite de uso) em anthropic — parada automática");
+        }
+        ultima.custo = registrar("anthropic", "claude-sonnet-4-6", j?.usage?.input_tokens ?? 0, j?.usage?.output_tokens ?? 0);
+        return r;
+      }
       const r = await rede(input, { ...init, signal: AbortSignal.timeout(120000) });
       if (r.status === 429) {
         writeFileSync(resolve(MON, "PARAR"), `429 do provider ${provider} em ${new Date().toISOString()}\n`);
