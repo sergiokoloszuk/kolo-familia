@@ -72,7 +72,7 @@ PEND-092 → 017 → 098 → 093 → 094 → 095 → 039 → 042 → 097 → 099
 substitui a prioridade atual de segurança nem a análise de produção.
 
 <!-- PENDENCIAS-INDEX:START -->
-Índice completo gerado de 185 fichas neste arquivo. A ficha é a fonte do estado; não edite as linhas abaixo à mão. Para atualizar: `node scripts/pendencias-index.mjs --write`.
+Índice completo gerado de 188 fichas neste arquivo. A ficha é a fonte do estado; não edite as linhas abaixo à mão. Para atualizar: `node scripts/pendencias-index.mjs --write`.
 
 | ID | Pendência | Prioridade | Estado da ficha |
 |---|---|---|---|
@@ -261,6 +261,9 @@ substitui a prioridade atual de segurança nem a análise de produção.
 | [PEND-244](#pend-244) | Cargos do Admin são apenas rótulos e não limitam o acesso | P1 | MEDIDA EM PRODUÇÃO · NÃO CORRIGIDA |
 | [PEND-245](#pend-245) | Black Friday permite checkout duplicado, aviso incoerente e ativação por fatura de R$ 0 | P0 | CORRIGIDA LOCALMENTE · PUBLICAÇÃO E PROVA EM PRODUÇÃO PENDENTES |
 | [PEND-246](#pend-246) | Decidir se R$ 39,90 vira preço oficial para novas adesões depois da Black Friday | P1 | DECISÃO DE PRODUTO PENDENTE · ASSINATURAS JÁ CONTRATADAS PRESERVADAS |
+| [PEND-247](#pend-247) | Memória é contexto, não pauta: interesse e conversa antigos chegavam à Ayla como atuais | P1 | PARCIAL — corrigido e medido em bancada na branch claude/ayla-memoria-respostas-20261119; sem publicação e sem prova em produção |
+| [PEND-248](#pend-248) | Pedido de parar/pausar em linguagem natural não executa nada, e a Ayla confirma como se tivesse feito | P0 | PENDENTE — achado em bancada; nenhuma correção estrutural feita |
+| [PEND-249](#pend-249) | Tela de preferências apaga evitar e experimentos ao salvar | P2 | PENDENTE — achado fora de escopo, não corrigido |
 <!-- PENDENCIAS-INDEX:END -->
 
 ---
@@ -11341,9 +11344,80 @@ fonte canônica de preço atualizada em conjunto na Stripe, checkout, tela,
 comunicação da Ayla e testes de cobrança; publicação com prova em modo de teste
 antes de produção.
 
+### PEND-247
+**Memória é contexto, não pauta: interesse e conversa antigos chegavam à Ayla como atuais**
+Bloco: **C · Memória / A · Condução** · Prioridade: **P1**
+STATUS: **PARCIAL — corrigido e medido em bancada na branch `claude/ayla-memoria-respostas-20261119`; sem publicação e sem prova em produção** · Aberta em: 2026-11-19
+
+**PROBLEMA.** Relato da responsável: seis meses depois de a criança falar do
+álbum de figurinhas da Copa, a Ayla ainda o trazia como interesse atual.
+Reproduzido no caminho oficial (`responderExperimental`, Core v12, `gpt-5.6-luna`)
+com família sintética: "Mais uma figurinha e depois banho" — juiz 2/5.
+
+**CAUSA RAIZ (três portas).** (1) `interessesAtuais` não tem data e o bloco o
+rotulava "Interesses atuais" ao lado da legenda "o que não tem marca é recente";
+(2) `<conversa_recente>` eram as 12 últimas mensagens sem janela nem data — a
+troca de 186 dias entrava como de ontem; (3) `sendRepertorioSugestao` e
+`mensagemEspontanea` usavam a mesma lista e o texto enviado voltava ao
+histórico. A legenda de "informação antiga" existia e não segurou: §15.
+
+**CORREÇÃO (estrutural).** `lib/ayla/memoria-temporal.ts`: interesse só chega ao
+modelo com evidência dos últimos 90 dias (menção da FAMÍLIA em `inbound`, perfil
+criado há < 90 dias ou `preferencias.atualizado_em` < 90 dias; fala de abandono e
+fala sobre irmão não confirmam). Conversa: até 72 h sem etiqueta, 3–30 dias com
+`[há N dias]` + legenda, > 30 dias fora. As duas proativas usam o mesmo filtro;
+sem interesse recente a sugestão semanal não sai. A tela de preferências passa a
+carimbar `atualizado_em`. Uma consulta nova (`lerMencoesRecentes`) corre em
+paralelo na onda 1 — sem espera serial nova.
+
+**BANCADA.** `scripts/bancada/memoria-respostas/` — 30 casos sintéticos
+(19 dev / 11 validação), 3 repetições, juiz cego de outra família de modelo
+(Claude Sonnet 4.6), matrizes de confusão. **Limitação:** sem acesso ao banco,
+Boas Práticas e catálogo de skills não entram (iguais em todas as versões).
+Baseline v0 (cfd5f19c + Core v12): memória antiga tratada como atual em
+**67%** dos casos de memória; nota geral 4,02; crise 100%; promessa sem ação 33%.
+
+**FALTA (critério de conclusão):** revisão humana de amostra; PR, CI, merge e
+deploy; prova em produção de que um interesse sem menção recente não aparece no
+prompt nem nas proativas (rastro `ayla_path` + leitura do bloco) e de que nada
+legítimo sumiu (interesse falado esta semana continua sendo usado).
+
+### PEND-248
+**Pedido de parar/pausar em linguagem natural não executa nada, e a Ayla confirma como se tivesse feito**
+Bloco: **D · Proativas e contato** · Prioridade: **P0**
+STATUS: **PENDENTE — achado em bancada; nenhuma correção estrutural feita** · Aberta em: 2026-11-19
+
+`detectarComando` (`lib/ayla/parser.ts`) só reconhece as palavras exatas
+`PAUSAR`, `SAIR`, `CANCELAR`, `MUDAR HORARIO HH:MM`. "Não quero mais receber
+mensagens de manhã" segue para a conversa; na bancada v0 a Ayla respondeu "Vou
+respeitar sua preferência e não considerar mais mensagens pela manhã" (juiz 1–2/5)
+sem nenhuma ação. A responsável já relatou caso real: promessa de parar e oito
+proativas depois. Além disso, `processarComando` (`orchestrator.ts`, casos
+`pausar`, `mudar_horario`, `sair`) faz `.update()` em `ayla_preferences` **sem
+conferir `error`** (§7): o comando pode falhar e a família recebe a confirmação.
+
+O Core v13 candidato só reduz o dano (não confirmar; ensinar os comandos).
+**Critério de conclusão:** intenção de parar/pausar/mudar horário reconhecida
+de forma determinística ou classificada, executada, **conferida** e só então
+confirmada; escrita do comando conferida; aviso administrativo do pedido;
+teste de que nenhuma proativa sai depois do pedido; distinção entre "hoje não",
+"muda o horário" e "parar tudo".
+
+### PEND-249
+**Tela de preferências apaga `evitar` e `experimentos` ao salvar**
+Bloco: **C · Memória** · Prioridade: **P2**
+STATUS: **PENDENTE — achado fora de escopo, não corrigido** · Aberta em: 2026-11-19
+
+`app/(app)/configuracoes/preferencias/actions.ts` regrava
+`categorias_extras.preferencias` com `{ temas, midia, materiais, musicas }`:
+`evitar` (o que a criança recusou) e `experimentos` (o que já foi tentado), que
+`sendRepertorioSugestao` e `interessesAtuais` leem, somem quando a família salva a
+tela. **Critério:** mesclar em vez de substituir, com teste de que `evitar` e
+`experimentos` sobrevivem a um salvamento.
+
 ---
 
-**Proximo ID livre: PEND-247. *(PEND-232 a PEND-243 estão reivindicadas em outras frentes; PEND-244 registra a ausência de autorização por cargo no Admin; PEND-245 e PEND-246 pertencem à remediação Black Friday; PEND-225, PEND-226 e PEND-228 estão reivindicadas no worktree `ayla-conversa-valor`; PEND-227 foi incorporada nesta frente; PEND-209 a PEND-211 já estão reivindicadas por outra frente; 024 e 025 reservadas por frentes ainda nao publicadas; PEND-202 reivindicada em commit e ainda sem ficha; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
+**Proximo ID livre: PEND-250. *(PEND-232 a PEND-243 estão reivindicadas em outras frentes; PEND-244 registra a ausência de autorização por cargo no Admin; PEND-245 e PEND-246 pertencem à remediação Black Friday; PEND-225, PEND-226 e PEND-228 estão reivindicadas no worktree `ayla-conversa-valor`; PEND-227 foi incorporada nesta frente; PEND-209 a PEND-211 já estão reivindicadas por outra frente; 024 e 025 reservadas por frentes ainda nao publicadas; PEND-202 reivindicada em commit e ainda sem ficha; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.

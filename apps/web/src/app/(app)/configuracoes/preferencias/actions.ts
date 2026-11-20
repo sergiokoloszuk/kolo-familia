@@ -62,6 +62,9 @@ export async function salvarPreferencias(
         midia: data.midia,
         materiais: data.materiais,
         musicas: data.musicas,
+        // Carimbo da edição: é a evidência de que estes gostos valem agora
+        // (ver `lib/ayla/memoria-temporal.ts`).
+        atualizado_em: new Date().toISOString(),
       },
     };
 

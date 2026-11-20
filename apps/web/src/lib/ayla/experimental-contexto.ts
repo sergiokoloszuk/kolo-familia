@@ -33,6 +33,8 @@ export type LinhaPerfilVivo = {
   desafios_regulacao?: unknown;
   sensorial?: unknown;
   categorias_extras?: Record<string, unknown> | null;
+  /** Quando o perfil nasceu — evidência de interesse recente (ver `memoria-temporal.ts`). */
+  created_at?: string | null;
 };
 
 /**
@@ -551,6 +553,8 @@ export function montarContextoBase(params: {
     genero?: string | null;
   } | null;
   perfilVivo: LinhaPerfilVivo | null;
+  /** Interesses já filtrados por evidência recente (`classificarInteresses`). */
+  interessesRecentes?: readonly string[];
   /**
    * As skills do turno — o assunto sobre o qual a família está falando AGORA.
    *
@@ -668,7 +672,11 @@ export function montarContextoBase(params: {
   const comoE = textoDoCampo(pv?.como_e);
   if (comoE) linhas.push(`Como ela é: ${comoE.replace(/\s*\n\s*/g, " ").slice(0, 400)}`);
 
-  const interesses = interessesAtuais(pv ?? null);
+  // ⚠️ SÓ O INTERESSE COM EVIDÊNCIA RECENTE — 19/11/2026. Quem passa a
+  // classificação (o caminho oficial) entrega só os confirmados nos últimos
+  // 90 dias; o sem confirmação NÃO entra, nem com aviso (ver
+  // `memoria-temporal.ts`). Quem não passa mantém o comportamento antigo.
+  const interesses = params.interessesRecentes ?? interessesAtuais(pv ?? null);
   if (interesses.length) linhas.push(`Interesses atuais: ${interesses.join(", ")}`);
   else lacunas.push("interesses da criança");
 
@@ -860,7 +868,7 @@ export async function lerPerfilVivo(
   try {
     const { data } = await supabase
       .from("perfil_vivo_membro")
-      .select("essencial, como_e, corpo_rotina, desafios_regulacao, sensorial, categorias_extras")
+      .select("essencial, como_e, corpo_rotina, desafios_regulacao, sensorial, categorias_extras, created_at")
       .eq("membro_atipico_id", membroId)
       .maybeSingle();
     return (data as LinhaPerfilVivo | null) ?? null;

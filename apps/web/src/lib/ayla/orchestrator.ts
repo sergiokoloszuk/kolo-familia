@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { classificarInteresses, lerMencoesRecentes } from "./memoria-temporal";
 import { hojeLocalISO, idadeAnos } from "@/lib/idade";
 import { chaveTelefoneBR } from "@/lib/telefone";
 import { enviarListaBotoes, enviarTexto, type InboundWhatsApp } from "./whatsappSender";
@@ -1466,11 +1467,14 @@ export async function sendRepertorioSugestao(
   const semana = Math.floor(agora.getTime() / (7 * 24 * 60 * 60 * 1000));
   const membroFoco = ctx.membros[Math.abs(hashSeed(`${familyAccountId}-${semana}`)) % ctx.membros.length];
 
-  const { data: perfil } = await supabase
-    .from("perfil_vivo_membro")
-    .select("categorias_extras")
-    .eq("membro_atipico_id", membroFoco.id)
-    .maybeSingle();
+  const [{ data: perfil }, mencoes] = await Promise.all([
+    supabase
+      .from("perfil_vivo_membro")
+      .select("categorias_extras, created_at")
+      .eq("membro_atipico_id", membroFoco.id)
+      .maybeSingle(),
+    lerMencoesRecentes(supabase, familyAccountId, agora),
+  ]);
 
   const pref =
     ((perfil?.categorias_extras as { preferencias?: Record<string, unknown> } | null)
@@ -1478,13 +1482,20 @@ export async function sendRepertorioSugestao(
   const lista = (v: unknown): string[] =>
     Array.isArray(v) ? v.filter((x): x is string => typeof x === "string" && x.trim().length > 0) : [];
 
-  const interesses = [
-    ...lista(pref.temas),
-    ...lista(pref.midia),
-    ...lista(pref.materiais),
-  ];
+  // ⚠️ SÓ O QUE TEM EVIDÊNCIA DOS ÚLTIMOS 90 DIAS — 19/11/2026. Sugerir
+  // "algo adjacente ao álbum da Copa" seis meses depois era uma das portas do
+  // defeito de memória velha, e o texto enviado voltava ao histórico como se
+  // fosse assunto de agora. Sem interesse recente, a sugestão não sai.
+  const interesses = classificarInteresses({
+    interesses: [...lista(pref.temas), ...lista(pref.midia), ...lista(pref.materiais)],
+    mencoes,
+    membroId: membroFoco.id,
+    perfilCriadoEm: (perfil as { created_at?: string | null } | null)?.created_at ?? null,
+    preferenciasAtualizadasEm: typeof pref.atualizado_em === "string" ? pref.atualizado_em : null,
+    agora,
+  }).recentes;
   if (interesses.length === 0) {
-    return { enviada: false, motivo: "Sem interesses cadastrados pra sugerir." };
+    return { enviada: false, motivo: "Sem interesses recentes pra sugerir." };
   }
   const evitar = lista(pref.evitar);
   const jaTentados = Array.isArray(pref.experimentos)
