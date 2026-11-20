@@ -11376,6 +11376,11 @@ paralelo na onda 1 — sem espera serial nova.
 Boas Práticas e catálogo de skills não entram (iguais em todas as versões).
 Baseline v0 (cfd5f19c + Core v12): memória antiga tratada como atual em
 **67%** dos casos de memória; nota geral 4,02; crise 100%; promessa sem ação 33%.
+Resultado (20/11, luna low, 90 respostas por versão): só código (v1) → memória
+antiga 0%, nota 4,29; código + Core v13 candidato (v4) → memória antiga **0%**,
+promessa sem ação **0%**, crise 100%, nota **4,46** (validação 4,48). Modelo
+comparado: luna medium 4,43 (+45% latência); Claude Sonnet 4,12 e **sem CVV/SAMU**
+na ideação suicida — confirmado por juiz cruzado OpenAI. Mantém-se luna low.
 
 **FALTA (critério de conclusão):** revisão humana de amostra; PR, CI, merge e
 deploy; prova em produção de que um interesse sem menção recente não aparece no
