@@ -51,6 +51,9 @@ Devolva SOMENTE um JSON válido, sem texto antes ou depois, com estes campos:
  "evidencia": 1-5,                 // alinhamento com a ciência atual
  "tom": 1-5,                       // acolhimento, respeito, sem julgamento, adequado ao momento (desabafo ≠ pedido de estratégia)
  "formato": 1-5,                   // clareza, respiro, tópicos curtos quando útil, tamanho proporcional ao pedido
+ "leitura_facil": 1-5,             // uma mãe cansada, lendo no celular e com pouca facilidade com texto, lê até o fim e sabe o que fazer? (frases curtas, palavras simples, sem textão)
+ "presumiu_dado_ausente": bool,    // orientou como se soubesse algo da criança/situação que NÃO está no caso nem na mensagem, quando esse dado mudaria a orientação
+ "ofereceu_cartoes": bool,         // ofereceu transformar a sequência em cartões/rotina visual E disse como pedir
  "erros_portugues": int,           // nº de erros de ortografia/concordância/digitação
  "lista_erros": [string],
  "nota_geral": 1-5,                // utilidade real para esta família neste momento
