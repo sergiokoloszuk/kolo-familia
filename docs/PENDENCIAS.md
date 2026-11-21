@@ -72,7 +72,7 @@ PEND-092 → 017 → 098 → 093 → 094 → 095 → 039 → 042 → 097 → 099
 substitui a prioridade atual de segurança nem a análise de produção.
 
 <!-- PENDENCIAS-INDEX:START -->
-Índice completo gerado de 188 fichas neste arquivo. A ficha é a fonte do estado; não edite as linhas abaixo à mão. Para atualizar: `node scripts/pendencias-index.mjs --write`.
+Índice completo gerado de 192 fichas neste arquivo. A ficha é a fonte do estado; não edite as linhas abaixo à mão. Para atualizar: `node scripts/pendencias-index.mjs --write`.
 
 | ID | Pendência | Prioridade | Estado da ficha |
 |---|---|---|---|
@@ -264,6 +264,10 @@ substitui a prioridade atual de segurança nem a análise de produção.
 | [PEND-247](#pend-247) | Memória é contexto, não pauta: interesse e conversa antigos chegavam à Ayla como atuais | P1 | PARCIAL — corrigido e medido em bancada na branch claude/ayla-memoria-respostas-20261119; sem publicação e sem prova em produção |
 | [PEND-248](#pend-248) | Pedido de parar/pausar em linguagem natural não executa nada, e a Ayla confirma como se tivesse feito | P0 | PENDENTE — achado em bancada; nenhuma correção estrutural feita |
 | [PEND-249](#pend-249) | Tela de preferências apaga evitar e experimentos ao salvar | P2 | PENDENTE — achado fora de escopo, não corrigido |
+| [PEND-250](#pend-250) | Respostas longas demais para quem lê no celular | P1 | PARCIAL — Core v13.3 candidato encurta; não ativado, sem medida em produção |
+| [PEND-251](#pend-251) | A Ayla presume dado que não tem e orienta antes de perguntar o que decide | P2 | PARCIAL — Core v13.3 candidato; sem prova em produção |
+| [PEND-252](#pend-252) | Oferta de cartões visuais: responder "sim" não abre a montagem | P1 | PARCIAL — mitigado no Core v13.4 (ensina a frase); correção estrutural pendente |
+| [PEND-253](#pend-253) | Canal seguro para a responsável pedir ajustes de comportamento da Ayla | P2 | PARCIAL — guia e formulário publicados; rito sem uso ainda |
 <!-- PENDENCIAS-INDEX:END -->
 
 ---
@@ -11420,9 +11424,98 @@ STATUS: **PENDENTE — achado fora de escopo, não corrigido** · Aberta em: 202
 tela. **Critério:** mesclar em vez de substituir, com teste de que `evitar` e
 `experimentos` sobrevivem a um salvamento.
 
+### PEND-250
+**Respostas longas demais para quem lê no celular**
+Bloco: **B · Ayla** · Prioridade: **P1**
+STATUS: **PARCIAL — Core v13.3 candidato encurta; não ativado, sem medida em produção** · Aberta em: 2026-11-20
+
+Relato da responsável (20/11, após testar o simulador): "o texto fica muito
+grande, tem mãe que é mais humilde, cansa ler tudo isso". O Core v12/v13 já manda
+"por padrão, 1 a 3 frases" — a regra existe e não é cumprida. Medido na bancada
+v4 (Core v13.2, 90 respostas): mediana **587 caracteres / 4 frases**, p90 884,
+29% acima de 700. Em produção entram ainda Boas Práticas e skills (ausentes na
+bancada), o que tende a alongar.
+
+Core v13.3 candidato (§5 e §6): resposta que cabe em uma tela (cerca de 500
+caracteres, até 3 passos), rótulo curto em negrito por passo, respiro entre
+blocos, oferecer o resto em uma linha. **Critério de conclusão:** mediana ≤ 500
+caracteres na bancada sem queda de nota, crise ou segurança; comprimento da fala
+registrado por turno em produção e conferido por 7 dias depois da ativação; se o
+Core não bastar, correção estrutural (limite no envelope ou no orçamento de
+saída), não mais texto no prompt.
+
+Resultado (20/11, bancada, 34 casos × 3, juiz Sonnet com régua nova): v13.2 →
+v13.3 mediana **617 → 467 caracteres**, acima de 700 **38% → 8%**, leitura fácil
+**4,26 → 4,60**, formato 4,48 → 4,62, nota geral 4,21 → 4,18 (variação do juiz),
+crise 15/15 nas duas, latência p50 3,9 s → 3,0 s. Falta: ativação e medida em
+produção.
+
+### PEND-251
+**A Ayla presume dado que não tem e orienta antes de perguntar o que decide**
+Bloco: **B · Ayla** · Prioridade: **P2**
+STATUS: **PARCIAL — Core v13.3 candidato; sem prova em produção** · Aberta em: 2026-11-20
+
+Relato da responsável (20/11): "tem horas que ela já assume que sabe tudo da
+criança, mas esqueceu de perguntar algumas coisas antes de dar a orientação".
+O §8 do Core ("ajude + investigue") empurra para orientar já; o v13.3 acrescenta
+"Não presuma o que você não sabe": se a orientação depende de dado ausente
+(situação, desde quando, se fala, o que já tentaram), acolher, no máximo um
+cuidado seguro e a pergunta que decide. ⚠️ A decisão de perguntar também tem
+dono no código (`decidirMiniInvestigacao`, `lacuna-decisiva.ts`) — conferir que
+Core e código não divergem antes de mexer em qualquer um. **Critério:** caso de
+bancada sem presunção, sem virar questionário (uma pergunta, não lista), e
+amostra de conversas reais revisada pela responsável.
+
+Resultado (20/11): o critério novo do juiz "presumiu dado ausente" **não
+melhorou** (v13.2 7/102, v13.3 8/102; caso F2 3,0 → 3,3). A resposta passou a
+terminar com a pergunta que decide, mas ainda orienta antes dela. Precisa dos
+exemplos reais da responsável para saber o que exatamente ela esperava.
+
+### PEND-252
+**Oferta de cartões visuais: responder "sim" não abre a montagem**
+Bloco: **B · Ayla** · Prioridade: **P1**
+STATUS: **PARCIAL — mitigado no Core v13.4 (ensina a frase); correção estrutural pendente** · Aberta em: 2026-11-20
+
+A responsável quer que, ao sugerir uma sequência visual, a Ayla ofereça montar
+os cartões. Executado o portão real (`portaoDeterministicoDeRotina`,
+`rotina-guiada.ts`, 20/11): "sim", "sim, quero", "quero", "pode montar" e
+"quero os cartões" → `abre: false`; "quero a rotina visual", "monta a rotina
+visual", "quero a rotina visual do banho" → `abre: true`. Uma oferta que termina
+em "quer que eu monte?" levaria a mãe a responder "sim" e a conversa seguiria
+sem artefato — promessa sem ação. O v13.3 manda oferecer com a frase que abre
+("é só responder **quero a rotina visual**"). Não verificado: se o fluxo de
+rotina aproveita os passos que a Ayla acabou de sugerir ou pede tudo de novo;
+e se o decisor (`intent`) abre com "sim" por conta própria.
+Resultado (20/11): oferta com a frase certa nos casos de sequência (F1, F4) —
+v13.2 **0/6**, v13.3 1/6, v13.4 (gatilho ampliado para "ordem de passos, mesmo
+descrita em palavras") **4/6**; **0/15 em crise**, 0/3 no caso sem sequência;
+1/3 ofereceu cartões a um adulto de 19 anos (O4) — revisar.
+**Critério de conclusão:** a oferta passa a ser estado (registrada como as
+ofertas de fim de semana e de objetivo de história), o aceite curto ("sim",
+"quero") é reconhecido como pedido de rotina carregando os passos sugeridos,
+teste de que "sim" sem oferta pendente não abre nada, e prova em produção com
+conta de QA.
+
+### PEND-253
+**Canal seguro para a responsável pedir ajustes de comportamento da Ayla**
+Bloco: **H · Governança** · Prioridade: **P2**
+STATUS: **PARCIAL — guia e formulário publicados; rito sem uso ainda** · Aberta em: 2026-11-20
+
+A responsável quer pedir ajustes ("formato com tópicos em negrito", "antes
+disso, devia ter perguntado tal coisa") sem "criar regra fora da engenharia".
+Hoje o único caminho seria editar o Core no Admin direto, sem medida. Entregue
+em 20/11: guia de pedidos com modelo único (o que a família disse · o que a Ayla
+respondeu · o que devia ter feito · por quê) e formulário que guarda os pedidos
+para a engenharia. Rito: pedido → classificar (Core × código) → candidato →
+bancada (sem perda de segurança) → simulador → Ativar → rollback pela versão
+anterior. Lacuna: o simulador (`admin/inteligencia`) **não guarda conversa** —
+"veja minha conversa" não tem como ser atendido; hoje só copiando o texto.
+**Critério:** três pedidos reais atendidos pelo rito, e decisão registrada sobre
+guardar (ou exportar) a conversa do simulador.
+
 ---
 
-**Proximo ID livre: PEND-250. *(PEND-232 a PEND-243 estão reivindicadas em outras frentes; PEND-244 registra a ausência de autorização por cargo no Admin; PEND-245 e PEND-246 pertencem à remediação Black Friday; PEND-225, PEND-226 e PEND-228 estão reivindicadas no worktree `ayla-conversa-valor`; PEND-227 foi incorporada nesta frente; PEND-209 a PEND-211 já estão reivindicadas por outra frente; 024 e 025 reservadas por frentes ainda nao publicadas; PEND-202 reivindicada em commit e ainda sem ficha; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
+**Proximo ID livre: PEND-254. *(PEND-232 a PEND-243 estão reivindicadas em outras frentes; PEND-244 registra a ausência de autorização por cargo no Admin; PEND-245 e PEND-246 pertencem à remediação Black Friday; PEND-225, PEND-226 e PEND-228 estão reivindicadas no worktree `ayla-conversa-valor`; PEND-227 foi incorporada nesta frente; PEND-209 a PEND-211 já estão reivindicadas por outra frente; 024 e 025 reservadas por frentes ainda nao publicadas; PEND-202 reivindicada em commit e ainda sem ficha; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.

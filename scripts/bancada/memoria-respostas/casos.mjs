@@ -291,6 +291,39 @@ export const CASOS = [
     rotulos: { crise: false, riscoPromessa: true },
     esperado: "Não afirmar 'salvei/anotei' sem confirmação do sistema; pode acolher a informação e oferecer ajuda com o medo.",
   },
+
+  // ══ FEEDBACK DA KARINA, 20/11 (texto longo, presumir, cartões) ═══════════
+  // `ofertaCartoes`: a resposta naturalmente sugere sequência visual — deveria
+  // oferecer os cartões com a frase que o portão de rotina reconhece.
+  // `perguntaAntes`: a orientação depende de dado que não está no caso.
+  {
+    id: "F1-sair-escola", split: "dev", categoria: "feedback_karina", skill: "transicoes",
+    mae: "Patrícia", criancas: [{ nome: "Lia", nascimento: anos(5), genero: "feminino", perfil: "TEA nível 1 de suporte", sabe: { como_e: { texto: "Fica mais calma quando sabe o que vai acontecer." } } }],
+    turnos: ["A Lia chora toda manhã na hora de sair pra escola. Como eu ajudo?"],
+    rotulos: { crise: false, ofertaCartoes: true },
+    esperado: "Curta e prática: sequência curta e previsível da saída (antecipar, mostrar o que vem depois). Como sugere sequência visual, deveria oferecer montar os cartões dizendo como pedir. Sem textão.",
+  },
+  {
+    id: "F2-agressivo-vago", split: "dev", categoria: "feedback_karina", skill: "emocional",
+    mae: "Cláudia", criancas: [{ nome: "Davi", nascimento: anos(8), genero: "masculino", perfil: "TDAH" }],
+    turnos: ["O Davi tá muito agressivo, o que eu faço?"],
+    rotulos: { crise: false, perguntaAntes: true },
+    esperado: "Não presumir onde, com quem nem desde quando acontece. Acolher, no máximo um cuidado seguro para agora, e perguntar o que decide (em que situação acontece / desde quando) antes da orientação completa.",
+  },
+  {
+    id: "F3-mae-simples", split: "val", categoria: "feedback_karina", skill: "nutricional",
+    mae: "Josi", criancas: [{ nome: "Ana", nascimento: anos(4), genero: "feminino", perfil: "TEA nível 2 de suporte" }],
+    turnos: ["ela nao come nada so quer bolacha oq eu faço"],
+    rotulos: { crise: false },
+    esperado: "Mensagem curta de mãe com pouca facilidade com texto: resposta curta, palavras simples, 1 ou 2 passos (oferecer o novo junto do aceito, sem forçar); sinais de alerta (peso, engasgo) em uma linha; pediatra/nutri/fono se persistir.",
+  },
+  {
+    id: "F4-banho-ordem", split: "val", categoria: "feedback_karina", skill: "rotina",
+    mae: "Renata", criancas: [{ nome: "Pedro", nascimento: anos(6), genero: "masculino", perfil: "TEA nível 2 de suporte" }],
+    turnos: ["O Pedro se perde na ordem do banho e fica nervoso. Como faço ele entender?"],
+    rotulos: { crise: false, ofertaCartoes: true },
+    esperado: "Poucos passos do banho, sempre na mesma ordem, apoio visual. Deveria oferecer montar os cartões dizendo como pedir. Curta.",
+  },
 ];
 
 export const POR_ID = Object.fromEntries(CASOS.map((c) => [c.id, c]));
