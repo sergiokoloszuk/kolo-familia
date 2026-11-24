@@ -557,9 +557,19 @@ async function montarContexto(
   const membroPreferido = membroPreferidoId
     ? lista.find((m) => m.id === membroPreferidoId) ?? null
     : null;
+  // A conversa em curso, da fala mais nova para a mais velha: simulador
+  // primeiro (vem depois do histórico real), depois o banco das últimas 24 h.
+  // Já lidos acima — nenhuma consulta nova. Ver `resolverFoco`.
+  const desde24h = Date.now() - 24 * 60 * 60 * 1000;
+  const falasRecentesDaMae = [
+    ...simulados.filter((t) => t.quem === "mae").map((t) => t.texto).reverse(),
+    ...((falas ?? []) as Fala[])
+      .filter((f) => f.direcao === "inbound" && (!f.created_at || Date.parse(f.created_at) >= desde24h))
+      .map((f) => f.texto ?? ""),
+  ];
   const foco: Foco = membroPreferido
     ? { tipo: lista.length === 1 ? "unica" : "individual", membros: [membroPreferido] }
-    : await resolverFoco(supabase, familyId, mensagem, lista);
+    : await resolverFoco(supabase, familyId, mensagem, lista, falasRecentesDaMae);
   const msFoco = Date.now() - tFoco;
   const emFoco = foco.membros;
 

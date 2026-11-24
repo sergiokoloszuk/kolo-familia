@@ -37,7 +37,13 @@ export type Foco =
   /** Família com uma criança só: não há o que desambiguar. */
   | { tipo: "unica"; membros: Membro[] }
   /** Dois ou mais filhos e nenhum sinal confiável. A Ayla PERGUNTA. */
-  | { tipo: "ambiguo"; membros: Membro[] };
+  | { tipo: "ambiguo"; membros: Membro[] }
+  /**
+   * A criança da conversa NÃO está cadastrada (terceiro filho, sobrinho,
+   * criança conhecida). Nenhum perfil entra; `cadastrados` só serve para dizer
+   * ao modelo de quem a informação NÃO pode vir.
+   */
+  | { tipo: "externa"; membros: Membro[]; cadastrados: Membro[] };
 
 /** "os dois", "as duas", "ambos", "eles", "juntos" — plural explícito. */
 const PLURAL_IRMAOS =
@@ -146,28 +152,119 @@ async function ultimaCriancaDaConversa(
 }
 
 /**
+ * A CRIANÇA DA CONVERSA NÃO ESTÁ CADASTRADA? — 23/11/2026.
+ *
+ * ⚠️ CASO REAL, simulador da Karina (família com Manu e Mario). Ela falou de
+ * uma terceira filha. "Minha filha" e "ela" apontavam, pela regra de gênero,
+ * para a Manu — a única menina cadastrada —, e a Ayla passou a chamar a
+ * terceira criança de Manu e a usar o perfil dela. Sem sinal de gênero, o foco
+ * caía em `ambiguo` a cada mensagem e a Ayla perguntava de novo "é a terceira
+ * ou um dos seus filhos?", mesmo depois da resposta.
+ *
+ * Dois tipos de sinal, ambos explícitos:
+ *   · NEGAÇÃO — "nenhum dos dois", "não é a Manu", "outra criança", "minha
+ *     terceira": vence até nome citado (o nome aparece justamente para negar);
+ *   · PARENTESCO DE FORA — sobrinho, neta, aluno, filho da amiga: só vale
+ *     quando nenhum nome cadastrado foi citado ("a Manu e a prima" é da Manu).
+ */
+//
+// ⚠️ CONSERVADOR DE PROPÓSITO. "A Manu não brinca com outra criança" e
+// "nenhum dos dois quer comer" falam DAS crianças cadastradas — por isso
+// "outra criança" só conta como afirmação de identidade ("é outra criança") e
+// "nenhum dos dois" só como RESPOSTA curta, no começo da mensagem.
+const CRIANCA_NAO_CADASTRADA =
+  /(\b(é|e|eh|sobre|falando d[eao]) (uma |a |o )?outr[ao] (crian[çc]a|menin[oa])\b|\bterceir[oa] (filh[oa]|crian[çc]a)\b|\bminha terceira\b|\bmeu terceiro\b|\bn[aã]o (est[aá]|t[aá]|é|e) cadastrad[oa]\b)/i;
+const RESPOSTA_NENHUM =
+  /^\W*(n[aã]o[\s,.!]+)?nenhum[ae]?\s+d(?:os\s+dois|as\s+duas|eles|elas)\s*(?:[,.;:!—-]|$|é\b|eh\b)/i;
+const PARENTESCO_DE_FORA =
+  /\b(sobrinh[oa]s?|afilhad[oa]s?|net[oa]s?|enteado|enteada|alun[oa]s?|filh[oa] d[aeo] (minha|meu|uma|um|nossa|nosso) )(?![a-zà-ÿ])/i;
+
+/** Nomes cadastrados citados só para NEGAR ("não é a Manu"). */
+function negados(texto: string, membros: Membro[]): Membro[] {
+  return membros.filter((m) => {
+    const n = (m.nome ?? "").trim().toLowerCase();
+    if (n.length < 3) return false;
+    const nome = n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return new RegExp(`(n[aã]o (é|e|eh|seria) (nem )?|(^|[^\\p{L}])nem )(a |o )?${nome}([^\\p{L}]|$)`, "iu").test(texto);
+  });
+}
+
+/**
+ * O QUE UM TEXTO DA MÃE DIZ SOBRE O FOCO — ou `null` quando não diz nada.
+ * Mesma escada para a mensagem atual e para as anteriores da conversa.
+ */
+function focoDoTexto(texto: string, ativos: Membro[], comGenero: boolean): Foco | null {
+  const negadosAqui = negados(texto, ativos);
+  // "Não é a Manu, é o Mario": o nome que sobra depois da negação decide.
+  const nomes = citados(texto, ativos).filter((m) => !negadosAqui.includes(m));
+  const externa = { tipo: "externa" as const, membros: [], cadastrados: ativos };
+  if (nomes.length === 0 &&
+      (negadosAqui.length > 0 || CRIANCA_NAO_CADASTRADA.test(texto) || RESPOSTA_NENHUM.test(texto))) {
+    return externa;
+  }
+  if (nomes.length >= 2) return { tipo: "compartilhado", membros: nomes };
+  if (PLURAL_IRMAOS.test(texto)) return { tipo: "compartilhado", membros: ativos };
+  if (nomes.length === 1) return { tipo: "individual", membros: nomes };
+  if (PARENTESCO_DE_FORA.test(texto)) return externa;
+  if (comGenero) {
+    const porSexo = porGenero(texto, ativos);
+    if (porSexo) return { tipo: "individual", membros: [porSexo] };
+  }
+  return null;
+}
+
+/**
  * A DECISÃO, por ordem de confiança:
- *   1. dois ou mais NOMES citados        → compartilhado
- *   2. plural de irmãos ("os dois")      → compartilhado (todos)
- *   3. um NOME citado                    → individual (troca o foco)
- *   4. uma criança cadastrada só         → unica
- *   5. última criança da conversa (24h)  → individual
- *   6. nada disso                        → ambiguo
+ *   1. a mensagem atual nega os cadastrados / cita parente de fora → externa
+ *   2. dois ou mais NOMES citados        → compartilhado
+ *   3. plural de irmãos ("os dois")      → compartilhado (todos)
+ *   4. um NOME citado                    → individual (troca o foco)
+ *   5. uma criança cadastrada só         → unica (salvo externa explícita)
+ *   6. a conversa já estabeleceu criança de fora → externa (antes do gênero)
+ *   7. gênero na mensagem atual          → individual
+ *   8. o que a conversa recente já decidiu (nome, plural, gênero) → mantém
+ *   9. última criança da conversa (24h)  → individual
+ *  10. nada disso                        → ambiguo
+ *
+ * ⚠️ `falasRecentesDaMae` — 23/11/2026. São as mensagens anteriores da mãe NA
+ * MESMA conversa, da mais recente para a mais antiga, já lidas pelo chamador
+ * (nenhuma consulta nova). Antes o foco olhava só a mensagem atual: a resposta
+ * "é a Bia" valia um turno e o "ela" seguinte voltava a ser ambíguo — e o bloco
+ * `<sobre_quem>` mandava perguntar de novo, contradizendo a conversa que o
+ * próprio modelo estava lendo.
  */
 export async function resolverFoco(
   supabase: SupabaseClient,
   familyId: string,
   texto: string,
   membros: Membro[],
+  falasRecentesDaMae: readonly string[] = [],
 ): Promise<Foco> {
   const ativos = membros.filter((m) => (m.nome ?? "").trim());
   if (ativos.length === 0) return { tipo: "ambiguo", membros: [] };
+
+  const agora = focoDoTexto(texto, ativos, false);
+  if (agora) return agora;
   if (ativos.length === 1) return { tipo: "unica", membros: ativos };
 
-  const nomes = citados(texto, ativos);
-  if (nomes.length >= 2) return { tipo: "compartilhado", membros: nomes };
-  if (PLURAL_IRMAOS.test(texto)) return { tipo: "compartilhado", membros: ativos };
-  if (nomes.length === 1) return { tipo: "individual", membros: nomes };
+  // A conversa recente, do mais novo para o mais velho: o primeiro texto que
+  // decide alguma coisa vale. Limite curto — é a conversa em curso, não o
+  // histórico da família.
+  //
+  // ⚠️ NO HISTÓRICO SÓ VALEM SINAIS FORTES (nome, plural, criança de fora).
+  // Medido na bancada de 23/11: com o gênero valendo aqui, "ela acorda de
+  // madrugada" (turno 2) apontava a Nina ANTES de a varredura chegar a "minha
+  // terceira filha" (turno 1), e o turno 3 carregava o perfil errado. Pronome é
+  // sinal fraco; numa fala antiga ele não pode passar na frente da afirmação.
+  let daConversa: Foco | null = null;
+  for (const anterior of falasRecentesDaMae.slice(0, 6)) {
+    if (!anterior?.trim() || anterior.trim() === texto.trim()) continue;
+    daConversa = focoDoTexto(anterior, ativos, false);
+    if (daConversa) break;
+  }
+  // Criança de fora já estabelecida vence o gênero: "ela" depois de "é minha
+  // terceira filha" não é a Manu.
+  if (daConversa?.tipo === "externa") return daConversa;
 
   // ⚠️ GÊNERO, DEPOIS DO NOME E ANTES DO HISTÓRICO — 17/08/2026.
   //
@@ -182,6 +279,8 @@ export async function resolverFoco(
   const porSexo = porGenero(texto, ativos);
   if (porSexo) return { tipo: "individual", membros: [porSexo] };
 
+  if (daConversa) return daConversa;
+
   const ultimo = await ultimaCriancaDaConversa(supabase, familyId);
   const achado = ultimo ? ativos.find((m) => m.id === ultimo) : null;
   if (achado) return { tipo: "individual", membros: [achado] };
@@ -192,6 +291,32 @@ export async function resolverFoco(
 }
 
 void TROCA_EXPLICITA;
+
+/**
+ * A CONVERSA JÁ DISSE QUE A CRIANÇA É DE FORA? — para o orquestrador.
+ *
+ * ⚠️ DOIS DONOS DA MESMA DECISÃO. No WhatsApp, `resolverMembroAlvo` decide
+ * antes e entrega um `membroPreferidoId` que passa por cima de `resolverFoco`.
+ * "Ela" depois de "é minha terceira filha" virava a Manu ali, pelo gênero.
+ * Esta função usa a MESMA escada de `resolverFoco`, para que o orquestrador
+ * deixe de impor uma criança cadastrada quando a conversa já a excluiu.
+ */
+export function criancaDeForaNaConversa(
+  texto: string,
+  falasRecentesDaMae: readonly string[],
+  membros: Membro[],
+): boolean {
+  const ativos = membros.filter((m) => (m.nome ?? "").trim());
+  if (ativos.length === 0) return false;
+  const agora = focoDoTexto(texto, ativos, false);
+  if (agora) return agora.tipo === "externa";
+  for (const anterior of falasRecentesDaMae.slice(0, 6)) {
+    if (!anterior?.trim() || anterior.trim() === texto.trim()) continue;
+    const f = focoDoTexto(anterior, ativos, false);
+    if (f) return f.tipo === "externa";
+  }
+  return false;
+}
 
 /**
  * O BLOCO QUE DIZ AO MODELO DE QUEM É A CONVERSA.
@@ -209,5 +334,9 @@ export function blocoDeFoco(foco: Foco): string {
       return `<sobre_quem>A conversa é sobre ${nomes} — as duas crianças. Considere as características de cada uma; o que vale para uma pode não valer para a outra.</sobre_quem>`;
     case "ambiguo":
       return `<sobre_quem>Ainda NÃO se sabe de qual criança a pessoa está falando: ${nomes}. NÃO escolha por conta própria e NÃO use informação de uma como se fosse da outra — pergunte de qual delas se trata, de forma natural.</sobre_quem>`;
+    // ⚠️ SEM OS NOMES DOS CADASTRADOS — medido em 23/11: citá-los aqui fazia o
+    // modelo repeti-los ("vou considerar o Davi, e não a Nina nem o Caio").
+    case "externa":
+      return `<sobre_quem>A conversa é sobre uma criança que NÃO está cadastrada na família (por exemplo, outro filho, sobrinho ou criança conhecida). Nenhum perfil cadastrado vale para ela: chame-a pelo nome que a pessoa usou, use só o que a pessoa contou na conversa e NÃO pergunte de novo de quem se trata.</sobre_quem>`;
   }
 }

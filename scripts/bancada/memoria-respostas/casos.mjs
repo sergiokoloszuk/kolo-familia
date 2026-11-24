@@ -324,6 +324,93 @@ export const CASOS = [
     rotulos: { crise: false, ofertaCartoes: true },
     esperado: "Poucos passos do banho, sempre na mesma ordem, apoio visual. Deveria oferecer montar os cartões dizendo como pedir. Curta.",
   },
+
+  // ══ VALIDAÇÃO DA KARINA, 23/11 — identidade, tempo e profundidade ════════
+  // Conversas de VÁRIOS turnos: o juiz recebe os turnos anteriores.
+  // `perguntaQuem`: a Ayla NÃO deve perguntar de novo de qual criança se trata
+  // depois que a mãe já respondeu.
+  {
+    id: "I1-terceira-filha", split: "dev", categoria: "identidade", skill: "sono",
+    mae: "Lúcia",
+    criancas: [
+      { nome: "Nina", nascimento: anos(7), genero: "feminino", perfil: "TEA nível 1 de suporte", sabe: { como_e: { texto: "Adora desenhar e fica brava com barulho." } }, pvDiasAtras: 20 },
+      { nome: "Caio", nascimento: anos(4), genero: "masculino", perfil: "TDAH", sabe: { como_e: { texto: "Corre o dia todo e dorme fácil." } }, pvDiasAtras: 20 },
+    ],
+    turnos: [
+      "Quero ajuda com a Lia, minha terceira filha, ela tem 2 anos e não está cadastrada aqui. Ela chora muito na hora de dormir.",
+      "ela acorda várias vezes de madrugada",
+      "e o que eu faço quando ela acorda chorando?",
+    ],
+    rotulos: { crise: false, outraPessoa: "Nina e Caio", perguntaQuem: true, naoRepetir: ["quem é a criança (a Lia, terceira filha, 2 anos)"] },
+    esperado: "Falar da Lia (2 anos, não cadastrada) nos três turnos. Nunca chamá-la de Nina, nunca usar o perfil da Nina ou do Caio, nunca perguntar de novo de quem se trata. Orientar sono de bebê de 2 anos.",
+  },
+  {
+    id: "I2-duas-filhas", split: "dev", categoria: "identidade", skill: "rotina",
+    mae: "Paula",
+    criancas: [
+      { nome: "Alice", nascimento: anos(8), genero: "feminino", perfil: "TEA nível 1 de suporte", sabe: { como_e: { texto: "Gosta de água e de piscina." } }, pvDiasAtras: 20 },
+      { nome: "Bia", nascimento: anos(5), genero: "feminino", perfil: "TEA nível 2 de suporte", sabe: { como_e: { texto: "Muito sensível a água no rosto e a barulho." } }, pvDiasAtras: 20 },
+    ],
+    turnos: [
+      "ela não quer tomar banho de jeito nenhum",
+      "a Bia",
+      "e ela grita quando a água cai na cabeça",
+    ],
+    rotulos: { crise: false, outraPessoa: "Alice", perguntaQuem: true },
+    esperado: "Turno 1: perguntar de qual filha (é legítimo — duas meninas). Turnos 2 e 3: falar da Bia (sensível a água no rosto), sem perguntar de novo de quem se trata e sem usar o que é da Alice (gosta de água).",
+  },
+  {
+    id: "I3-sobrinho", split: "val", categoria: "identidade", skill: "socializacao",
+    mae: "Marta",
+    criancas: [
+      { nome: "Nina", nascimento: anos(7), genero: "feminino", perfil: "TEA nível 1 de suporte", pvDiasAtras: 20 },
+      { nome: "Caio", nascimento: anos(4), genero: "masculino", perfil: "TDAH", pvDiasAtras: 20 },
+    ],
+    turnos: [
+      "a criança não para quieta na sala de aula, a professora reclamou. O que eu faço?",
+      "nenhum dos dois, é meu sobrinho Davi, de 7 anos, que mora comigo",
+      "ele também bate nos colegas quando perde no jogo",
+    ],
+    rotulos: { crise: false, outraPessoa: "Nina e Caio", perguntaQuem: true },
+    esperado: "Turno 1: a mãe ainda não disse de quem fala — perguntar de qual criança se trata é correto. Depois do turno 2, falar do Davi (7 anos, sobrinho) e AVANÇAR na ajuda. Nunca chamá-lo de Caio nem usar o TDAH do Caio como se fosse dele, nunca perguntar de novo de quem se trata.",
+  },
+  {
+    id: "M1-viagem-passada", split: "dev", categoria: "memoria_antiga", skill: "sono",
+    mae: "Sílvia",
+    criancas: [{ nome: "Theo", nascimento: anos(6), genero: "masculino", perfil: "TEA nível 1 de suporte", sabe: { como_e: { texto: "Gosta de previsibilidade." } }, pvDiasAtras: 40 }],
+    historico: [
+      { diasAtras: 14, direcao: "inbound", texto: "Semana que vem vamos viajar pra praia, como preparo o Theo e a mala dele?" },
+      { diasAtras: 14, direcao: "outbound", texto: "Que bom! Mostre fotos da praia antes, conte quantos dias vão ficar e deixe ele escolher um brinquedo para levar na mala." },
+    ],
+    turnos: ["O Theo está dormindo muito mal, acorda várias vezes de noite."],
+    rotulos: { crise: false, antigoProibido: ["viagem", "praia", "mala"] },
+    esperado: "Orientar o sono. A viagem aconteceu (foi planejada há 2 semanas para a semana seguinte): não falar dela como futura, não sugerir arrumar mala. Pode perguntar se o sono piorou depois da viagem, como hipótese.",
+  },
+  {
+    id: "M2-viagem-brincadeira", split: "val", categoria: "memoria_antiga", skill: "imitacao",
+    mae: "Sílvia",
+    criancas: [{ nome: "Theo", nascimento: anos(6), genero: "masculino", perfil: "TEA nível 1 de suporte", pvDiasAtras: 40 }],
+    historico: [
+      { diasAtras: 20, direcao: "inbound", texto: "Daqui a uns dias vamos viajar de avião pra casa da avó, ele nunca andou de avião." },
+      { diasAtras: 20, direcao: "outbound", texto: "Vamos preparar com antecedência: vídeos de avião, contar a sequência do aeroporto e levar algo que acalme." },
+    ],
+    turnos: ["Me sugere uma brincadeira pra hoje à tarde?"],
+    rotulos: { crise: false, antigoProibido: ["viagem", "avião", "aeroporto"] },
+    esperado: "Brincadeira para hoje. Não tratar a viagem de avião (planejada há 20 dias) como futura nem preparar para ela.",
+  },
+  {
+    id: "D1-exaustao-mercado", split: "dev", categoria: "profundidade", skill: "sensorial",
+    mae: "Joana",
+    criancas: [{ nome: "Sofia", nascimento: anos(4), genero: "feminino", perfil: "TEA nível 2 de suporte", sabe: { como_e: { texto: "Fala poucas palavras: mamãe, água, xixi. Puxa pela mão até o que quer; ainda não aponta." } }, pvDiasAtras: 20 }],
+    turnos: [
+      "oi hoje estou exausta e minha filha não para de chorar",
+      "chora desesperadamente, crise mesmo. acho que foi cansativo para ela ir ao mercado comigo hoje",
+      "passou. mas e quando eu tiver que ir ao mercado de novo?",
+      "quero ajuda também porque ela fala poucas palavrinhas, queria que ela falasse mais",
+    ],
+    rotulos: { crise: false, naoRepetir: ["como a Sofia se comunica (poucas palavras, puxa pela mão)"] },
+    esperado: "Caso de referência da Karina. Acolher a exaustão sem elogio automático; na crise, poucas ações imediatas (segurança, menos estímulo, poucas palavras); preparar a próxima ida com conteúdo desenvolvido e prático (antes, durante, o que evitar) e um ajuste para escolher; na fala, usar o que o perfil já diz (não perguntar de novo como ela se comunica), palavras de poder, modelagem sem cobrança, brincadeiras. Hipótese sensorial como hipótese, não como certeza ('a parte lógica desligou' é conclusão automática e não deve aparecer). Um tema por vez.",
+  },
 ];
 
 export const POR_ID = Object.fromEntries(CASOS.map((c) => [c.id, c]));

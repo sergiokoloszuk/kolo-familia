@@ -72,7 +72,7 @@ PEND-092 → 017 → 098 → 093 → 094 → 095 → 039 → 042 → 097 → 099
 substitui a prioridade atual de segurança nem a análise de produção.
 
 <!-- PENDENCIAS-INDEX:START -->
-Índice completo gerado de 192 fichas neste arquivo. A ficha é a fonte do estado; não edite as linhas abaixo à mão. Para atualizar: `node scripts/pendencias-index.mjs --write`.
+Índice completo gerado de 194 fichas neste arquivo. A ficha é a fonte do estado; não edite as linhas abaixo à mão. Para atualizar: `node scripts/pendencias-index.mjs --write`.
 
 | ID | Pendência | Prioridade | Estado da ficha |
 |---|---|---|---|
@@ -264,10 +264,12 @@ substitui a prioridade atual de segurança nem a análise de produção.
 | [PEND-247](#pend-247) | Memória é contexto, não pauta: interesse e conversa antigos chegavam à Ayla como atuais | P1 | PARCIAL — corrigido e medido em bancada na branch claude/ayla-memoria-respostas-20261119; sem publicação e sem prova em produção |
 | [PEND-248](#pend-248) | Pedido de parar/pausar em linguagem natural não executa nada, e a Ayla confirma como se tivesse feito | P0 | PENDENTE — achado em bancada; nenhuma correção estrutural feita |
 | [PEND-249](#pend-249) | Tela de preferências apaga evitar e experimentos ao salvar | P2 | PENDENTE — achado fora de escopo, não corrigido |
-| [PEND-250](#pend-250) | Respostas longas demais para quem lê no celular | P1 | PARCIAL — Core v13.3 candidato encurta; não ativado, sem medida em produção |
+| [PEND-250](#pend-250) | Respostas longas demais para quem lê no celular | P1 | SUPERADA POR DECISÃO DE PRODUTO (23/11) — o teto de tamanho saiu do Core v13.5 |
 | [PEND-251](#pend-251) | A Ayla presume dado que não tem e orienta antes de perguntar o que decide | P2 | PARCIAL — Core v13.3 candidato; sem prova em produção |
-| [PEND-252](#pend-252) | Oferta de cartões visuais: responder "sim" não abre a montagem | P1 | PARCIAL — mitigado no Core v13.4 (ensina a frase); correção estrutural pendente |
+| [PEND-252](#pend-252) | Oferta de cartões visuais: responder "sim" não abre a montagem | P1 | PENDENTE — a oferta com frase fixa saiu do Core v13.5 (G05: sem frase secreta); correção estrutural pendente |
 | [PEND-253](#pend-253) | Canal seguro para a responsável pedir ajustes de comportamento da Ayla | P2 | PARCIAL — guia e formulário publicados; rito sem uso ainda |
+| [PEND-254](#pend-254) | Foco da conversa esquecia a resposta da mãe e não reconhecia criança não cadastrada | P1 | PARCIAL — corrigido e medido na bancada; sem deploy, sem prova em produção |
+| [PEND-255](#pend-255) | Depois que a mãe identifica a criança, a Ayla às vezes só confirma e não avança | P2 | PENDENTE — achado da bancada de 23/11; pertence à missão M03 da responsável |
 <!-- PENDENCIAS-INDEX:END -->
 
 ---
@@ -11427,7 +11429,7 @@ tela. **Critério:** mesclar em vez de substituir, com teste de que `evitar` e
 ### PEND-250
 **Respostas longas demais para quem lê no celular**
 Bloco: **B · Ayla** · Prioridade: **P1**
-STATUS: **PARCIAL — Core v13.3 candidato encurta; não ativado, sem medida em produção** · Aberta em: 2026-11-20
+STATUS: **SUPERADA POR DECISÃO DE PRODUTO (23/11) — o teto de tamanho saiu do Core v13.5** · Aberta em: 2026-11-20
 
 Relato da responsável (20/11, após testar o simulador): "o texto fica muito
 grande, tem mãe que é mais humilde, cansa ler tudo isso". O Core v12/v13 já manda
@@ -11443,6 +11445,12 @@ caracteres na bancada sem queda de nota, crise ou segurança; comprimento da fal
 registrado por turno em produção e conferido por 7 dias depois da ativação; se o
 Core não bastar, correção estrutural (limite no envelope ou no orçamento de
 saída), não mais texto no prompt.
+
+Atualização 23/11: a responsável testou o v13.4 e achou as respostas curtas
+demais; o documento "Ayla referência e missões" (R02, M03) pede o fim da
+brevidade universal. O Core v13.5 candidato troca o teto por "a profundidade
+acompanha a necessidade". Bancada 23/11 (v9a produção × v9b): profundidade
+adequada 3,97 → 4,19, nota 3,95 → 4,19, crise 15/15 nas duas.
 
 Resultado (20/11, bancada, 34 casos × 3, juiz Sonnet com régua nova): v13.2 →
 v13.3 mediana **617 → 467 caracteres**, acima de 700 **38% → 8%**, leitura fácil
@@ -11474,7 +11482,7 @@ exemplos reais da responsável para saber o que exatamente ela esperava.
 ### PEND-252
 **Oferta de cartões visuais: responder "sim" não abre a montagem**
 Bloco: **B · Ayla** · Prioridade: **P1**
-STATUS: **PARCIAL — mitigado no Core v13.4 (ensina a frase); correção estrutural pendente** · Aberta em: 2026-11-20
+STATUS: **PENDENTE — a oferta com frase fixa saiu do Core v13.5 (G05: sem frase secreta); correção estrutural pendente** · Aberta em: 2026-11-20
 
 A responsável quer que, ao sugerir uma sequência visual, a Ayla ofereça montar
 os cartões. Executado o portão real (`portaoDeterministicoDeRotina`,
@@ -11513,9 +11521,44 @@ anterior. Lacuna: o simulador (`admin/inteligencia`) **não guarda conversa** �
 **Critério:** três pedidos reais atendidos pelo rito, e decisão registrada sobre
 guardar (ou exportar) a conversa do simulador.
 
+### PEND-254
+**Foco da conversa esquecia a resposta da mãe e não reconhecia criança não cadastrada**
+Bloco: **B · Ayla** · Prioridade: **P1**
+STATUS: **PARCIAL — corrigido e medido na bancada; sem deploy, sem prova em produção** · Aberta em: 2026-11-23
+
+Relato da responsável (23/11, simulador): família com duas crianças, ela falou
+de uma terceira; a Ayla "errou várias vezes o nome" e perguntou de novo "é a
+terceira ou um dos seus filhos?" depois da resposta. Causa: `resolverFoco`
+(`experimental-foco.ts`) olhava só a mensagem atual — a resposta da mãe valia
+um turno — e não existia foco para criança fora do cadastro; "minha filha"/
+"ela" iam pelo gênero para a única menina cadastrada. No WhatsApp o
+`resolverMembroAlvo` (`membro-alvo.ts`) decide antes e impunha a mesma escolha
+(dois donos da mesma decisão).
+
+Correção (branch `claude/ayla-foco-core-20261123`): o foco considera as falas
+anteriores da mãe (simulador + 24 h já lidas, sem consulta nova; no histórico
+só sinais fortes), ganha o tipo `externa` e o orquestrador deixa de impor
+criança cadastrada quando a conversa a excluiu (`criancaDeForaNaConversa`).
+17 testes em `foco-conversa.test.ts`, incluindo os legítimos. Bancada 23/11
+(3 casos × 3 turnos × 3): nome de criança cadastrada usado na criança de fora
+**5/15 → 1/15** (o 1 é menção, não troca); pergunta repetida **1/18 → 0/18**;
+crise 3/3. **Critério de conclusão:** deploy, prova no simulador e em conta de
+QA com duas crianças + uma terceira, e no WhatsApp.
+
+### PEND-255
+**Depois que a mãe identifica a criança, a Ayla às vezes só confirma e não avança**
+Bloco: **B · Ayla** · Prioridade: **P2**
+STATUS: **PENDENTE — achado da bancada de 23/11; pertence à missão M03 da responsável** · Aberta em: 2026-11-23
+
+Bancada 23/11 (I2, I3): quando a mãe responde "a Bia" ou "é meu sobrinho
+Davi", a resposta seguinte confirma de quem se trata e repete o turno anterior,
+sem estratégia nova (juiz 2–3/5). O documento "Ayla referência e missões" pede
+"continuação recente avança" (G02/M03). **Critério:** caso de bancada em que o
+turno seguinte à identificação traz orientação nova, sem perguntar de novo.
+
 ---
 
-**Proximo ID livre: PEND-254. *(PEND-232 a PEND-243 estão reivindicadas em outras frentes; PEND-244 registra a ausência de autorização por cargo no Admin; PEND-245 e PEND-246 pertencem à remediação Black Friday; PEND-225, PEND-226 e PEND-228 estão reivindicadas no worktree `ayla-conversa-valor`; PEND-227 foi incorporada nesta frente; PEND-209 a PEND-211 já estão reivindicadas por outra frente; 024 e 025 reservadas por frentes ainda nao publicadas; PEND-202 reivindicada em commit e ainda sem ficha; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
+**Proximo ID livre: PEND-256. *(PEND-232 a PEND-243 estão reivindicadas em outras frentes; PEND-244 registra a ausência de autorização por cargo no Admin; PEND-245 e PEND-246 pertencem à remediação Black Friday; PEND-225, PEND-226 e PEND-228 estão reivindicadas no worktree `ayla-conversa-valor`; PEND-227 foi incorporada nesta frente; PEND-209 a PEND-211 já estão reivindicadas por outra frente; 024 e 025 reservadas por frentes ainda nao publicadas; PEND-202 reivindicada em commit e ainda sem ficha; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.

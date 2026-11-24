@@ -119,6 +119,7 @@ import { dispararGeracao } from "./rotina-guiada";
 import { resolverRotinaOrfa, rotinaOrfaDaFamilia } from "./rotina-reconciliacao";
 import { pedeArtefatoImprimivel, apontaProRecente } from "./rotina-pdf-rota";
 import { resolverMembroAlvo, textoDoTurnoSemResposta } from "./membro-alvo";
+import { criancaDeForaNaConversa } from "./experimental-foco";
 import {
   segurancaAberta,
   mensagemPedeSeguranca,
@@ -4279,7 +4280,20 @@ async function processInboundInterno(
           membroContexto: membroConversa,
         })
       : null;
-    const membroPreferidoId = alvoDoTurno?.tipo === "resolvido"
+    // ⚠️ CRIANÇA DE FORA (23/11/2026): se a conversa já disse que a criança
+    // não é cadastrada, não impor uma cadastrada pelo gênero ou pelo contexto —
+    // `resolverFoco` decide com a conversa inteira. Ver `criancaDeForaNaConversa`.
+    const deForaNaConversa = ctxExp && alvoDoTurno?.tipo === "resolvido" && alvoDoTurno.motivo !== "nome"
+      ? criancaDeForaNaConversa(
+          inbound.texto,
+          (await historicoDoTurno())
+            .filter((l) => l.direcao === "inbound" &&
+              (!l.created_at || Date.parse(l.created_at) >= Date.now() - 24 * 60 * 60 * 1000))
+            .map((l) => l.texto ?? ""),
+          ctxExp.membros.map((m) => ({ id: m.id, nome: m.nome ?? null, genero: m.genero ?? null })),
+        )
+      : false;
+    const membroPreferidoId = alvoDoTurno?.tipo === "resolvido" && !deForaNaConversa
       ? alvoDoTurno.membroId
       : null;
     const exp = ctxExp
