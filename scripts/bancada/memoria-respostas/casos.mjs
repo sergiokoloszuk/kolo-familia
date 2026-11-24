@@ -372,7 +372,7 @@ export const CASOS = [
       "ele também bate nos colegas quando perde no jogo",
     ],
     rotulos: { crise: false, outraPessoa: "Nina e Caio", perguntaQuem: true },
-    esperado: "Depois do turno 2, falar do Davi (7 anos, sobrinho). Nunca chamá-lo de Caio nem usar o TDAH do Caio como se fosse dele, nunca perguntar de novo de quem se trata.",
+    esperado: "Turno 1: a mãe ainda não disse de quem fala — perguntar de qual criança se trata é correto. Depois do turno 2, falar do Davi (7 anos, sobrinho) e AVANÇAR na ajuda. Nunca chamá-lo de Caio nem usar o TDAH do Caio como se fosse dele, nunca perguntar de novo de quem se trata.",
   },
   {
     id: "M1-viagem-passada", split: "dev", categoria: "memoria_antiga", skill: "sono",

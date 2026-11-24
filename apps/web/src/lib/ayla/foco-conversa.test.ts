@@ -38,6 +38,18 @@ describe("O CASO DA KARINA — criança que não está cadastrada", () => {
     expect(f.membros).toEqual([]);
   });
 
+  it("turno 3: um 'ela' intermediário NÃO passa na frente de 'minha terceira filha' (bancada 23/11)", async () => {
+    const f = await foco("e o que eu faço quando ela acorda chorando?", KARINA, [
+      "ela acorda várias vezes de madrugada",
+      "Quero ajuda com a Lia, minha terceira filha, ela tem 2 anos e não está cadastrada aqui.",
+    ]);
+    expect(f.tipo).toBe("externa");
+    expect(criancaDeForaNaConversa("e o que eu faço quando ela acorda chorando?", [
+      "ela acorda várias vezes de madrugada",
+      "Quero ajuda com a Lia, minha terceira filha",
+    ], KARINA)).toBe(true);
+  });
+
   it("a resposta 'nenhum dos dois, é meu sobrinho' vale nos turnos seguintes", async () => {
     expect((await foco("nenhum dos dois, é meu sobrinho Davi que mora comigo", KARINA)).tipo).toBe("externa");
     const depois = await foco("ele bate nos colegas também", KARINA, [
@@ -51,10 +63,10 @@ describe("O CASO DA KARINA — criança que não está cadastrada", () => {
     expect((await foco("não é a Manu nem o Mario, é outra criança", KARINA)).tipo).toBe("externa");
   });
 
-  it("o bloco manda NÃO perguntar de novo e NÃO usar os cadastrados", async () => {
+  it("o bloco manda NÃO perguntar de novo e NÃO cita os cadastrados (o modelo repetia)", async () => {
     const b = blocoDeFoco(await foco("ela não dorme", KARINA, ["é minha terceira filha"]));
     expect(b).toMatch(/NÃO pergunte de novo/);
-    expect(b).toMatch(/Manu e Mario/);
+    expect(b).not.toMatch(/Manu|Mario/);
   });
 
   it("o orquestrador enxerga a mesma decisão", () => {

@@ -250,10 +250,16 @@ export async function resolverFoco(
   // A conversa recente, do mais novo para o mais velho: o primeiro texto que
   // decide alguma coisa vale. Limite curto — é a conversa em curso, não o
   // histórico da família.
+  //
+  // ⚠️ NO HISTÓRICO SÓ VALEM SINAIS FORTES (nome, plural, criança de fora).
+  // Medido na bancada de 23/11: com o gênero valendo aqui, "ela acorda de
+  // madrugada" (turno 2) apontava a Nina ANTES de a varredura chegar a "minha
+  // terceira filha" (turno 1), e o turno 3 carregava o perfil errado. Pronome é
+  // sinal fraco; numa fala antiga ele não pode passar na frente da afirmação.
   let daConversa: Foco | null = null;
   for (const anterior of falasRecentesDaMae.slice(0, 6)) {
     if (!anterior?.trim() || anterior.trim() === texto.trim()) continue;
-    daConversa = focoDoTexto(anterior, ativos, true);
+    daConversa = focoDoTexto(anterior, ativos, false);
     if (daConversa) break;
   }
   // Criança de fora já estabelecida vence o gênero: "ela" depois de "é minha
@@ -306,7 +312,7 @@ export function criancaDeForaNaConversa(
   if (agora) return agora.tipo === "externa";
   for (const anterior of falasRecentesDaMae.slice(0, 6)) {
     if (!anterior?.trim() || anterior.trim() === texto.trim()) continue;
-    const f = focoDoTexto(anterior, ativos, true);
+    const f = focoDoTexto(anterior, ativos, false);
     if (f) return f.tipo === "externa";
   }
   return false;
@@ -328,9 +334,9 @@ export function blocoDeFoco(foco: Foco): string {
       return `<sobre_quem>A conversa é sobre ${nomes} — as duas crianças. Considere as características de cada uma; o que vale para uma pode não valer para a outra.</sobre_quem>`;
     case "ambiguo":
       return `<sobre_quem>Ainda NÃO se sabe de qual criança a pessoa está falando: ${nomes}. NÃO escolha por conta própria e NÃO use informação de uma como se fosse da outra — pergunte de qual delas se trata, de forma natural.</sobre_quem>`;
-    case "externa": {
-      const deFora = foco.cadastrados.map((m) => m.nome).filter(Boolean).join(" e ");
-      return `<sobre_quem>A conversa é sobre uma criança que NÃO está cadastrada na família (por exemplo, outro filho, sobrinho ou criança conhecida)${deFora ? ` — não é ${deFora}` : ""}. Não use nada do que se sabe sobre ${deFora || "as crianças cadastradas"} para ela, não a chame por esses nomes e NÃO pergunte de novo de quem se trata. Use só o que a pessoa contou na conversa.</sobre_quem>`;
-    }
+    // ⚠️ SEM OS NOMES DOS CADASTRADOS — medido em 23/11: citá-los aqui fazia o
+    // modelo repeti-los ("vou considerar o Davi, e não a Nina nem o Caio").
+    case "externa":
+      return `<sobre_quem>A conversa é sobre uma criança que NÃO está cadastrada na família (por exemplo, outro filho, sobrinho ou criança conhecida). Nenhum perfil cadastrado vale para ela: chame-a pelo nome que a pessoa usou, use só o que a pessoa contou na conversa e NÃO pergunte de novo de quem se trata.</sobre_quem>`;
   }
 }
