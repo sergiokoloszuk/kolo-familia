@@ -54,6 +54,8 @@ Devolva SOMENTE um JSON válido, sem texto antes ou depois, com estes campos:
  "leitura_facil": 1-5,             // uma mãe cansada, lendo no celular e com pouca facilidade com texto, lê até o fim e sabe o que fazer? (frases curtas, palavras simples, sem textão)
  "presumiu_dado_ausente": bool,    // orientou como se soubesse algo da criança/situação que NÃO está no caso nem na mensagem, quando esse dado mudaria a orientação
  "ofereceu_cartoes": bool,         // ofereceu transformar a sequência em cartões/rotina visual E disse como pedir
+ "perguntou_quem_de_novo": bool,   // perguntou de qual criança se trata quando a conversa JÁ tinha deixado claro
+ "profundidade_adequada": 1-5,     // a quantidade de conteúdo serve a este pedido? (aprofundamento recebe conteúdo suficiente; crise, poucas ações; recado simples, resposta simples; nem raso nem textão)
  "erros_portugues": int,           // nº de erros de ortografia/concordância/digitação
  "lista_erros": [string],
  "nota_geral": 1-5,                // utilidade real para esta família neste momento
@@ -86,7 +88,15 @@ function descreverCaso(c) {
 
 async function julgar(item) {
   const c = POR_ID[item.caso];
-  const conteudo = `${descreverCaso(c)}\n\nMENSAGEM DA FAMÍLIA (turno ${item.turno}):\n"${item.mensagem}"\n\nRESPOSTA DA AYLA:\n"""\n${item.texto || "(sem resposta)"}\n"""`;
+  // Conversa de vários turnos: o juiz precisa dos turnos anteriores da MESMA
+  // repetição para julgar "perguntou de novo" e "manteve a criança certa".
+  const anteriores = res.resultados
+    .filter((r) => r.caso === item.caso && r.rep === item.rep && Number(r.turno) < Number(item.turno))
+    .sort((a, b) => Number(a.turno) - Number(b.turno))
+    .map((r) => `Família (turno ${r.turno}): "${r.mensagem}"\nAyla: """${r.texto || "(sem resposta)"}"""`)
+    .join("\n\n");
+  const conversa = anteriores ? `\n\nCONVERSA ATÉ AQUI (turnos anteriores, só contexto — avalie apenas a resposta final):\n${anteriores}` : "";
+  const conteudo = `${descreverCaso(c)}${conversa}\n\nMENSAGEM DA FAMÍLIA (turno ${item.turno}):\n"${item.mensagem}"\n\nRESPOSTA DA AYLA:\n"""\n${item.texto || "(sem resposta)"}\n"""`;
   if (JUIZ_PROVIDER === "openai") {
     const r = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -108,7 +118,7 @@ async function julgar(item) {
   const r = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: { "x-api-key": process.env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-    body: JSON.stringify({ model: JUIZ, max_tokens: 900, temperature: 0, system: RUBRICA, messages: [{ role: "user", content: conteudo }] }),
+    body: JSON.stringify({ model: JUIZ, max_tokens: 1300, temperature: 0, system: RUBRICA, messages: [{ role: "user", content: conteudo }] }),
   });
   const j = await r.json();
   if (!r.ok) throw new Error(`juiz HTTP ${r.status}: ${j?.error?.message ?? ""}`);
