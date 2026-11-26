@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { capitalizarNome } from "@/lib/nome";
 import { idadeAnos } from "@/lib/idade";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { PlanoView, type PlanoSecaoView } from "./plano-view";
 import { PlanoMontando } from "./plano-poller";
+import { lerPlanoV51 } from "@/lib/plano-v51/contrato";
 
 // A geração do plano roda em segundo plano (after) — pode levar ~1 min.
 export const maxDuration = 300;
@@ -28,6 +29,8 @@ export default async function PlanoPage({
     .maybeSingle();
 
   if (!plano) notFound();
+  // Novos planos versionados têm retomada própria. O documento legado segue intacto.
+  if (lerPlanoV51(plano.secoes)) redirect(`/planos/desenvolvimento?plano=${encodeURIComponent(id)}`);
 
   const rel = plano.membros_atipicos as
     | { nome: string; data_nascimento: string | null }

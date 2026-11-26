@@ -1,0 +1,122 @@
+{
+  "base": "8a18707de242ca877842bf102b7dba08e47d1eaa",
+  "branch": "codex/ayla-web-v5-interna-20261126",
+  "geradoEm": "2026-11-26T20:22:54.417Z",
+  "producaoAlterada": false,
+  "modeloRealExecutado": false,
+  "arquivos": [
+    {
+      "caminho": "apps/web/src/lib/plano-v51/contrato.ts",
+      "sha256": "dbe51654080812b278e5b66e48e29b6c4d9da2b247d2fcf95b10ddeb126af38a"
+    },
+    {
+      "caminho": "apps/web/src/lib/plano-v51/demonstracao.ts",
+      "sha256": "0cb79eabf430902e4d0393a9bbf73ca8dcd8ac51148d0df545d5803fddcffd54"
+    },
+    {
+      "caminho": "apps/web/src/lib/plano-v51/dominio.test.ts",
+      "sha256": "67f849ce151c7182760d51220bf11aa6f2bb5f9d2e0830d8229e13c5fe32f594"
+    },
+    {
+      "caminho": "apps/web/src/lib/plano-v51/dominio.ts",
+      "sha256": "6614e77f610f6004010717f56b2b7262614dabb4fff97b5c987778e0ac09c2a9"
+    },
+    {
+      "caminho": "apps/web/src/lib/plano-v51/gerador.test.ts",
+      "sha256": "26f3913bb606885ffc2d36b6ad701c8ba624f84dc6cf1664cd2c42fbe34ec383"
+    },
+    {
+      "caminho": "apps/web/src/lib/plano-v51/gerador.ts",
+      "sha256": "8ed197b9045f0119bb5adbe58a7d1820931689fd191c26fdbba87b2bcc7008f7"
+    },
+    {
+      "caminho": "apps/web/src/lib/plano-v51/repositorio.test.ts",
+      "sha256": "74af8c2ff2d9abc6e2de00940eaaf12d71eb5f86bf8167acea14e7488f4fdc04"
+    },
+    {
+      "caminho": "apps/web/src/lib/plano-v51/repositorio.ts",
+      "sha256": "0781fa9b506d14ca3ebc86d885548b717d5c9f17c6b9ab3bdd77e2274e1a2fc9"
+    },
+    {
+      "caminho": "apps/web/src/lib/plano-v51/servico.ts",
+      "sha256": "9a9b040e841c87dc74dc4c42539391a31ef11539ad08d3d4a6d445728908671a"
+    },
+    {
+      "caminho": "apps/web/src/components/plano-v51/painel-interno.tsx",
+      "sha256": "2700c31146be99cc8cee28c4987ca7f2300407cedfa9fb90a866fb621febc113"
+    },
+    {
+      "caminho": "apps/web/src/components/plano-v51/plano-v51.css",
+      "sha256": "1a5dde3d48996e88c41aaa998207163d7015bff5da6c41a9c3b6acef90a527db"
+    },
+    {
+      "caminho": "apps/web/src/components/plano-v51/plano-v51.tsx",
+      "sha256": "588458e1f70bd3d23df7e9f166ad00a7394b8422a8c147728317a30e7b0a45e0"
+    },
+    {
+      "caminho": "apps/web/src/app/(app)/planos/desenvolvimento/actions.test.ts",
+      "sha256": "14042194d594e7e7da21c1d8c0f72633371bf71fb8cb9e6c0a58ed93c1eb3497"
+    },
+    {
+      "caminho": "apps/web/src/app/(app)/planos/desenvolvimento/actions.ts",
+      "sha256": "6ae13badff368310545ad9e6634b9f44ea1630ef53348cdd004cea7c7e692d01"
+    },
+    {
+      "caminho": "apps/web/src/app/(app)/planos/desenvolvimento/page.tsx",
+      "sha256": "60c2dd01c166f9d0776a95ff1a57d51e45d91291c7b32b69345d1fbfeb16112a"
+    },
+    {
+      "caminho": "apps/web/src/app/(app)/planos/desenvolvimento/plano-conectado.tsx",
+      "sha256": "c063d8484625a381b60d8b4fbd41168bd1d1129a81a0a0e45add1e6db7a14d6c"
+    },
+    {
+      "caminho": "apps/web/src/app/admin/plano-v51/page.tsx",
+      "sha256": "737cb070865f247d5fe9159cca586444b21f7988e5b2eb4b56dbc909315f7f83"
+    },
+    {
+      "caminho": "apps/web/src/app/(app)/planos/[id]/page.tsx",
+      "sha256": "8b45a86bb0f53040ffd65d810f9999f2c4d680f00ace1a3da8d94cc795fad381"
+    },
+    {
+      "caminho": "docs/specs/plano-web-v51.md",
+      "sha256": "2415304d5db573e1d44d62674775d5fec7d225567f0c342904af29f6ee147377"
+    },
+    {
+      "caminho": "apps/web/vercel.json",
+      "sha256": "099d062dd69acdfc9ecb6bf64004af67b34f3ecf93a197f2a817c8db02903989"
+    }
+  ],
+  "protegidos": [
+    {
+      "caminho": "apps/web/src/app/(app)/painel/page.tsx",
+      "sha256": "9360307470f7b346c4f26395a8f69a516cd15ea32c55f0cc6ccf51e3c28711d4",
+      "identicoAHEAD": true
+    },
+    {
+      "caminho": "apps/web/src/lib/ia/engine.ts",
+      "sha256": "cda8f0a24c2859aa40a8b95d96ef417e2bed016150ac0fc41ec69f6e4f0da5a2",
+      "identicoAHEAD": true
+    },
+    {
+      "caminho": "apps/web/src/lib/ia/context.ts",
+      "sha256": "c60dc2b8c1c9d9beaac681da173ef620db98f65f7f6d83b125e624732b268d65",
+      "identicoAHEAD": true
+    },
+    {
+      "caminho": "apps/web/src/lib/ayla/orchestrator.ts",
+      "sha256": "af15f5256c2fc03f872436542f805e30035a7b6633bea59ea920a8a418050c7a",
+      "identicoAHEAD": true
+    },
+    {
+      "caminho": "apps/web/src/lib/ia/plano.ts",
+      "sha256": "40a122b2eb645b273354de89a97f6c876c097895844a29e13fe30f64e7d63552",
+      "identicoAHEAD": true
+    },
+    {
+      "caminho": "apps/web/src/app/api/stripe/webhook/route.ts",
+      "sha256": "c362be2ed9ad150b2cec9982032ee5aeccb1e96ff3c737dda08b949aec0d4487",
+      "identicoAHEAD": true
+    }
+  ],
+  "testeStripePreexistente": "apps/web/src/app/api/stripe/webhook/route.test.ts — não pertence a esta entrega"
+}

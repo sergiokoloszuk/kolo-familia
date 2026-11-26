@@ -1,0 +1,38 @@
+{
+  "ambito": "Somente fixture fictícia, mesmo componente React, browser sem acesso externo. Não é smoke Next autenticado nem produção.",
+  "cenarios": [
+    {
+      "nome": "desktop",
+      "width": 1440,
+      "height": 1000,
+      "veredito": "PASSOU",
+      "caminho": "entrada sem membro → seleção → relato → convite → etapas → combinado → dia1 vazio → formulário vazio → resultado → melhoria+confirmação → conquista → troca de irmão → retomada",
+      "retomadaAposReload": false,
+      "bancoReal": false,
+      "producao": false
+    },
+    {
+      "nome": "celular",
+      "width": 390,
+      "height": 844,
+      "veredito": "PASSOU",
+      "caminho": "entrada sem membro → seleção → relato → convite → etapas → combinado → dia1 vazio → formulário vazio → resultado → melhoria+confirmação → conquista → troca de irmão → retomada",
+      "retomadaAposReload": false,
+      "bancoReal": false,
+      "producao": false
+    },
+    {
+      "nome": "celular-320",
+      "width": 320,
+      "height": 720,
+      "veredito": "PASSOU",
+      "caminho": "entrada sem membro → seleção → relato → convite → etapas → combinado → dia1 vazio → formulário vazio → resultado → melhoria+confirmação → conquista → troca de irmão → retomada",
+      "retomadaAposReload": false,
+      "bancoReal": false,
+      "producao": false
+    }
+  ],
+  "erros": [],
+  "externosBloqueados": 0,
+  "falha": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByText('“Começou a primeira parte com ajuda.”', { exact: true }) to be visible\u001b[22m\n\n    at C:\\Users\\karin\\.codex\\worktrees\\ayla-web-v5-interna-20261126\\Kolo Família\\outputs\\plano-v51\\qa-browser.mjs:117:80"
+}

@@ -1,4 +1,9 @@
 {
+  "git": {
+    "deploymentEnabled": {
+      "codex/ayla-web-v5-interna-20261126": false
+    }
+  },
   "crons": [
     {
       "path": "/api/ayla/cron?tipo=rotina",

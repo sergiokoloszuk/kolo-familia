@@ -1,0 +1,47 @@
+{
+  "ambito": "Somente fixture fictícia, mesmo componente React, browser sem acesso externo. Não é smoke Next autenticado nem produção.",
+  "cenarios": [
+    {
+      "nome": "desktop",
+      "width": 1440,
+      "height": 1000,
+      "veredito": "PASSOU",
+      "caminho": "entrada sem membro → seleção → relato → convite → etapas → combinado → dia1 vazio → formulário vazio → resultado → melhoria+confirmação → conquista → troca de irmão → retomada",
+      "retomadaAposReload": false,
+      "bancoReal": false,
+      "producao": false
+    },
+    {
+      "nome": "celular",
+      "width": 390,
+      "height": 844,
+      "veredito": "PASSOU",
+      "caminho": "entrada sem membro → seleção → relato → convite → etapas → combinado → dia1 vazio → formulário vazio → resultado → melhoria+confirmação → conquista → troca de irmão → retomada",
+      "retomadaAposReload": false,
+      "bancoReal": false,
+      "producao": false
+    },
+    {
+      "nome": "celular-320",
+      "width": 320,
+      "height": 720,
+      "veredito": "PASSOU",
+      "caminho": "entrada sem membro → seleção → relato → convite → etapas → combinado → dia1 vazio → formulário vazio → resultado → melhoria+confirmação → conquista → troca de irmão → retomada",
+      "retomadaAposReload": false,
+      "bancoReal": false,
+      "producao": false
+    },
+    {
+      "nome": "persistencia-simulada",
+      "width": 1440,
+      "height": 1000,
+      "veredito": "PASSOU",
+      "caminho": "entrada sem membro → seleção → relato → convite → etapas → combinado → dia1 vazio → formulário vazio → resultado → melhoria+confirmação → conquista → troca de irmão → retomada",
+      "retomadaAposReload": true,
+      "bancoReal": false,
+      "producao": false
+    }
+  ],
+  "erros": [],
+  "externosBloqueados": 0
+}

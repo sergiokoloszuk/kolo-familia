@@ -10768,6 +10768,22 @@ aplicada.
 Bloco: **B · Ayla / Produto** · Prioridade: **P1**
 STATUS: **SUSPENSÃO IMPLEMENTADA LOCALMENTE — decisão de produto pendente** · Aberta em: 2026-09-25
 
+**ATUALIZAÇÃO LOCAL — 26/11/2026 (Plano Web V5.1).** Karina aprovou o HTML
+V5.1 (SHA-256 `a7899a119ea91c2bdf1fe2ab0f07c3877aa759ee76f692a9ca0b85ec942c7a2d`)
+para evolução do Plano na Web. Autorizou usar gravações existentes sem alterar
+esquema ou registros atuais, com testes controlados e nenhuma escrita de teste
+em produção. A candidata neste checkout usa somente novos registros em
+`planos.secoes`, com envelope versionado; registros legados não são convertidos.
+Implementa cinco estados, eventos escopados, confirmação por leitura, controle
+de revisão e interface restrita à equipe. Evidências e limites em
+`outputs/plano-v51/` e `docs/specs/plano-web-v51.md`.
+Essa decisão NÃO religa Plano, oferta, follow-up ou lembretes no WhatsApp.
+Permanecem pendentes: qualidade da IA real, triagem/texto de cuidado revisado,
+continuidade WhatsApp, prioridade persistente entre planos, conversa livre
+persistente e validação do JSONB/CAS em banco descartável com RLS real.
+Nada desta fatia foi publicado ou confirmado em produção. A suspensão existente
+e a ficha permanecem abertas; teste local não comprova retomada de produção.
+
 Por decisão da Karina, a entrega de Plano pelo WhatsApp deve ficar suspensa
 enquanto o produto verifica se o artefato ainda melhora a experiência ou se a
 mesma necessidade é melhor atendida por orientação conversacional,
@@ -11395,6 +11411,13 @@ legítimo sumiu (interesse falado esta semana continua sendo usado).
 **Pedido de parar/pausar em linguagem natural não executa nada, e a Ayla confirma como se tivesse feito**
 Bloco: **D · Proativas e contato** · Prioridade: **P0**
 STATUS: **PENDENTE — achado em bancada; nenhuma correção estrutural feita** · Aberta em: 2026-11-19
+
+**FRONTEIRA PLANO WEB V5.1 — 26/11/2026.** A candidata local mantém os
+lembretes indisponíveis/desligados; o contrato recebido do browser rejeita
+ativação e origem WhatsApp forjada. Pausa/encerramento retiram autorização no
+estado do plano, mas nenhum agendador ou envio foi conectado. Portanto NÃO
+comprovam interrupção das proativas existentes e NÃO encerram esta pendência.
+O orchestrator, suas preferências e os transportes permanecem intocados.
 
 `detectarComando` (`lib/ayla/parser.ts`) só reconhece as palavras exatas
 `PAUSAR`, `SAIR`, `CANCELAR`, `MUDAR HORARIO HH:MM`. "Não quero mais receber
