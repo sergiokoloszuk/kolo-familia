@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { MODELO_CONVERSA, gerarConversacional } from "./provider";
@@ -103,17 +103,30 @@ describe("erro não vira resposta vazia", () => {
 
   it("chave ausente não quebra a montagem — a API é quem recusa", async () => {
     const antes = process.env.ANTHROPIC_API_KEY;
-    process.env.ANTHROPIC_API_KEY = "";
-    await expect(
-      gerarConversacional({
-        provider: "anthropic",
-        model: "claude-sonnet-4-6",
-        system: "oi",
+    const transporte = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(
+      JSON.stringify({ error: { type: "authentication_error", message: "401 sintético" } }),
+      { status: 401, headers: { "content-type": "application/json" } },
+    ));
+    try {
+      process.env.ANTHROPIC_API_KEY = "";
+      await expect(gerarConversacional({
+        provider: "anthropic", model: "claude-sonnet-4-6", system: "oi",
+        messages: [{ role: "user", content: "oi" }], maxTokens: 8,
+      })).rejects.toThrow(/anthropic/);
+      expect(transporte).toHaveBeenCalledTimes(1);
+      const [url, init] = transporte.mock.calls[0];
+      expect(url).toBe("https://api.anthropic.com/v1/messages");
+      expect(init?.method).toBe("POST");
+      expect(init?.headers).toMatchObject({ "x-api-key": "" });
+      expect(JSON.parse(String(init?.body))).toMatchObject({
+        model: "claude-sonnet-4-6", max_tokens: 8,
         messages: [{ role: "user", content: "oi" }],
-        maxTokens: 8,
-      }),
-    ).rejects.toThrow(/anthropic/);
-    if (antes) process.env.ANTHROPIC_API_KEY = antes;
+      });
+    } finally {
+      transporte.mockRestore();
+      if (antes === undefined) delete process.env.ANTHROPIC_API_KEY;
+      else process.env.ANTHROPIC_API_KEY = antes;
+    }
   });
 });
 

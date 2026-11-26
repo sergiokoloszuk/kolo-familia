@@ -2,7 +2,7 @@ import Link from "next/link";
 import { VideoAjuda } from "@/components/video-guia";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { loadFamilyContext } from "@/lib/auth/require-user";
-import { resolverCriancaAtivaId } from "@/lib/crianca-ativa";
+import { lerCriancaAtivaId } from "@/lib/crianca-ativa";
 import { capitalizarNome } from "@/lib/nome";
 import { ConversarForm } from "../conversar/conversar-form";
 import { ConversaItem } from "./conversa-item";
@@ -34,7 +34,12 @@ export default async function EstrategiasPage({
     .eq("ativo", true)
     .order("created_at", { ascending: true });
 
-  const ativaId = (await resolverCriancaAtivaId(membros ?? [])) ?? undefined;
+  // Esta entrada não pode tratar o fallback global do primeiro filho como
+  // escolha da família. URL/cookie são contexto explícito, conferido na lista.
+  const contextoId = sp.membro ?? await lerCriancaAtivaId();
+  const ativaId = membros?.some(m => m.id === contextoId)
+    ? contextoId ?? undefined
+    : !contextoId && membros?.length === 1 ? membros[0].id : undefined;
 
   // Conversas anteriores da CRIANÇA ATIVA (não mistura os filhos).
   let convQuery = supabase
@@ -87,7 +92,7 @@ export default async function EstrategiasPage({
         </p>
         <ConversarForm
           membros={membros ?? []}
-          initialMembroId={sp.membro ?? ativaId}
+          initialMembroId={contextoId ?? ativaId}
           tema={temaContexto ?? undefined}
         />
       </div>

@@ -44,6 +44,30 @@ const parserFalha = { valor: false };
  * nada, e uma asserção sobre ele passaria por vazio em vez de por verdade.
  */
 const eventos: Array<{ kind: string; payload?: Record<string, unknown> }> = [];
+const pedidosExtrator: Array<{ system: string; user: string }> = [];
+
+// Nos cenários de sombra abaixo, o modelo controlado decide legitimamente
+// não propor conhecimento. Extração, fontes persistidas e guardas são reais.
+vi.mock("@/lib/ia/anthropic", () => ({
+  MODELS: { leve: "claude-haiku-4-5", principal: "claude-sonnet-4-6" },
+  getAnthropicClient: () => ({ messages: { stream: (p: { system: unknown; messages: Array<{ content: string }> }) => {
+    pedidosExtrator.push({ system: JSON.stringify(p.system), user: p.messages[0].content });
+    return { finalMessage: async () => ({
+      content: [{ type: "text", text: JSON.stringify({ kolo_vivo: [], conquista: null, desafio: null }) }],
+      usage: { input_tokens: 10, output_tokens: 5 },
+    }) };
+  } } }),
+}));
+
+// A fixture controla também as fábricas internas: uma chave fictícia não
+// transforma consultas service-role em BancoMemoria. Mantém loaders reais.
+vi.mock("@/lib/supabase/server", async (orig) => ({
+  ...((await orig()) as Record<string, unknown>),
+  createServiceRoleClient: () => {
+    if (!mundoRef.atual) throw new Error("mundo sintético ausente");
+    return mundoRef.atual.db.cliente();
+  },
+}));
 
 vi.mock("@/lib/log", () => ({
   logEvent: async (e: { kind: string; payload?: Record<string, unknown> }) => {
@@ -120,16 +144,29 @@ function familia(telefone = "+5541999990021") {
 }
 
 const ENV = process.env.AYLA_EXPERIMENTAL_FAMILY_IDS;
+let fetchControlado: { mock: { calls: unknown[] }; mockRestore: () => void } | null = null;
 beforeEach(() => {
+  fetchControlado = vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("rede proibida neste cenário"));
   registros.length = 0;
   linhaDoTempo.length = 0;
   eventos.length = 0;
+  pedidosExtrator.length = 0;
   parserFalha.valor = false;
 });
 afterEach(() => {
+  const tentativas = fetchControlado?.mock.calls.length ?? 0;
+  fetchControlado?.mockRestore();
   if (ENV === undefined) delete process.env.AYLA_EXPERIMENTAL_FAMILY_IDS;
   else process.env.AYLA_EXPERIMENTAL_FAMILY_IDS = ENV;
   delete process.env.KOLO_EXTRATOR_SOMBRA;
+  expect(tentativas, "a fixture deixou escapar uma chamada externa").toBe(0);
+  for (const p of pedidosExtrator) {
+    expect(p.system).toContain("Você é o assistente de registro do Kolo Família");
+    const fontePersistida = mundoRef.atual?.db.linhas("ayla_messages").some((l) =>
+      l.direcao === "inbound" && typeof l.texto === "string" && l.texto.trim() && p.user.includes(l.texto),
+    );
+    expect(fontePersistida, "o modelo controlado não recebeu fonte persistida").toBe(true);
+  }
 });
 
 const passouPeloExperimental = (m: Mundo) =>

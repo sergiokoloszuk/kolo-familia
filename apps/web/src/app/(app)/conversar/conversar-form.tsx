@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -26,21 +26,33 @@ export function ConversarForm({
   const [error, setError] = useState<string | null>(null);
   const [bloqueado, setBloqueado] = useState(false);
   const [membroId, setMembroId] = useState<string>(
-    initialMembroId ?? membros[0]?.id ?? "",
+    initialMembroId
+      ? membros.some(m => m.id === initialMembroId) ? initialMembroId : ""
+      : membros.length === 1 ? membros[0].id : membros.length ? "" : "familia",
   );
   const [texto, setTexto] = useState("");
+  const envio = useRef<{ id: string; texto: string; membroId: string } | null>(null);
   const placeholder = tema
     ? `Conte o desafio atual com ${tema.toLowerCase()} — o que acontece no dia a dia — e depois aperte Conversar.`
     : "Escreva à vontade o que está acontecendo. Quando terminar, é só apertar Conversar.";
 
   function submit() {
     if (!texto.trim() || pending) return;
+    if (!membroId) {
+      setError("Escolha sobre quem você quer conversar.");
+      return;
+    }
     setError(null);
     startTransition(async () => {
       try {
+        const textoAtual = texto.trim();
+        if (!envio.current || envio.current.texto !== textoAtual || envio.current.membroId !== membroId) {
+          envio.current = { id: crypto.randomUUID(), texto: textoAtual, membroId };
+        }
         const res = await criarConversa({
-          membroAtipicoId: membroId || null,
-          texto,
+          membroAtipicoId: membroId === "familia" ? null : membroId,
+          texto: textoAtual,
+          requisicaoId: envio.current.id,
         });
         if ("erro" in res) {
           if (res.assinatura) setBloqueado(true);
@@ -70,15 +82,17 @@ export function ConversarForm({
         </div>
       )}
 
-      {membros.length > 0 && (
+      {(membros.length > 0 || membroId === "") && (
         <select
           id="membro"
           aria-label="Sobre quem é?"
           className="h-10 w-fit rounded-full border border-brand-purple/20 bg-white px-4 text-sm font-medium text-foreground shadow-sm transition-colors hover:border-brand-purple/40 focus:outline-none focus:ring-1 focus:ring-brand-purple/30"
           value={membroId}
+          disabled={pending}
           onChange={(e) => setMembroId(e.target.value)}
         >
-          <option value="">Sobre a família em geral</option>
+          <option value="" disabled>Sobre quem você quer conversar?</option>
+          <option value="familia">Sobre a família em geral</option>
           {membros.map((m) => (
             <option key={m.id} value={m.id}>
               Sobre {m.nome}
@@ -105,7 +119,7 @@ export function ConversarForm({
       />
 
       <div className="flex items-center justify-end gap-3">
-        <Button type="submit" size="lg" disabled={pending || !texto.trim()}>
+        <Button type="submit" size="lg" disabled={pending || !texto.trim() || !membroId}>
           {pending ? "Pensando..." : "Conversar"}
           {!pending && <ArrowRight className="size-4" aria-hidden />}
         </Button>
