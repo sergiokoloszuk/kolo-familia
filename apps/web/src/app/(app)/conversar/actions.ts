@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
+import { createHash, randomUUID } from "node:crypto";
 import { z } from "zod";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { respondAsOutputType } from "@/lib/ia/engine";
@@ -64,13 +65,15 @@ async function requireFamily() {
 const criarConversaSchema = z.object({
   membroAtipicoId: z.string().uuid().nullable(),
   texto: z.string().trim().min(1, "Mensagem vazia").max(2000),
+  // Opcional para clientes anteriores. O formulário atual preserva o ID no retry.
+  requisicaoId: z.string().uuid().optional(),
 });
 
 export async function criarConversa(
   input: z.infer<typeof criarConversaSchema>,
 ): Promise<{ conversaId: string } | { erro: string; assinatura?: boolean }> {
-  const { membroAtipicoId, texto } = criarConversaSchema.parse(input);
-  const { supabase, family } = await requireFamily();
+  const { membroAtipicoId, texto, requisicaoId } = criarConversaSchema.parse(input);
+  const { supabase, family, user } = await requireFamily();
   // Assinatura: em vez de dar throw (o Next MASCARA a mensagem de server action
   // que sobe sem tratamento → vira "Server Components render error" genérico),
   // devolvemos um sinal pra UI mostrar "quer assinar?" + botão pra /assinatura.
@@ -81,30 +84,67 @@ export async function criarConversa(
     throw e;
   }
 
-  const { data: nova, error } = await supabase
-    .from("conversas")
-    .insert({
-      family_account_id: family.id,
-      membro_atipico_id: membroAtipicoId,
-      titulo: texto.slice(0, 80),
-    })
-    .select("id")
-    .single();
-  if (error || !nova) throw new Error(`Falha ao criar conversa: ${error?.message}`);
-
-  await supabase.from("mensagens_skill").insert({
-    conversa_id: nova.id,
-    family_account_id: family.id,
-    papel: "user",
-    conteudo: texto,
-  });
-
-  agendarTituloConversa(family.id, nova.id as string, texto);
-  after(() =>
-    trackFeature({ familyId: family.id, evento: "conversa_mensagem", detalhe: { nova: true } }),
-  );
-
-  return { conversaId: nova.id as string };
+  try {
+    if (membroAtipicoId) {
+      const { data: membro, error } = await supabase.from("membros_atipicos").select("id")
+        .eq("id", membroAtipicoId).eq("family_account_id", family.id).eq("ativo", true).maybeSingle();
+      if (error) return { erro: "Não consegui conferir sobre quem é a conversa. Tente novamente." };
+      if (!membro) return { erro: "Escolha uma pessoa ativa da sua família ou converse sobre a família em geral." };
+    }
+    const id = requisicaoId ?? randomUUID();
+    // Marca de criação parcial, não um recibo de mensagem nem outra memória.
+    // O servidor vincula a operação ao ator/alvo/conteúdo; o hash não vem da UI.
+    const assinatura = createHash("sha256").update(JSON.stringify([family.id, user.id, membroAtipicoId, texto])).digest("hex");
+    const marca = { versao: 1, assinatura, autor_user_id: user.id };
+    const colunasConversa = "id, family_account_id, membro_atipico_id, contexto_inicial";
+    const criada = await supabase.from("conversas").insert({
+      id, family_account_id: family.id, membro_atipico_id: membroAtipicoId,
+      titulo: texto.slice(0, 80), contexto_inicial: { entrada_web_v1: marca },
+    }).select(colunasConversa).maybeSingle();
+    let conversa = criada.data;
+    if (criada.error?.code === "23505") {
+      const existente = await supabase.from("conversas").select(colunasConversa)
+        .eq("id", id).eq("family_account_id", family.id).maybeSingle();
+      if (existente.error) return { erro: "Não consegui conferir o envio anterior. Tente novamente sem alterar o relato." };
+      conversa = existente.data;
+    } else if (criada.error || !conversa) {
+      return { erro: "Não consegui iniciar a conversa. Seu relato ainda não foi confirmado; tente novamente." };
+    }
+    const anterior = (conversa?.contexto_inicial as { entrada_web_v1?: typeof marca } | null)?.entrada_web_v1;
+    if (!conversa || conversa.id !== id || conversa.family_account_id !== family.id
+      || conversa.membro_atipico_id !== membroAtipicoId || anterior?.versao !== 1
+      || anterior.assinatura !== assinatura || anterior.autor_user_id !== user.id) {
+      return { erro: "Este envio não corresponde à conversa anterior. Envie novamente a partir do formulário." };
+    }
+    const colunasMensagem = "id, conversa_id, family_account_id, papel, conteudo, metadata";
+    const inserida = await supabase.from("mensagens_skill").insert({
+      id, conversa_id: id, family_account_id: family.id, papel: "user", conteudo: texto,
+      metadata: { entrada_web_v1: marca },
+    }).select(colunasMensagem).maybeSingle();
+    let mensagem = inserida.data;
+    const novaMensagem = !inserida.error && Boolean(mensagem);
+    if (inserida.error?.code === "23505") {
+      const existente = await supabase.from("mensagens_skill").select(colunasMensagem)
+        .eq("id", id).eq("conversa_id", id).eq("family_account_id", family.id).maybeSingle();
+      if (existente.error) return { erro: "Não consegui conferir sua mensagem anterior. Tente novamente sem alterar o relato." };
+      mensagem = existente.data;
+    } else if (inserida.error || !mensagem) {
+      return { erro: "A conversa foi iniciada, mas não confirmei sua mensagem. Tente novamente sem alterar o relato." };
+    }
+    const origem = (mensagem?.metadata as { entrada_web_v1?: typeof marca } | null)?.entrada_web_v1;
+    if (!mensagem || mensagem.id !== id || mensagem.conversa_id !== id || mensagem.family_account_id !== family.id
+      || mensagem.papel !== "user" || mensagem.conteudo !== texto || origem?.assinatura !== assinatura
+      || origem.versao !== 1 || origem.autor_user_id !== user.id) {
+      return { erro: "Não consegui confirmar o conteúdo da mensagem. O envio não será tratado como concluído." };
+    }
+    if (novaMensagem) {
+      agendarTituloConversa(family.id, id, texto);
+      after(() => trackFeature({ familyId: family.id, evento: "conversa_mensagem", detalhe: { nova: true } }));
+    }
+    return { conversaId: id };
+  } catch {
+    return { erro: "Não consegui confirmar o envio. Tente novamente sem alterar o relato." };
+  }
 }
 
 const adicionarMsgSchema = z.object({

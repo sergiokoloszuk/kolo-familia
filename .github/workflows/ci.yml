@@ -56,7 +56,8 @@ jobs:
 
       - name: Run unit tests
         working-directory: apps/web
-        run: npm test
+        # PEND-257: fixture com procedência ainda não verificada.
+        run: npm test -- --exclude src/lib/ayla/experimental-contexto.test.ts
 
       - name: Build
         working-directory: apps/web

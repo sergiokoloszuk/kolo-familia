@@ -23,10 +23,37 @@ import { clienteFalso, type Registro } from "./__harness/modelo";
  */
 
 const registros: Registro[] = [];
+const pedidosArea: string[] = [];
 const mundoRef: { atual: Mundo | null; alvo: string | null; parser?: Record<string, unknown> } = {
   atual: null,
   alvo: null,
 };
+
+// Consultas internas de prompt/vetos/log continuam reais, no mesmo banco
+// sintético. Sem isto a chave fictícia acionava retry PostgREST de 7 s/turno.
+vi.mock("@/lib/supabase/server", async (orig) => ({
+  ...((await orig()) as Record<string, unknown>),
+  createServiceRoleClient: () => {
+    if (!mundoRef.atual) throw new Error("mundo sintético ausente");
+    return mundoRef.atual.db.cliente();
+  },
+}));
+
+// Classificar área usa outro cliente além de ./anthropic. O classificador
+// permanece real; só seu SDK recebe uma resposta explícita para este corpus.
+vi.mock("@/lib/ia/anthropic", () => ({
+  MODELS: { leve: "claude-haiku-4-5", principal: "claude-sonnet-4-6" },
+  getAnthropicClient: () => ({ messages: { stream: (p: { system: unknown; messages: Array<{ content: string }> }) => {
+    pedidosArea.push(JSON.stringify(p.system));
+    const user = p.messages[0].content;
+    const conquista = /^Conquista: (.*)$/m.exec(user)?.[1] ?? "(nenhuma)";
+    const desafio = /^Desafio: (.*)$/m.exec(user)?.[1] ?? "(nenhum)";
+    return { finalMessage: async () => ({
+      content: [{ type: "text", text: JSON.stringify({ conquista_area: conquista === "(nenhuma)" ? null : "autonomia", desafio_area: null, conquista_limpa: conquista, desafio_limpa: desafio }) }],
+      usage: { input_tokens: 10, output_tokens: 5 },
+    }) };
+  } } }),
+}));
 
 vi.mock("./whatsappSender", () => ({
   enviarTexto: async (p: { phoneE164: string; texto: string }) => {
@@ -67,14 +94,21 @@ vi.mock("./anthropic", async (orig) => {
 const { processInbound } = await import("./orchestrator");
 
 const ENV = process.env.AYLA_EXPERIMENTAL_FAMILY_IDS;
+let fetchControlado: { mock: { calls: unknown[] }; mockRestore: () => void } | null = null;
 beforeEach(() => {
+  fetchControlado = vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("rede proibida neste cenário"));
   registros.length = 0;
+  pedidosArea.length = 0;
   mundoRef.parser = undefined;
 });
 afterEach(() => {
+  const tentativas = fetchControlado?.mock.calls.length ?? 0;
+  fetchControlado?.mockRestore();
   vi.useRealTimers();
   if (ENV === undefined) delete process.env.AYLA_EXPERIMENTAL_FAMILY_IDS;
   else process.env.AYLA_EXPERIMENTAL_FAMILY_IDS = ENV;
+  expect(tentativas, "a fixture deixou escapar uma chamada externa").toBe(0);
+  for (const system of pedidosArea) expect(system).toContain("Você organiza registros do dia a dia");
 });
 
 function familia(nome: string, tel: string, crianca: string, nasc: string) {
