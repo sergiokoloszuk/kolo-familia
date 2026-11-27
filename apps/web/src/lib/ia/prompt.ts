@@ -9,7 +9,7 @@ import { DIRETRIZES_BRINCADEIRA, REGRA_BRINCADEIRA_SE_SURGIR } from "@/lib/condu
 // NÚCLEO DE CONDUÇÃO — fonte única compartilhada com a Ayla (WhatsApp):
 // identidade + norte, princípios, regra de sequência, exemplos, piso e tom.
 // Ver lib/conducao/diretrizes.ts. A mesma "cabeça" nos dois canais.
-import { nucleoConducao, FRONTEIRA_DIAGNOSTICO } from "@/lib/conducao/diretrizes";
+import { nucleoConducao, FRONTEIRA_DIAGNOSTICO, SEGURANCA_COMPARTILHADA } from "@/lib/conducao/diretrizes";
 import { blocoBoasPraticas } from "@/lib/conhecimento/recuperar";
 import {
   ANCORA_PERFIL,
@@ -87,7 +87,7 @@ export const VOZ_E_LIMITES = `# Voz do produto (PRD §6)
 # Limites duros
 
 - Não copie literalmente texto das Boas Práticas — integre as ideias com suas próprias palavras.
-- Em caso de dúvida sobre risco real (auto-lesão, ideação suicida, abuso), responda APENAS: "Isso precisa de apoio profissional agora. Procure um profissional de saúde mental ou ligue para o CVV: 188." e pare.`;
+${SEGURANCA_COMPARTILHADA}`;
 
 /**
  * VOZ_E_LIMITES PODADO — a versão do MODO CONVERSA, que já carrega o núcleo.

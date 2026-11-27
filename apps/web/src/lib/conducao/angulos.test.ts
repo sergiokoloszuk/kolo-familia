@@ -113,8 +113,9 @@ describe("três níveis: cotidiano não é crise", () => {
     for (const v of ["se joga", "bate", "derruba"]) expect(PISO).toContain(v);
   });
 
-  it("na dúvida, cotidiano — e o gatilho de crise ficou mais estreito", () => {
-    expect(PISO).toMatch(/Na dúvida entre cotidiano e crise, trate como cotidiano/);
+  it("esclarece ambiguidade sem atrasar ajuda em perigo concreto", () => {
+    expect(PISO).toContain("Se o significado for ambíguo, esclareça o risco atual");
+    expect(PISO).toContain("não adie ajuda imediata quando houver sinais concretos de perigo");
     expect(PISO).toMatch(/agressão que machuca alguém/);
     expect(PISO).toMatch(/acidente iminente/);
     expect(PISO).not.toMatch(/fuga, risco de acidente\)/);

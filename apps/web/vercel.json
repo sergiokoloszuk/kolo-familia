@@ -60,5 +60,10 @@
       "path": "/api/cron/retencao-contas",
       "schedule": "30 10 * * *"
     }
-  ]
+  ],
+  "git": {
+    "deploymentEnabled": {
+      "codex/ayla-comunicacao-minima-20261126": false
+    }
+  }
 }

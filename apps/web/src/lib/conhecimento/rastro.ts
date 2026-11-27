@@ -68,6 +68,9 @@ export type RastroConhecimento = {
   recuperados: readonly string[];
   enviados: readonly string[];
   motivoVazio?: MotivoVazio;
+  /** Correlação sem texto pessoal; opcional para os chamadores existentes. */
+  turnoId?: string;
+  erroNaConsulta?: boolean;
 };
 
 /**
@@ -114,6 +117,7 @@ export function montarRastro(p: {
   erroNaConsulta?: boolean;
   /** Ver `catalogo_indisponivel`: falha a montante, não ausência de material. */
   catalogoIndisponivel?: boolean;
+  turnoId?: string;
 }): RastroConhecimento {
   const tags = p.tags ?? 0;
   const recuperados = p.recuperadas.map((b) => b.id).filter(Boolean);
@@ -127,6 +131,8 @@ export function montarRastro(p: {
     idade: p.idade ?? null,
     recuperados,
     enviados,
+    ...(p.turnoId ? { turnoId: p.turnoId } : {}),
+    ...(p.erroNaConsulta ? { erroNaConsulta: true } : {}),
   };
   // Vazio é o que se mede pelo que CHEGOU ao modelo. Recuperar três e mandar
   // zero é, para a família, o mesmo que não ter encontrado nada.
@@ -161,6 +167,7 @@ export async function registrarRastroConhecimento(r: RastroConhecimento): Promis
       message: `${r.canal}: ${r.enviados.length} de ${r.recuperados.length} ao modelo${r.motivoVazio ? ` (vazio: ${r.motivoVazio})` : ""}`,
       payload: {
         canal: r.canal,
+        turno_id: r.turnoId ?? null,
         membro_id: r.membroId,
         skills: r.skills,
         tags: r.tags,
@@ -171,6 +178,7 @@ export async function registrarRastroConhecimento(r: RastroConhecimento): Promis
         n_enviados: r.enviados.length,
         vazio: r.enviados.length === 0,
         motivo_vazio: r.motivoVazio ?? null,
+        erro_na_consulta: r.erroNaConsulta ?? false,
         // Dito por extenso no próprio dado: quem ler isto daqui a seis meses
         // não pode concluir que a resposta se apoiou nestas BPs.
         uso_efetivo: "nao_observavel",

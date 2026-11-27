@@ -109,6 +109,7 @@ import {
 import { BLOCO_PEDIDO_BRINCADEIRA, auditarBrincadeiras, blocoMecanicasBrincadeira, pedidoExplicitoDeBrincadeira } from "./pedido-brincadeira";
 import { DIRETRIZES_BRINCADEIRA, REGRA_BRINCADEIRA_SE_SURGIR } from "@/lib/conducao/brincadeira-diretrizes";
 import { recuperarBoasPraticas, blocoBoasPraticas } from "@/lib/conhecimento/recuperar";
+import { montarRastro, registrarRastroConhecimento } from "@/lib/conhecimento/rastro";
 import { lerEstadoTrial } from "@/lib/trial/estado";
 import { blocoDeContinuidade } from "@/lib/conducao/continuidade";
 import {
@@ -1065,6 +1066,7 @@ export async function responderExperimental(
         params.membroPreferidoId,
       ),
     );
+    let erroNaConsulta = false;
     const [ctxTurno, core, bps, estadoTrial, evidencias, docTrial, fatosComerciais] = await Promise.all([
       ctxP,
       cron("core", resolverDocumento(supabase, "core", params.rascunhoCore ?? null)),
@@ -1078,7 +1080,8 @@ export async function responderExperimental(
             // A IDADE DA CRIANÇA EM FOCO. Ver o bloco acima (PEND-163).
             idade: ctx.idadeFoco,
             limite: 2,
-          }))).catch(() => [])
+            aoFalhar: () => { erroNaConsulta = true; },
+          }))).catch(() => { erroNaConsulta = true; return []; })
         : Promise.resolve([]),
       semJornada
         ? Promise.resolve(null)
@@ -1306,8 +1309,23 @@ export async function responderExperimental(
     // `instrucaoExtra` é o que a rede de fronteiras injeta na segunda passada.
     // Vazia no caminho normal: o turno saudável monta o mesmo `system` de antes,
     // byte a byte.
-    const gerar = (instrucaoExtra?: string, semEnvelope = false) =>
-      gerarConversacional({
+    const turnoConhecimento = crypto.randomUUID();
+    const gerar = (instrucaoExtra?: string, semEnvelope = false) => {
+      // Mesmos IDs da recuperação e do bloco realmente passado à geração.
+      // Não espera a telemetria e não faz consultas de conhecimento adicionais.
+      void registrarRastroConhecimento(montarRastro({
+        canal: "whatsapp",
+        familyId: params.familyId,
+        membroId: membroDoTurno,
+        turnoId: turnoConhecimento,
+        skills: skillsDoTurno,
+        idade: ctxTurno.idadeFoco,
+        recuperadas: bps,
+        enviadas: repertorio ? bps : [],
+        erroNaConsulta,
+        catalogoIndisponivel: !catalogoDisponivel,
+      }));
+      return gerarConversacional({
       provider,
       model,
       // ⚠️ A ORDEM É CORE → CONTEXTO → REPERTÓRIO, e ela importa. O Core diz
@@ -1420,6 +1438,7 @@ export async function responderExperimental(
       // recuperação: uma única passada em texto livre quando a estrutura falha.
       ...(semEnvelope ? {} : { formatoJson: esquemaDaResposta() }),
     });
+    };
 
     // ⚠️ O LIMITE, POR EXTENSO. `comRetentativaCurta` repete UMA vez se a
     // chamada ESTOURAR. Vazio não estoura — devolve texto em branco —, então

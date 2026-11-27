@@ -1,0 +1,40 @@
+{
+  "base": "8a18707de242ca877842bf102b7dba08e47d1eaa",
+  "arquivos": [
+    {
+      "path": "apps/web/src/lib/conhecimento/recuperar.ts",
+      "sha256": "004ea89c79eaacda937c60010912b81053298e420a3d1eecef58596007ce6c7b"
+    },
+    {
+      "path": "apps/web/src/lib/conhecimento/rastro.ts",
+      "sha256": "de789f7c5549ae688587b26b267f4dd75b907da1e19fcd14870c8a388731f15c"
+    },
+    {
+      "path": "apps/web/src/lib/conducao/diretrizes.ts",
+      "sha256": "24576281fdfc7fcee6307955f28311d4225ed739265284e0eb32d305fd867629"
+    },
+    {
+      "path": "apps/web/src/lib/ia/prompt.ts",
+      "sha256": "13b81db0dd7434abd52064f76a89d617eea1f4c4ddda7201546d57b5b78f1db5"
+    },
+    {
+      "path": "apps/web/src/lib/ayla/experimental.ts",
+      "sha256": "674ec163f68493a1752266cca72968d9e0b8ec796041d11591407064caba5d5a"
+    },
+    {
+      "path": "apps/web/src/lib/ayla/experimental-prompt.ts",
+      "sha256": "4f2837fb888f7debb71cac659f78ce3f34fa2d4c5fcfe9b8ef5339a45d941975"
+    },
+    {
+      "path": "data/curadoria/comunicacao-minima-20261126.json",
+      "sha256": "22bceca34a8637ceea7670f4568330b1845c67f90daf9781df78e973ed98f51e"
+    },
+    {
+      "path": "scripts/bancada/comunicacao-minima/casos.json",
+      "sha256": "bb7da12505bbbf02debda377d9397f63f0706dbbe293c5f8339483d94f3d7103"
+    }
+  ],
+  "observacao": "Os quatro JSONs preservam os hashes exatos dos módulos carregados por rodada. Após a geração houve comentários, testes e parametrização operacional dos roteiros, sem alteração de instruções funcionais. O roteiro não foi hasheado no início; ver README de reprodução.",
+  "pacote78": "preservado e fora desta entrega",
+  "segredosOuDadosFamiliaresIncluidos": false
+}

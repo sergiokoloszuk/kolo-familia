@@ -5338,6 +5338,9 @@ STATUS: **A INVESTIGAR** · Aberta em: 2026-08-18
 - **CRITÉRIO DE BAIXA:** a Karina importa e publica um material do começo ao
   fim sem desenvolvedor, com revisão humana antes de qualquer chunk ficar ativo.
 
+
+**Atualização local, sem baixa:** 26/11/2026 — comunicação mínima em branch codex/ayla-comunicacao-minima-20261126: snapshot local de 372 BPs contém 461 tags distintas; o filtro de slugs descarta 248 (53,8%). Proposta preserva tags literais com acentos/espaços e mantém exclusão de expressões malformadas. Duas BPs genéricas receberam propostas locais de curadoria e faixa editorial experimental, sem escrita no banco. Conteúdo malformado continua pendente de revisão editorial. Evidência: outputs/comunicacao-minima-20261126; não é prova de produção.
+
 ---
 
 ### PEND-101
@@ -5601,6 +5604,9 @@ STATUS: **MEDIDA — CORREÇÃO NÃO IMPLEMENTADA** · Aberta em: 2026-08-19
   observabilidade — não pode mudar o que mede.
 - **CRITÉRIO DE BAIXA:** rastro de WhatsApp e web no mesmo período, com volumes
   compatíveis com o número de turnos respondidos.
+
+
+**Atualização local, sem baixa:** 26/11/2026 — correção local: gerador oficial reutiliza montarRastro/registrarRastroConhecimento com IDs recuperados/enviados e correlação por turno, sem texto familiar. Callback distingue erro de consulta, vazio legítimo e catálogo indisponível. Seis turnos candidatos e testes em memória comprovaram emissão; persistência/volume em produção continuam NÃO VALIDADOS. Estado operacional desta ficha não foi encerrado.
 
 ---
 
@@ -8636,6 +8642,9 @@ Nao corrigido junto com a PEND-184 de proposito: acrescentar um emissor no
 caminho mais quente do produto e mudanca de escopo, e a missao pedia STOP nesse
 caso.
 
+
+**Atualização local, sem baixa:** 26/11/2026 — implementação isolada da mesma correção descrita em PEND-106, incluindo falha no detalhamento sem apagar as BPs leves. Testes locais não comprovam entrega durável do evento em produção. Rastro registra disponibilidade no prompt, nunca uso semântico comprovado.
+
 ### PEND-186
 **21,5% das decisoes de turno sao truncadas no teto de 300 tokens e viram o neutro — em silencio**
 Bloco: **B · Ayla** · Prioridade: **P0**
@@ -11512,6 +11521,9 @@ anterior. Lacuna: o simulador (`admin/inteligencia`) **não guarda conversa** �
 "veja minha conversa" não tem como ser atendido; hoje só copiando o texto.
 **Critério:** três pedidos reais atendidos pelo rito, e decisão registrada sobre
 guardar (ou exportar) a conversa do simulador.
+
+
+**Atualização local, sem baixa:** 26/11/2026 — bancada curta congelada: seis casos fictícios, Web e gerador oficial WhatsApp, antes/depois, com 24 respostas completas. Web usa seed versionado como fixture e WhatsApp usa fallback do código; não reproduz a configuração atual do banco. Persistem falhas semânticas e há aumentos de orçamento por cenário; candidata NÃO aprovada. Core do Admin recebeu somente proposta textual, sem publicação. Auditoria posterior solicitada deve usar Core ativo do banco e conversas longas, sem implementar correções.
 
 ---
 

@@ -1,0 +1,242 @@
+[
+  {
+    "canal": "web",
+    "id": "REF01",
+    "antes": [
+      4,
+      2,
+      3,
+      3,
+      3
+    ],
+    "depois": [
+      4,
+      2,
+      3,
+      3,
+      3
+    ],
+    "veredito": "PASSOU COM RESSALVAS",
+    "motivo": "Explica a repetição e oferece um exemplo; ainda generaliza o significado comunicativo antes de verificar a função."
+  },
+  {
+    "canal": "web",
+    "id": "REF02",
+    "antes": [
+      4,
+      3,
+      2,
+      3,
+      3
+    ],
+    "depois": [
+      4,
+      2,
+      2,
+      3,
+      3
+    ],
+    "veredito": "FALHOU",
+    "motivo": "A conclusão sobre processamento auditivo a partir de reação a um som não sustenta excluir dificuldade de audição. A pergunta não substitui avaliação."
+  },
+  {
+    "canal": "web",
+    "id": "REF03",
+    "antes": [
+      4,
+      1,
+      3,
+      3,
+      2
+    ],
+    "depois": [
+      4,
+      1,
+      3,
+      3,
+      2
+    ],
+    "veredito": "FALHOU",
+    "motivo": "Afirma que o inglês tem contexto seguro, fluência e função comunicativa sem esses fatos terem sido relatados. A candidata preserva o problema."
+  },
+  {
+    "canal": "web",
+    "id": "REF04",
+    "antes": [
+      4,
+      2,
+      3,
+      2,
+      3
+    ],
+    "depois": [
+      4,
+      1,
+      3,
+      2,
+      3
+    ],
+    "veredito": "FALHOU",
+    "motivo": "Reduz o treino, mas inventa necessidades e consolo. A comparação entre crianças que crescem mais não está sustentada; supõe desenho amado e disponibilidade para deitar juntas."
+  },
+  {
+    "canal": "web",
+    "id": "REF05",
+    "antes": [
+      4,
+      1,
+      3,
+      3,
+      3
+    ],
+    "depois": [
+      4,
+      1,
+      3,
+      3,
+      3
+    ],
+    "veredito": "FALHOU",
+    "motivo": "Atribui gestos específicos ao Heitor sem relato e fala da chegada da fala como expectativa estabelecida. O antes prometia a chegada de modo ainda mais explícito."
+  },
+  {
+    "canal": "web",
+    "id": "REF06",
+    "antes": [
+      4,
+      2,
+      2,
+      3,
+      2
+    ],
+    "depois": [
+      4,
+      2,
+      2,
+      3,
+      2
+    ],
+    "veredito": "FALHOU",
+    "motivo": "Muda o aviso, mas presume frustração e a capacidade de a adulta aguentar; escolhe manejo antes de entender a tentativa. Não ficou demonstrada adaptação suficiente à energia real."
+  },
+  {
+    "canal": "whatsapp",
+    "id": "REF01",
+    "antes": [
+      4,
+      3,
+      3,
+      4,
+      3
+    ],
+    "depois": [
+      4,
+      3,
+      3,
+      4,
+      3
+    ],
+    "veredito": "PASSOU COM RESSALVAS",
+    "motivo": "Mantém função como possibilidade, modelos curtos e pergunta relevante; oferece várias possibilidades sem explicitar bem uma prioridade."
+  },
+  {
+    "canal": "whatsapp",
+    "id": "REF02",
+    "antes": [
+      4,
+      3,
+      3,
+      4,
+      3
+    ],
+    "depois": [
+      4,
+      3,
+      3,
+      4,
+      3
+    ],
+    "veredito": "PASSOU COM RESSALVAS",
+    "motivo": "Evita intenção de ignorar e contato visual obrigatório; considera audição. A investigação da compreensão continua superficial."
+  },
+  {
+    "canal": "whatsapp",
+    "id": "REF03",
+    "antes": [
+      4,
+      2,
+      2,
+      3,
+      2
+    ],
+    "depois": [
+      4,
+      3,
+      3,
+      4,
+      3
+    ],
+    "veredito": "PASSOU COM RESSALVAS",
+    "motivo": "A candidata oferece ponte para português e pergunta sobre compreensão. O antes prescreve transição de desenho cedo; ambos exigem investigar melhor o uso real das falas."
+  },
+  {
+    "canal": "whatsapp",
+    "id": "REF04",
+    "antes": [
+      4,
+      3,
+      3,
+      3,
+      3
+    ],
+    "depois": [
+      4,
+      3,
+      3,
+      3,
+      3
+    ],
+    "veredito": "PASSOU COM RESSALVAS",
+    "motivo": "Retira o treino e permite desabafo; ainda supõe o momento do dia/noite na candidata e a adaptação não foi testada em vários turnos."
+  },
+  {
+    "canal": "whatsapp",
+    "id": "REF05",
+    "antes": [
+      4,
+      3,
+      3,
+      4,
+      3
+    ],
+    "depois": [
+      4,
+      2,
+      3,
+      3,
+      3
+    ],
+    "veredito": "FALHOU",
+    "motivo": "Acolhe e reconhece comunicação além da fala, mas chama a estratégia de ponte até a fala, sugerindo um destino garantido; os gestos atuais ainda não são conhecidos."
+  },
+  {
+    "canal": "whatsapp",
+    "id": "REF06",
+    "antes": [
+      4,
+      2,
+      2,
+      3,
+      2
+    ],
+    "depois": [
+      4,
+      2,
+      2,
+      3,
+      2
+    ],
+    "veredito": "FALHOU",
+    "motivo": "Propõe aproximação como prioridade, mas a fala “você queria continuar” atribui intenção; ajudar a levantar/retirar roupa precisa de cuidado com assentimento e contexto. Falta investigar a tentativa e coconstruir a viabilidade."
+  }
+]

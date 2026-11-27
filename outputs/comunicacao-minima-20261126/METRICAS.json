@@ -1,0 +1,287 @@
+{
+  "estimador": "ceil(chars do pedido / 4), igual antes/depois. Input nativo da Anthropic exclui cache; não equivale a tokens totais.",
+  "tags": {
+    "distintas": 461,
+    "rejeitadasAntes": 248,
+    "rejeitadasDepois": 35
+  },
+  "latencias": [
+    {
+      "canal": "web",
+      "versao": "antes",
+      "n": 6,
+      "p50": 11764,
+      "p95": 13923,
+      "tipo": "resposta completa local; não transporte nem produção; primeira útil não medida"
+    },
+    {
+      "canal": "web",
+      "versao": "depois",
+      "n": 6,
+      "p50": 11168,
+      "p95": 14283,
+      "tipo": "resposta completa local; não transporte nem produção; primeira útil não medida"
+    },
+    {
+      "canal": "whatsapp",
+      "versao": "antes",
+      "n": 6,
+      "p50": 6485,
+      "p95": 7607,
+      "tipo": "resposta completa local; não transporte nem produção; primeira útil não medida"
+    },
+    {
+      "canal": "whatsapp",
+      "versao": "depois",
+      "n": 6,
+      "p50": 4550,
+      "p95": 7088,
+      "tipo": "resposta completa local; não transporte nem produção; primeira útil não medida"
+    }
+  ],
+  "cenarios": [
+    {
+      "canal": "web",
+      "id": "REF01",
+      "antesMs": 11764,
+      "depoisMs": 13047,
+      "antesChamadas": 3,
+      "depoisChamadas": 3,
+      "antesTokensEstimadosGeracao": 17323,
+      "depoisTokensEstimadosGeracao": 17989,
+      "crescimentoPercentual": 3.84,
+      "acimaDe10PorCento": false,
+      "recuperadasAntes": [
+        "854864cc-4189-4e77-bb7e-89498ff70193",
+        "363fd1e4-7f89-4815-8c83-4ce2a5edf39d",
+        "e1e083df-15ea-4297-9652-69530f8780e7"
+      ],
+      "recuperadasDepois": [
+        "e1e083df-15ea-4297-9652-69530f8780e7",
+        "4f7f16aa-f67a-44d1-bf4b-ce23c54f7e35",
+        "d5c505c5-03cf-4d5b-9dc9-562bfb6c327d"
+      ]
+    },
+    {
+      "canal": "web",
+      "id": "REF02",
+      "antesMs": 13923,
+      "depoisMs": 10665,
+      "antesChamadas": 3,
+      "depoisChamadas": 3,
+      "antesTokensEstimadosGeracao": 17337,
+      "depoisTokensEstimadosGeracao": 17984,
+      "crescimentoPercentual": 3.73,
+      "acimaDe10PorCento": false,
+      "recuperadasAntes": [
+        "854864cc-4189-4e77-bb7e-89498ff70193",
+        "363fd1e4-7f89-4815-8c83-4ce2a5edf39d",
+        "e1e083df-15ea-4297-9652-69530f8780e7"
+      ],
+      "recuperadasDepois": [
+        "e1e083df-15ea-4297-9652-69530f8780e7",
+        "4f7f16aa-f67a-44d1-bf4b-ce23c54f7e35",
+        "d5c505c5-03cf-4d5b-9dc9-562bfb6c327d"
+      ]
+    },
+    {
+      "canal": "web",
+      "id": "REF03",
+      "antesMs": 12595,
+      "depoisMs": 14283,
+      "antesChamadas": 3,
+      "depoisChamadas": 3,
+      "antesTokensEstimadosGeracao": 17327,
+      "depoisTokensEstimadosGeracao": 17993,
+      "crescimentoPercentual": 3.84,
+      "acimaDe10PorCento": false,
+      "recuperadasAntes": [
+        "854864cc-4189-4e77-bb7e-89498ff70193",
+        "363fd1e4-7f89-4815-8c83-4ce2a5edf39d",
+        "e1e083df-15ea-4297-9652-69530f8780e7"
+      ],
+      "recuperadasDepois": [
+        "e1e083df-15ea-4297-9652-69530f8780e7",
+        "4f7f16aa-f67a-44d1-bf4b-ce23c54f7e35",
+        "d5c505c5-03cf-4d5b-9dc9-562bfb6c327d"
+      ]
+    },
+    {
+      "canal": "web",
+      "id": "REF04",
+      "antesMs": 7133,
+      "depoisMs": 11168,
+      "antesChamadas": 3,
+      "depoisChamadas": 3,
+      "antesTokensEstimadosGeracao": 17300,
+      "depoisTokensEstimadosGeracao": 17892,
+      "crescimentoPercentual": 3.42,
+      "acimaDe10PorCento": false,
+      "recuperadasAntes": [
+        "709924d0-0d63-4c10-b513-258636ec01f7",
+        "854864cc-4189-4e77-bb7e-89498ff70193",
+        "dd16f1d0-d9d8-4e0b-b423-93fee7a5d209"
+      ],
+      "recuperadasDepois": [
+        "709924d0-0d63-4c10-b513-258636ec01f7",
+        "dd16f1d0-d9d8-4e0b-b423-93fee7a5d209",
+        "9e2b4658-86f2-4aef-b75c-3cb805bc1751"
+      ]
+    },
+    {
+      "canal": "web",
+      "id": "REF05",
+      "antesMs": 11981,
+      "depoisMs": 12229,
+      "antesChamadas": 3,
+      "depoisChamadas": 3,
+      "antesTokensEstimadosGeracao": 17419,
+      "depoisTokensEstimadosGeracao": 18072,
+      "crescimentoPercentual": 3.75,
+      "acimaDe10PorCento": false,
+      "recuperadasAntes": [
+        "854864cc-4189-4e77-bb7e-89498ff70193",
+        "363fd1e4-7f89-4815-8c83-4ce2a5edf39d",
+        "e1e083df-15ea-4297-9652-69530f8780e7"
+      ],
+      "recuperadasDepois": [
+        "e1e083df-15ea-4297-9652-69530f8780e7",
+        "4f7f16aa-f67a-44d1-bf4b-ce23c54f7e35",
+        "d5c505c5-03cf-4d5b-9dc9-562bfb6c327d"
+      ]
+    },
+    {
+      "canal": "web",
+      "id": "REF06",
+      "antesMs": 8648,
+      "depoisMs": 9349,
+      "antesChamadas": 3,
+      "depoisChamadas": 3,
+      "antesTokensEstimadosGeracao": 17705,
+      "depoisTokensEstimadosGeracao": 18155,
+      "crescimentoPercentual": 2.54,
+      "acimaDe10PorCento": false,
+      "recuperadasAntes": [
+        "854864cc-4189-4e77-bb7e-89498ff70193",
+        "21a9fc7b-e719-4341-aa5b-6a1b09667f11",
+        "77c95c71-97d0-46e7-99a4-ad24dd57d673"
+      ],
+      "recuperadasDepois": [
+        "854864cc-4189-4e77-bb7e-89498ff70193",
+        "21a9fc7b-e719-4341-aa5b-6a1b09667f11",
+        "77c95c71-97d0-46e7-99a4-ad24dd57d673"
+      ]
+    },
+    {
+      "canal": "whatsapp",
+      "id": "REF01",
+      "antesMs": 7215,
+      "depoisMs": 6206,
+      "antesChamadas": 2,
+      "depoisChamadas": 2,
+      "antesTokensEstimadosGeracao": 8019,
+      "depoisTokensEstimadosGeracao": 8772,
+      "crescimentoPercentual": 9.39,
+      "acimaDe10PorCento": false,
+      "recuperadasAntes": [
+        "64f90e54-b620-474e-8ae8-d4788fa3d68e",
+        "1d4dfc61-116e-4b2f-bbd8-4a1e8e9634c6"
+      ],
+      "recuperadasDepois": [
+        "64f90e54-b620-474e-8ae8-d4788fa3d68e",
+        "1d4dfc61-116e-4b2f-bbd8-4a1e8e9634c6"
+      ]
+    },
+    {
+      "canal": "whatsapp",
+      "id": "REF02",
+      "antesMs": 5945,
+      "depoisMs": 7088,
+      "antesChamadas": 2,
+      "depoisChamadas": 2,
+      "antesTokensEstimadosGeracao": 7600,
+      "depoisTokensEstimadosGeracao": 8830,
+      "crescimentoPercentual": 16.18,
+      "acimaDe10PorCento": true,
+      "recuperadasAntes": [
+        "854864cc-4189-4e77-bb7e-89498ff70193",
+        "363fd1e4-7f89-4815-8c83-4ce2a5edf39d"
+      ],
+      "recuperadasDepois": [
+        "e1e083df-15ea-4297-9652-69530f8780e7",
+        "4f7f16aa-f67a-44d1-bf4b-ce23c54f7e35"
+      ]
+    },
+    {
+      "canal": "whatsapp",
+      "id": "REF03",
+      "antesMs": 6038,
+      "depoisMs": 5560,
+      "antesChamadas": 2,
+      "depoisChamadas": 2,
+      "antesTokensEstimadosGeracao": 7953,
+      "depoisTokensEstimadosGeracao": 9005,
+      "crescimentoPercentual": 13.23,
+      "acimaDe10PorCento": true,
+      "recuperadasAntes": [
+        "9a004520-234a-4a1c-90d2-dc8bb7fde3b1",
+        "854864cc-4189-4e77-bb7e-89498ff70193"
+      ],
+      "recuperadasDepois": [
+        "9a004520-234a-4a1c-90d2-dc8bb7fde3b1",
+        "e1e083df-15ea-4297-9652-69530f8780e7"
+      ]
+    },
+    {
+      "canal": "whatsapp",
+      "id": "REF04",
+      "antesMs": 6485,
+      "depoisMs": 3403,
+      "antesChamadas": 3,
+      "depoisChamadas": 2,
+      "antesTokensEstimadosGeracao": 7392,
+      "depoisTokensEstimadosGeracao": 7820,
+      "crescimentoPercentual": 5.79,
+      "acimaDe10PorCento": false,
+      "recuperadasAntes": [],
+      "recuperadasDepois": []
+    },
+    {
+      "canal": "whatsapp",
+      "id": "REF05",
+      "antesMs": 7607,
+      "depoisMs": 4503,
+      "antesChamadas": 2,
+      "depoisChamadas": 2,
+      "antesTokensEstimadosGeracao": 8074,
+      "depoisTokensEstimadosGeracao": 8828,
+      "crescimentoPercentual": 9.34,
+      "acimaDe10PorCento": false,
+      "recuperadasAntes": [
+        "4f7f16aa-f67a-44d1-bf4b-ce23c54f7e35",
+        "0502c313-a25b-4fdb-9bc8-91283bc0cb9c"
+      ],
+      "recuperadasDepois": [
+        "4f7f16aa-f67a-44d1-bf4b-ce23c54f7e35",
+        "0502c313-a25b-4fdb-9bc8-91283bc0cb9c"
+      ]
+    },
+    {
+      "canal": "whatsapp",
+      "id": "REF06",
+      "antesMs": 6754,
+      "depoisMs": 4550,
+      "antesChamadas": 2,
+      "depoisChamadas": 2,
+      "antesTokensEstimadosGeracao": 7157,
+      "depoisTokensEstimadosGeracao": 8860,
+      "crescimentoPercentual": 23.79,
+      "acimaDe10PorCento": true,
+      "recuperadasAntes": [],
+      "recuperadasDepois": [
+        "cd1a4a80-f2d7-455b-8bc4-cd9aec24ec3d",
+        "363fd1e4-7f89-4815-8c83-4ce2a5edf39d"
+      ]
+    }
+  ]
+}
