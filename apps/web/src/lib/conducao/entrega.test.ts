@@ -8,7 +8,7 @@ import {
   A_CRIANCA_ANTES_DO_ROTULO as ROTULO,
 } from "./formas";
 import { TEMAS, CHAVES_TEMA, fraseDoTema, rotuloDoTema, listarTemas } from "./temas";
-import { nucleoConducao } from "./diretrizes";
+import { nucleoConducao, APOIO_AO_ADULTO } from "./diretrizes";
 import { dividirEmBolhas, ehSoTitulo } from "@/lib/ayla/bolhas";
 import { templateBoasVindasComDesafio } from "@/lib/ayla/messageTemplates";
 import { VOZ_CONVERSA, VOZ_E_LIMITES, blocoIntencao } from "@/lib/ia/prompt";
@@ -532,7 +532,11 @@ describe("simplificação: o prompt não pode crescer", () => {
     // núcleo: virou código em `angulos.ts`. VOZ 7 já era a exortação, e ela
     // falhou com a resposta anterior no histórico — a lista concreta do que
     // ela mesma já orientou custa zero caractere aqui.
-    expect(nucleoConducao().length).toBeLessThan(57_000);
+    // Revisão autorizada de 26/11: seis linhas e esclarecimento de segurança.
+    // Teto sobe de 57k para 58k (+1,75%), explicitamente, sem ocultar o aumento.
+    expect(nucleoConducao().length).toBeLessThan(58_000);
+    expect(APOIO_AO_ADULTO.length).toBeLessThan(900);
+    expect(APOIO_AO_ADULTO.split("\n")).toHaveLength(6);
   });
 });
 

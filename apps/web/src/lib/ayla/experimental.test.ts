@@ -249,7 +249,11 @@ describe("o caminho curto pula mesmo a condução atual", () => {
       /nucleoConducao|conducao\/diretrizes|conducao\/lentes|conducao\/formas/,
     );
     const PROMPT = readFileSync(resolve(__dirname, "experimental-prompt.ts"), "utf8");
-    expect(PROMPT, "o prompt experimental importou algo do núcleo").not.toMatch(/^import /m);
+    // Revisão autorizada do fallback: só os dois blocos compartilhados, nunca
+    // o núcleo inteiro. O Core ativo do Admin continua com precedência.
+    expect(PROMPT.match(/^import .*$/gm)).toEqual([
+      'import { APOIO_AO_ADULTO, SEGURANCA_COMPARTILHADA } from "@/lib/conducao/diretrizes";',
+    ]);
   });
 });
 

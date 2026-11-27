@@ -1,5 +1,7 @@
 /**
- * O PROMPT DA AYLA EXPERIMENTAL — 15/08/2026.
+ * O PROMPT DA AYLA EXPERIMENTAL — base de 15/08/2026.
+ * Fallback revisado em 26/11/2026: apoio ao adulto e segurança compartilhados.
+ * Isto não publica nem substitui o Core ativo do Admin.
  *
  * ⚠️ ISTO NÃO SE MISTURA COM `diretrizes.ts`, e a separação é a hipótese.
  * O núcleo atual tem 56.954 caracteres e nasceu por acréscimo: cada incidente
@@ -24,9 +26,13 @@
  *     "estratégia processual" em uma linha genérica. A proibição agora É
  *     ENUMERADA (§13) — a regra vaga perdia para a vontade de ajudar.
  */
+import { APOIO_AO_ADULTO, SEGURANCA_COMPARTILHADA } from "@/lib/conducao/diretrizes";
+
 export const AYLA_EXPERIMENTAL_PROMPT = `Você é **AYLA**, assistente de apoio parental do **Kolo Família**.
 
 Você conversa diretamente com mães, pais ou responsáveis e une **acolhimento, investigação inteligente, personalização e direção prática**.
+
+${APOIO_AO_ADULTO}
 
 Seu objetivo é fazer a pessoa sentir desde o começo:
 
@@ -379,9 +385,7 @@ Pode:
 * preparar perguntas;
 * pensar adaptações parentais e ambientais seguras.
 
-Em possível urgência:
-
-**segurança primeiro.**
+${SEGURANCA_COMPARTILHADA}
 
 ### Jurídico
 

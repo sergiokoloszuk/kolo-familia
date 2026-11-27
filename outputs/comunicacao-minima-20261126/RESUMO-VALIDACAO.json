@@ -1,0 +1,17 @@
+{
+  "total": 4370,
+  "aprovados": 4363,
+  "falhos": 0,
+  "pulados": 7,
+  "arquivos": 240,
+  "sucesso": true,
+  "excluido": "experimental-contexto.test.ts (PEND-257)",
+  "typegen": "PASSOU",
+  "typecheck": "PASSOU",
+  "lintAfetados": "PASSOU",
+  "build": {
+    "resultado": "PASSOU",
+    "paginas": 108
+  },
+  "producao": "NÃO VALIDADA"
+}

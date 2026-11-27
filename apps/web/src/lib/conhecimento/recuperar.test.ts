@@ -58,7 +58,7 @@ describe("as atividades chegam ao modelo", () => {
   });
 });
 
-describe("a crença do adulto chega — e vem rotulada para NÃO ser dita", () => {
+describe("a crença do adulto chega como hipótese editorial", () => {
   it("emite a linha quando existe", () => {
     const bloco = blocoBoasPraticas([
       bp({ crenca_adulto: '"Birra é manipulação." É sobrecarga.' }),
@@ -69,8 +69,8 @@ describe("a crença do adulto chega — e vem rotulada para NÃO ser dita", () =
 
   it("a instrução proíbe explicitamente acusar a família de pensar assim", () => {
     const bloco = blocoBoasPraticas([bp({ crenca_adulto: "x" })]);
-    expect(bloco).toMatch(/NÃO diga isso a ela/);
-    expect(bloco).toMatch(/não a acuse de pensar assim/);
+    expect(bloco).toMatch(/Só explore essa crença como hipótese quando houver apoio no relato/);
+    expect(bloco).toMatch(/Não a acuse de pensar assim/);
   });
 
   /**

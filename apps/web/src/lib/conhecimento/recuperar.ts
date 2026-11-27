@@ -47,7 +47,7 @@ export type BoaPraticaRecuperada = {
   /**
    * A crença do adulto que precisa mudar para a prática funcionar ("birra é
    * manipulação" → "é sobrecarga"). Também em 367, também nunca lida.
-   * Não é para ser dita à família: é para a Ayla saber contra o que fala.
+   * Hipótese editorial; só pode ser explorada se houver apoio no relato.
    */
   crenca_adulto: string | null;
 };
@@ -185,13 +185,16 @@ export async function recuperarBoasPraticas(
     // servindo repertório vazio pra metade dos temas sem nunca acusar erro.
     // Nomes viram parte de uma query string — só o vocabulário conhecido passa.
     // Um valor com aspas ou vírgula quebraria o `or` inteiro (e o filtro junto).
-    const seguro = (v: string) => /^[a-z0-9_]{2,40}$/.test(v);
+    const skillSegura = (v: string) => /^[a-z0-9_]{2,40}$/.test(v);
+    // Tags editoriais não são slugs: preservar acentos e espaços EXATOS do
+    // acervo. Aspas, separadores de cláusula e controles continuam proibidos.
+    const tagSegura = (v: string) => /^[\p{L}\p{N}_ ./-]{2,120}$/u.test(v);
     const clausulas = [
-      ...skills.filter(seguro).map((s) => `skills_relacionadas.cs.["${s}"]`),
+      ...skills.filter(skillSegura).map((s) => `skills_relacionadas.cs.${JSON.stringify([s])}`),
       // Teto nas tags: a web roteia até 3 skills e cada uma traz ~6
       // `knowledge_tags`. Sem corte, o `or` cresceria sem limite útil — as
       // primeiras já vêm das skills mais relevantes.
-      ...[...tags].filter(seguro).slice(0, 12).map((t) => `tags.cs.["${t}"]`),
+      ...[...tags].filter(tagSegura).slice(0, 12).map((t) => `tags.cs.${JSON.stringify([t])}`),
     ];
     if (clausulas.length === 0) return [];
     // ── DUAS FASES: RANQUEAR LEVE, DETALHAR SÓ O QUE VAI SER USADO ──────────
@@ -293,13 +296,17 @@ export async function recuperarBoasPraticas(
     // que são o miolo da orientação. Perder `erros_comuns` e `atividades` é pior
     // que antes; perder a boa prática inteira seria MUITO pior.
     const detalhePorId = new Map<string, Record<string, unknown>>();
-    const { data: detalhe } = await p.supabase
+    const { data: detalhe, error: erroDetalhe } = await p.supabase
       .from("boas_praticas")
       .select("id, erros_comuns, atividades_praticas, crencas_adulto")
       .in(
         "id",
         escolhidas.map((bp) => String(bp.id)),
       );
+    if (erroDetalhe) {
+      // Mantém o repertório leve já selecionado, sinalizando a perda de detalhe.
+      try { p.aoFalhar?.("Falha no detalhamento das boas práticas"); } catch { /* best-effort */ }
+    }
     for (const d of (detalhe ?? []) as Array<Record<string, unknown>>) {
       detalhePorId.set(String(d.id), d);
     }
@@ -360,8 +367,8 @@ export function blocoBoasPraticas(bps: readonly BoaPraticaRecuperada[]): string 
       // da oferta ("quer que eu monte…"), não o raciocínio que a antecede.
       if (b.atividades_praticas.length)
         linhas.push(`   ATIVIDADES: ${b.atividades_praticas.join(" · ")}`);
-      // A crença do adulto NÃO é para ser dita à família — é contra o que a
-      // Ayla está falando. Por isso o rótulo diz "desfazer", não "explicar".
+      // Hipótese editorial: o cabeçalho exige apoio no relato antes de
+      // explorá-la com a família, sem atribuir pensamentos não confirmados.
       if (b.crenca_adulto) linhas.push(`   CRENÇA A DESFAZER: ${b.crenca_adulto}`);
       return linhas.join("\n");
     })
@@ -374,7 +381,7 @@ Isto é REPERTÓRIO da Kolo pra você raciocinar — não é roteiro e não se c
 - "EVITE" é o que NÃO recomendar. Não vire isso em aula sobre erros.
 - "DÁ PRA FAZER" é o que a família consegue executar hoje — adapte à idade e aos interesses da criança que você já conhece, em vez de repetir o passo literal.
 - "ATIVIDADES" são brincadeiras e atividades concretas já validadas. Prefira ADAPTAR uma delas ao interesse da criança a inventar uma do zero — mas nunca cite a lista, e nunca proponha uma que não caiba na idade ou no momento.
-- "CRENÇA A DESFAZER" é o que o adulto provavelmente pensa e que atrapalha. NÃO diga isso a ela, não a corrija e não a acuse de pensar assim: use só para escolher como falar, e para não reforçar a crença sem querer.
+- "CRENÇA A DESFAZER" é uma possibilidade editorial, não um fato sobre esta família. Só explore essa crença como hipótese quando houver apoio no relato: convide a refletir com respeito e exemplos concretos, sem corrigir de forma seca, culpar ou atribuir pensamentos não confirmados. Não a acuse de pensar assim.
 - NUNCA escreva "quando usar", "erros comuns", "passos", "atividades" ou "crença" como seções da resposta, e nunca despeje as ${bps.length} entradas. Escolha o que ajuda AGORA e transforme em conversa.
 
 ${itens}

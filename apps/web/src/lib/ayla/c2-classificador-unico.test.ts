@@ -149,7 +149,7 @@ describe("BOAS PRÁTICAS — repertório, pelo mecanismo existente", () => {
   it("falha do acervo NUNCA derruba o turno", () => {
     // Enriquecimento que derruba conversa é pior que a ausência dele.
     const bloco = EXP.slice(EXP.indexOf("recuperarBoasPraticas({"), EXP.indexOf("const msBp ="));
-    expect(bloco).toContain(".catch(() => [])");
+    expect(bloco).toContain(".catch(() => { erroNaConsulta = true; return []; })");
   });
 
   it("sem skills, não há consulta — nada de query vazia em todo turno", () => {
@@ -202,9 +202,10 @@ describe("SABOTAGEM — os testes mordem?", () => {
   });
 
   it("S4 · remover o `.catch` do acervo (falha de BP derruba conversa)", () => {
-    const sabotado = EXP.split(".catch(() => [])").join("");
-    expect(sabotado).not.toContain(".catch(() => [])");
-    expect(EXP).toContain(".catch(() => [])");
+    const protecao = ".catch(() => { erroNaConsulta = true; return []; })";
+    const sabotado = EXP.split(protecao).join("");
+    expect(sabotado).not.toContain(protecao);
+    expect(EXP).toContain(protecao);
   });
 
   it("S5 · o repertório passando na frente do contexto", () => {

@@ -1,0 +1,39 @@
+[
+  {
+    "id": "854864cc-4189-4e77-bb7e-89498ff70193",
+    "titulo": "Aviso prévio de 5 minutos com linguagem concreta",
+    "estado": "proposta local para teste; não aplicada ao banco",
+    "baseVersao": 1,
+    "justificativa": "A BP descreve antecipação de transições, não desenvolvimento da linguagem em geral. A associação ampla a comunicacao a colocava em perguntas sem relação com transições.",
+    "faixaEtaria": "3–12 é um recorte editorial experimental para esta formulação infantil; não é marco clínico nem faixa comprovada pela fonte. Revisar antes de eventual publicação. Fora dela, o princípio de previsibilidade pode continuar pertinente com outra formulação.",
+    "alteracoes": {
+      "versao": 2,
+      "skills_relacionadas": ["rotina", "transicoes"],
+      "tags": ["antecipacao_transicoes", "encerramento_atividade", "aviso_previo_concreto"],
+      "faixa_etaria_min": 3,
+      "faixa_etaria_max": 12,
+      "quando_usar": "Quando a dificuldade envolve encerrar uma atividade e passar à próxima. Verificar como a criança compreende o aviso e o que já foi tentado. Não usar como resposta geral à ecolalia, ausência de fala ou resposta ao nome.",
+      "erros_comuns": ["Tratar cinco minutos como duração universal ou como garantia de aceitação.", "Repetir a mesma proposta depois de a família relatar que não ajudou.", "Interpretar choro após o aviso como desobediência ou prova de que a criança entendeu."],
+      "passos_praticos": ["Combinar um sinal compreensível para a mudança que realmente acontecerá; pode ser um objeto ou uma frase concreta, conforme as preferências da família.", "Adaptar a antecedência à situação, à compreensão e à capacidade do adulto; investigar uma tentativa malsucedida antes de insistir."]
+    }
+  },
+  {
+    "id": "363fd1e4-7f89-4815-8c83-4ce2a5edf39d",
+    "titulo": "Limite firme + acolhimento na mesma frase",
+    "estado": "proposta local para teste; não aplicada ao banco",
+    "baseVersao": 1,
+    "justificativa": "A BP apoia limites em conflitos, não perguntas gerais de comunicação. Preserva o princípio de limite respeitoso, com hipótese emocional e ajuste de tom, momento e postura.",
+    "faixaEtaria": "3–12 é um recorte editorial experimental para esta formulação infantil; não é marco clínico nem faixa comprovada pela fonte. Revisar antes de eventual publicação. O cuidado e o limite respeitoso não deixam de ser pertinentes em outras idades.",
+    "alteracoes": {
+      "versao": 2,
+      "skills_relacionadas": ["emocional", "comportamento_e_limites"],
+      "tags": ["limites_respeitosos", "acolhimento_durante_limite", "conflito_com_dano"],
+      "faixa_etaria_min": 3,
+      "faixa_etaria_max": 12,
+      "quando_usar": "Quando existe um limite necessário em um conflito ou uma ação que machuca. Acolher sem permitir o dano. Não usar para interpretar ausência de fala, ecolalia ou não responder ao nome como desafio ao adulto.",
+      "versao_conversa": "É possível manter o limite e o cuidado juntos. Descreva o que observa sem atribuir uma emoção que ninguém confirmou, diga o limite necessário e ofereça presença. As palavras, o tom calmo, a postura e o momento importam mais do que repetir uma fórmula. Se o adulto estiver esgotado, reduza a proposta ao que ele consegue sustentar agora.",
+      "erros_comuns": ["Afirmar que a criança está com raiva sem apoio no relato.", "Confundir acolhimento com permissividade ou firmeza com ameaça.", "Usar uma frase pronta em qualquer dificuldade de comunicação."],
+      "passos_praticos": ["Nomear a ação observável e o limite necessário, sem julgar intenção.", "Ajustar palavras, tom, proximidade e quantidade de fala à situação e à capacidade de ambos."]
+    }
+  }
+]

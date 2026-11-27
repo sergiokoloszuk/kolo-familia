@@ -1,0 +1,570 @@
+{
+  "baseSha": "8a18707de242ca877842bf102b7dba08e47d1eaa",
+  "versao": "antes",
+  "canal": "web",
+  "manifest": {
+    "lib/conhecimento/recuperar.ts": "6ff661b2783a952471e28742124d212eef73d87291c9a9ed091813d1a7d21c81",
+    "lib/conhecimento/rastro.ts": "473a03b1041ac7ced1d08f7122d5fa9f19650d3188752aade1765db151981ff7",
+    "lib/conducao/diretrizes.ts": "291f465166858515114a95fa5c155535fee254fadc78a7598505fbebdc833d38",
+    "lib/ia/prompt.ts": "4af540a357b26266e110e3c583d169bdf7403753bbae33503aeb206d092c2c2c",
+    "lib/ayla/experimental.ts": "13962f88b9c16e0d6fb6959d230dea008d9af64b417394cefcc83ce2b51904dd",
+    "lib/ayla/experimental-prompt.ts": "9aff07cdf59a9cd14789f26cfaa394c3831023c4361dca5608b9e547daf2573a"
+  },
+  "casosSha": "d3e38eddb6dc3440a90d113fefd630262eb9503d23908e78bfee6ee711fc80f7",
+  "corpusBaseSha": "a14734a62b7c573ce4b73c2f62b807668e6e99504da370eeae72eedbd6806dfd",
+  "corpusCandidatoSha": "a14734a62b7c573ce4b73c2f62b807668e6e99504da370eeae72eedbd6806dfd",
+  "catalogoSha": "20441dea8b78c34e63592d0c9db2838a5a5c24fb7f04f60d2a8f6c5242329351",
+  "skillsFixtureSha": "47dab43996fb7648aafd8647eed40dbd2f71caa726f315be3382b7b6c3d7d3ed",
+  "core": "fallback do código; banco de documentos vazio intencionalmente",
+  "limitacoes": [
+    "Web: seed versionado de 7 skills, não configuração atual das 13 skills",
+    "WhatsApp: gerador oficial + classificador; sem webhook e sem envio externo",
+    "BPs: snapshot local histórico; não prova acervo atual",
+    "1 amostra por caso/canal/versão; variação do modelo não isolada"
+  ],
+  "resultados": [
+    {
+      "id": "REF01",
+      "contextoFicticio": {
+        "id": "REF01",
+        "tema": "ecolalia",
+        "crianca": "Lucas",
+        "nascimento": "2022-04-10",
+        "relato": "O Lucas repete frases inteiras de desenho em vez de responder. Isso é ruim?",
+        "historico": [],
+        "esperado": "Investigar a função no contexto sem diagnosticar nem tratar repetição como algo a extinguir."
+      },
+      "respostaCompleta": "Não é ruim — é comunicação real, e das mais importantes que ele tem agora.\n\nIsso se chama ecolalia, e crianças de 4 anos a usam por muitas razões: pra processar o que ouviram, pra regular a própria emoção, pra preencher um silêncio que ainda não sabem como preencher com palavras próprias, ou pra tentar dizer algo que ainda não conseguem montar do zero. A frase do desenho já existe pronta na memória dele — e usá-la é um passo real de linguagem, não um desvio.\n\nO que vale observar é se a ecolalia tem função: ele repete a frase *quando algo acontece*? Quando está animado, assustado, querendo algo, ou respondendo a uma pergunta que não sabe como responder? Se sim, aquela frase está dizendo alguma coisa — mesmo que indiretamente.\n\nO que ajuda nesse caso é responder ao *sentido possível*, não cobrar a frase \"certa\". Se ele fala uma linha de personagem quando quer brincar, você pode responder *\"ah, quer brincar! Vamos!\"* — sem exigir que ele reformule. Isso mostra que a comunicação dele funciona, e ao longo do tempo vai criando pontes pra palavras próprias aparecerem.\n\nEle costuma usar essas frases mais em alguma situação específica — quando está animado, quando não quer algo, quando está cansado?",
+      "erro": null,
+      "duracaoMs": 11764.1635,
+      "selecionadas": [
+        "854864cc-4189-4e77-bb7e-89498ff70193",
+        "363fd1e4-7f89-4815-8c83-4ce2a5edf39d",
+        "e1e083df-15ea-4297-9652-69530f8780e7"
+      ],
+      "rastros": [
+        {
+          "canal": "web",
+          "membro_id": "6d656d62-0011-4000-8000-000000000011",
+          "skills": [
+            "comunicacao",
+            "regulacao_emocional"
+          ],
+          "tags": 10,
+          "idade": 4,
+          "recuperados": [
+            "854864cc-4189-4e77-bb7e-89498ff70193",
+            "363fd1e4-7f89-4815-8c83-4ce2a5edf39d",
+            "e1e083df-15ea-4297-9652-69530f8780e7"
+          ],
+          "enviados": [
+            "854864cc-4189-4e77-bb7e-89498ff70193",
+            "363fd1e4-7f89-4815-8c83-4ce2a5edf39d",
+            "e1e083df-15ea-4297-9652-69530f8780e7"
+          ],
+          "n_recuperados": 3,
+          "n_enviados": 3,
+          "vazio": false,
+          "motivo_vazio": null,
+          "uso_efetivo": "nao_observavel"
+        }
+      ],
+      "chamadas": [
+        {
+          "host": "api.anthropic.com",
+          "modelo": "claude-haiku-4-5",
+          "duracaoMs": 817.6613,
+          "hashPedido": "8468134a188e5857578867735e5e248d434588ff13ef56d0f793298b534170ed",
+          "charsPedido": 1476,
+          "tokensEstimados": 369,
+          "blocoProjetado": "",
+          "inputTokens": 474,
+          "outputTokens": 23,
+          "http": 200
+        },
+        {
+          "host": "api.anthropic.com",
+          "modelo": "claude-haiku-4-5",
+          "duracaoMs": 582.9294,
+          "hashPedido": "d4fb7e1eae43407fb4bf0a0f3aeb47ccd3270018bbedeb5cb3050d8fefcd9db9",
+          "charsPedido": 2396,
+          "tokensEstimados": 599,
+          "blocoProjetado": "",
+          "inputTokens": 790,
+          "outputTokens": 10,
+          "http": 200
+        },
+        {
+          "host": "api.anthropic.com",
+          "modelo": "claude-sonnet-4-6",
+          "duracaoMs": 10295.4383,
+          "hashPedido": "8e39d942a5936b73973b94cd9248dba789d26738efd188c3cf8c430d55396292",
+          "charsPedido": 69289,
+          "tokensEstimados": 17323,
+          "blocoProjetado": "<repertorio_kolo>\nIsto é REPERTÓRIO da Kolo pra você raciocinar — não é roteiro e não se cita.\n\n- Use \"QUANDO SERVE\" pra decidir se aquilo cabe MESMO nesta situação. Se não couber, ignore aquela entrada; trazer conteúdo que não serve é pior do que não trazer.\n- \"EVITE\" é o que NÃO recomendar. Não vire isso em aula sobre erros.\n- \"DÁ PRA FAZER\" é o que a família consegue executar hoje — adapte à idade e aos interesses da criança que você já conhece, em vez de repetir o passo literal.\n- \"ATIVIDADES\" são brincadeiras e atividades concretas já validadas. Prefira ADAPTAR uma delas ao interesse da criança a inventar uma do zero — mas nunca cite a lista, e nunca proponha uma que não caiba na idade ou no momento.\n- \"CRENÇA A DESFAZER\" é o que o adulto provavelmente pensa e que atrapalha. NÃO diga isso a ela, não a corrija e não a acuse de pensar assim: use só para escolher como falar, e para não reforçar a crença sem querer.\n- NUNCA escreva \"quando usar\", \"erros comuns\", \"passos\", \"atividades\" ou \"crença\" como seções da resposta, e nunca despeje as 3 entradas. Escolha o que ajuda AGORA e transforme em conversa.\n\n1. Aviso prévio de 5 minutos com linguagem concreta\n   Uma coisa que costuma ajudar muito: avisar 5 minutos antes da transição, com palavras bem concretas. Em vez de \"vamos sair logo\", diga \"em 5 minutos a gente coloca o casaco e vai para a escola\". Pode ser ainda mais simples se você mostrar o casaco enquanto fala.\n\n2. Limite firme + acolhimento na mesma frase\n   Quando precisar firmar um limite numa hora difícil, tente colocar três coisas na mesma frase: o que você vê (vejo que você está com raiva), o limite (não vou deixar você bater) e a presença (vou ficar aqui com você). A criança recebe o limite e o cuidado juntos — não como opostos.\n\n3. Puxar pela mão, apontar ou entregar objeto já é comunicação funcional\n   Puxar pela mão, apontar, entregar um objeto, aproximar uma palavra ou usar uma ecolalia com função já comunica algo. Responda ao sentido e modele só um próximo passo. Quando o Perfil trouxer a forma que a criança já usa, torne isso perceptível com naturalidade: se já usa palavras soltas, ligue essa habilidade a UMA palavra do item pedido, não a um menu genérico. Nunca exija fala ou contato visual para atender.\n   QUANDO SERVE: Quando a família diz que a criança não pede, mas relata gesto, objeto, som, aproximação de palavra, script ou ecolalia com função.\n   EVITE: [\"dizer que a criança não se comunica quando o relato já mostra uma forma funcional\",\"reter o item até obter fala ou contato visual\",\"pedir várias habilidades novas de uma vez\",\"listar fala, gesto, imagem e apontar quando o Perfil já mostra qual via está disponível\",\"oferecer um menu de palavras genéricas em vez de escolher a palavra ligada ao pedido real\"]\n   DÁ PRA FAZER: Reconheça primeiro o significado da forma comunicativa que apareceu. · Cruze com o Perfil: se já usa palavras soltas, diga isso naturalmente e modele uma única palavra do item real; se usa gesto ou objeto, amplie a partir dessa forma. · Atenda ao pedido possível sem transformar fala ou olhar em condição para atender. · Observe qual forma a criança volta a usar espontaneamente em situação parecida.\n   CRENÇA A DESFAZER: Só conta como pedido quando a criança fala ou olha para o adulto.\n</repertorio_kolo>",
+          "inputTokens": 1933,
+          "outputTokens": 371,
+          "http": 200
+        }
+      ],
+      "consultasConstruidas": 21,
+      "metrica": null,
+      "escritasRemotas": 0,
+      "producao": false
+    },
+    {
+      "id": "REF02",
+      "contextoFicticio": {
+        "id": "REF02",
+        "tema": "nome",
+        "crianca": "Nina",
+        "nascimento": "2024-03-10",
+        "relato": "A Nina não atende pelo nome. Será que ela está me ignorando?",
+        "historico": [],
+        "esperado": "Não atribuir intenção; distinguir observação de hipótese, considerar contexto e avaliação pertinente sem diagnóstico."
+      },
+      "respostaCompleta": "Não atender pelo nome é uma das coisas que mais preocupa os pais, e faz sentido você trazer isso.\n\nAntes de qualquer coisa: ela ouve bem de forma geral? Reage a barulhos do ambiente — porta batendo, TV ligando, animal fazendo som? Essa é a primeira pergunta que vale checar com a pediatra, porque audição é o ponto de partida.\n\nSe ela reage a outros sons, o que costuma acontecer é diferente de \"ignorar\": a criança pequena ainda está aprendendo que aquele som — o nome dela — significa \"olha pra mim agora\". Isso leva tempo e treino, e algumas crianças demoram mais pra construir essa conexão.\n\nUma coisa que ajuda muito nessa fase é chamar o nome no momento em que ela já está prestando atenção em você — não quando está concentrada em outra coisa. Você se aproxima, entra no campo visual dela, diz o nome uma vez e reage com entusiasmo se ela virar. Isso vai construindo a associação aos poucos, sem competir com o que ela está fazendo.\n\nVale observar também: ela atende melhor quando você está perto? Quando usa um tom diferente? Quando chama junto com um gesto? Essas pistas ajudam muito a entender o que está funcionando.\n\nE com 2 anos, a preocupação sobre isso merece uma conversa com a pediatra — não pra alarmar, mas porque documentar o que você observa em casa agora é útil seja qual for o caminho daqui pra frente. Me conta o que você já reparou: ela busca você com o olhar, puxa pela mão, mostra coisas pra você?",
+      "erro": null,
+      "duracaoMs": 13923.305299999998,
+      "selecionadas": [
+        "854864cc-4189-4e77-bb7e-89498ff70193",
+        "363fd1e4-7f89-4815-8c83-4ce2a5edf39d",
+        "e1e083df-15ea-4297-9652-69530f8780e7"
+      ],
+      "rastros": [
+        {
+          "canal": "web",
+          "membro_id": "6d656d62-0030-4000-8000-000000000030",
+          "skills": [
+            "comunicacao",
+            "sensorial"
+          ],
+          "tags": 10,
+          "idade": 2,
+          "recuperados": [
+            "854864cc-4189-4e77-bb7e-89498ff70193",
+            "363fd1e4-7f89-4815-8c83-4ce2a5edf39d",
+            "e1e083df-15ea-4297-9652-69530f8780e7"
+          ],
+          "enviados": [
+            "854864cc-4189-4e77-bb7e-89498ff70193",
+            "363fd1e4-7f89-4815-8c83-4ce2a5edf39d",
+            "e1e083df-15ea-4297-9652-69530f8780e7"
+          ],
+          "n_recuperados": 3,
+          "n_enviados": 3,
+          "vazio": false,
+          "motivo_vazio": null,
+          "uso_efetivo": "nao_observavel"
+        }
+      ],
+      "chamadas": [
+        {
+          "host": "api.anthropic.com",
+          "modelo": "claude-haiku-4-5",
+          "duracaoMs": 797.0886999999984,
+          "hashPedido": "f06bf9cca8b0e8ffd4a607858e543dc7684ca112bdddf0d2250fdbd386e21109",
+          "charsPedido": 1461,
+          "tokensEstimados": 366,
+          "blocoProjetado": "",
+          "inputTokens": 468,
+          "outputTokens": 20,
+          "http": 200
+        },
+        {
+          "host": "api.anthropic.com",
+          "modelo": "claude-haiku-4-5",
+          "duracaoMs": 590.3895999999986,
+          "hashPedido": "6815b164d1b3fd8cc1fb2cf3eed544d38877a0d4c0c4872b999a16e7d38810f7",
+          "charsPedido": 2381,
+          "tokensEstimados": 596,
+          "blocoProjetado": "",
+          "inputTokens": 784,
+          "outputTokens": 10,
+          "http": 200
+        },
+        {
+          "host": "api.anthropic.com",
+          "modelo": "claude-sonnet-4-6",
+          "duracaoMs": 12514.6355,
+          "hashPedido": "67d9192fcdab1d1823f1c1e2d7d8877c73662a5a34071a2386815dcefed740b0",
+          "charsPedido": 69346,
+          "tokensEstimados": 17337,
+          "blocoProjetado": "<repertorio_kolo>\nIsto é REPERTÓRIO da Kolo pra você raciocinar — não é roteiro e não se cita.\n\n- Use \"QUANDO SERVE\" pra decidir se aquilo cabe MESMO nesta situação. Se não couber, ignore aquela entrada; trazer conteúdo que não serve é pior do que não trazer.\n- \"EVITE\" é o que NÃO recomendar. Não vire isso em aula sobre erros.\n- \"DÁ PRA FAZER\" é o que a família consegue executar hoje — adapte à idade e aos interesses da criança que você já conhece, em vez de repetir o passo literal.\n- \"ATIVIDADES\" são brincadeiras e atividades concretas já validadas. Prefira ADAPTAR uma delas ao interesse da criança a inventar uma do zero — mas nunca cite a lista, e nunca proponha uma que não caiba na idade ou no momento.\n- \"CRENÇA A DESFAZER\" é o que o adulto provavelmente pensa e que atrapalha. NÃO diga isso a ela, não a corrija e não a acuse de pensar assim: use só para escolher como falar, e para não reforçar a crença sem querer.\n- NUNCA escreva \"quando usar\", \"erros comuns\", \"passos\", \"atividades\" ou \"crença\" como seções da resposta, e nunca despeje as 3 entradas. Escolha o que ajuda AGORA e transforme em conversa.\n\n1. Aviso prévio de 5 minutos com linguagem concreta\n   Uma coisa que costuma ajudar muito: avisar 5 minutos antes da transição, com palavras bem concretas. Em vez de \"vamos sair logo\", diga \"em 5 minutos a gente coloca o casaco e vai para a escola\". Pode ser ainda mais simples se você mostrar o casaco enquanto fala.\n\n2. Limite firme + acolhimento na mesma frase\n   Quando precisar firmar um limite numa hora difícil, tente colocar três coisas na mesma frase: o que você vê (vejo que você está com raiva), o limite (não vou deixar você bater) e a presença (vou ficar aqui com você). A criança recebe o limite e o cuidado juntos — não como opostos.\n\n3. Puxar pela mão, apontar ou entregar objeto já é comunicação funcional\n   Puxar pela mão, apontar, entregar um objeto, aproximar uma palavra ou usar uma ecolalia com função já comunica algo. Responda ao sentido e modele só um próximo passo. Quando o Perfil trouxer a forma que a criança já usa, torne isso perceptível com naturalidade: se já usa palavras soltas, ligue essa habilidade a UMA palavra do item pedido, não a um menu genérico. Nunca exija fala ou contato visual para atender.\n   QUANDO SERVE: Quando a família diz que a criança não pede, mas relata gesto, objeto, som, aproximação de palavra, script ou ecolalia com função.\n   EVITE: [\"dizer que a criança não se comunica quando o relato já mostra uma forma funcional\",\"reter o item até obter fala ou contato visual\",\"pedir várias habilidades novas de uma vez\",\"listar fala, gesto, imagem e apontar quando o Perfil já mostra qual via está disponível\",\"oferecer um menu de palavras genéricas em vez de escolher a palavra ligada ao pedido real\"]\n   DÁ PRA FAZER: Reconheça primeiro o significado da forma comunicativa que apareceu. · Cruze com o Perfil: se já usa palavras soltas, diga isso naturalmente e modele uma única palavra do item real; se usa gesto ou objeto, amplie a partir dessa forma. · Atenda ao pedido possível sem transformar fala ou olhar em condição para atender. · Observe qual forma a criança volta a usar espontaneamente em situação parecida.\n   CRENÇA A DESFAZER: Só conta como pedido quando a criança fala ou olha para o adulto.\n</repertorio_kolo>",
+          "inputTokens": 1927,
+          "outputTokens": 427,
+          "http": 200
+        }
+      ],
+      "consultasConstruidas": 21,
+      "metrica": null,
+      "escritasRemotas": 0,
+      "producao": false
+    },
+    {
+      "id": "REF03",
+      "contextoFicticio": {
+        "id": "REF03",
+        "tema": "ingles",
+        "crianca": "Theo",
+        "nascimento": "2021-04-10",
+        "relato": "O Theo só fala inglês do desenho. Quero conversar com ele em português. Devo tirar os desenhos?",
+        "historico": [],
+        "esperado": "Não culpar nem concluir que o desenho causou a dificuldade; compreender o uso das falas e propor conexão possível."
+      },
+      "respostaCompleta": "Tirar os desenhos provavelmente não vai funcionar — e pode até fechar a única porta que você tem para conversar com ele agora.\n\nO que parece estar acontecendo é que o inglês do desenho é a linguagem que o Theo já domina, onde ele se sente seguro para falar. Tirar isso não ensina o português; só tira o ponto de apoio.\n\nO caminho mais natural é **usar o que ele já fala como ponte**. Quando ele soltar uma fala do desenho em inglês, você responde em português, como se estivesse traduzindo a cena ao vivo. Ele diz algo do personagem favorito, você diz: *\"É, ele está com fome! Vamos buscar comida.\"* Mesmo assunto, mesmo clima, em português. Com o tempo, as palavras portuguesas vão entrando coladas nas situações que ele já conhece e gosta.\n\nVocê também pode assistir junto e comentar em português enquanto assiste, sem cobrar nenhuma resposta dele. *\"Olha, ele caiu!\"*, *\"Que barulho!\"* — frases curtas, no ritmo da cena. Ele ouve português no contexto que faz sentido pra ele.\n\nNos próximos dias, repara se alguma palavra em português começa a aparecer no jeito que ele brinca ou comenta as cenas. Muitas vezes a criança já absorveu mais do que mostra, e a palavra aparece de surpresa. Me conta se aparecer alguma coisa — fica mais fácil saber por onde avançar.",
+      "erro": null,
+      "duracaoMs": 12595.302500000002,
+      "selecionadas": [
+        "854864cc-4189-4e77-bb7e-89498ff70193",
+        "363fd1e4-7f89-4815-8c83-4ce2a5edf39d",
+        "e1e083df-15ea-4297-9652-69530f8780e7"
+      ],
+      "rastros": [
+        {
+          "canal": "web",
+          "membro_id": "6d656d62-0049-4000-8000-000000000049",
+          "skills": [
+            "comunicacao",
+            "regulacao_emocional"
+          ],
+          "tags": 10,
+          "idade": 5,
+          "recuperados": [
+            "854864cc-4189-4e77-bb7e-89498ff70193",
+            "363fd1e4-7f89-4815-8c83-4ce2a5edf39d",
+            "e1e083df-15ea-4297-9652-69530f8780e7"
+          ],
+          "enviados": [
+            "854864cc-4189-4e77-bb7e-89498ff70193",
+            "363fd1e4-7f89-4815-8c83-4ce2a5edf39d",
+            "e1e083df-15ea-4297-9652-69530f8780e7"
+          ],
+          "n_recuperados": 3,
+          "n_enviados": 3,
+          "vazio": false,
+          "motivo_vazio": null,
+          "uso_efetivo": "nao_observavel"
+        }
+      ],
+      "chamadas": [
+        {
+          "host": "api.anthropic.com",
+          "modelo": "claude-haiku-4-5",
+          "duracaoMs": 699.7973999999995,
+          "hashPedido": "74a4cfa12edfd3fa752a69cbbd2f11c94ebf932401f32b482c91b0da933a30c8",
+          "charsPedido": 1496,
+          "tokensEstimados": 374,
+          "blocoProjetado": "",
+          "inputTokens": 482,
+          "outputTokens": 23,
+          "http": 200
+        },
+        {
+          "host": "api.anthropic.com",
+          "modelo": "claude-haiku-4-5",
+          "duracaoMs": 611.1844999999994,
+          "hashPedido": "323cee2e463413674618d90adb092a87020a7fd4159936bdf033e929f2a48daf",
+          "charsPedido": 2416,
+          "tokensEstimados": 604,
+          "blocoProjetado": "",
+          "inputTokens": 798,
+          "outputTokens": 11,
+          "http": 200
+        },
+        {
+          "host": "api.anthropic.com",
+          "modelo": "claude-sonnet-4-6",
+          "duracaoMs": 11273.944800000001,
+          "hashPedido": "6b40713741722aaca31d088144763f7d9a5415ea862cebefe268d62f61ada8c1",
+          "charsPedido": 69306,
+          "tokensEstimados": 17327,
+          "blocoProjetado": "<repertorio_kolo>\nIsto é REPERTÓRIO da Kolo pra você raciocinar — não é roteiro e não se cita.\n\n- Use \"QUANDO SERVE\" pra decidir se aquilo cabe MESMO nesta situação. Se não couber, ignore aquela entrada; trazer conteúdo que não serve é pior do que não trazer.\n- \"EVITE\" é o que NÃO recomendar. Não vire isso em aula sobre erros.\n- \"DÁ PRA FAZER\" é o que a família consegue executar hoje — adapte à idade e aos interesses da criança que você já conhece, em vez de repetir o passo literal.\n- \"ATIVIDADES\" são brincadeiras e atividades concretas já validadas. Prefira ADAPTAR uma delas ao interesse da criança a inventar uma do zero — mas nunca cite a lista, e nunca proponha uma que não caiba na idade ou no momento.\n- \"CRENÇA A DESFAZER\" é o que o adulto provavelmente pensa e que atrapalha. NÃO diga isso a ela, não a corrija e não a acuse de pensar assim: use só para escolher como falar, e para não reforçar a crença sem querer.\n- NUNCA escreva \"quando usar\", \"erros comuns\", \"passos\", \"atividades\" ou \"crença\" como seções da resposta, e nunca despeje as 3 entradas. Escolha o que ajuda AGORA e transforme em conversa.\n\n1. Aviso prévio de 5 minutos com linguagem concreta\n   Uma coisa que costuma ajudar muito: avisar 5 minutos antes da transição, com palavras bem concretas. Em vez de \"vamos sair logo\", diga \"em 5 minutos a gente coloca o casaco e vai para a escola\". Pode ser ainda mais simples se você mostrar o casaco enquanto fala.\n\n2. Limite firme + acolhimento na mesma frase\n   Quando precisar firmar um limite numa hora difícil, tente colocar três coisas na mesma frase: o que você vê (vejo que você está com raiva), o limite (não vou deixar você bater) e a presença (vou ficar aqui com você). A criança recebe o limite e o cuidado juntos — não como opostos.\n\n3. Puxar pela mão, apontar ou entregar objeto já é comunicação funcional\n   Puxar pela mão, apontar, entregar um objeto, aproximar uma palavra ou usar uma ecolalia com função já comunica algo. Responda ao sentido e modele só um próximo passo. Quando o Perfil trouxer a forma que a criança já usa, torne isso perceptível com naturalidade: se já usa palavras soltas, ligue essa habilidade a UMA palavra do item pedido, não a um menu genérico. Nunca exija fala ou contato visual para atender.\n   QUANDO SERVE: Quando a família diz que a criança não pede, mas relata gesto, objeto, som, aproximação de palavra, script ou ecolalia com função.\n   EVITE: [\"dizer que a criança não se comunica quando o relato já mostra uma forma funcional\",\"reter o item até obter fala ou contato visual\",\"pedir várias habilidades novas de uma vez\",\"listar fala, gesto, imagem e apontar quando o Perfil já mostra qual via está disponível\",\"oferecer um menu de palavras genéricas em vez de escolher a palavra ligada ao pedido real\"]\n   DÁ PRA FAZER: Reconheça primeiro o significado da forma comunicativa que apareceu. · Cruze com o Perfil: se já usa palavras soltas, diga isso naturalmente e modele uma única palavra do item real; se usa gesto ou objeto, amplie a partir dessa forma. · Atenda ao pedido possível sem transformar fala ou olhar em condição para atender. · Observe qual forma a criança volta a usar espontaneamente em situação parecida.\n   CRENÇA A DESFAZER: Só conta como pedido quando a criança fala ou olha para o adulto.\n</repertorio_kolo>",
+          "inputTokens": 1944,
+          "outputTokens": 388,
+          "http": 200
+        }
+      ],
+      "consultasConstruidas": 21,
+      "metrica": null,
+      "escritasRemotas": 0,
+      "producao": false
+    },
+    {
+      "id": "REF04",
+      "contextoFicticio": {
+        "id": "REF04",
+        "tema": "esgotamento",
+        "crianca": "Lia",
+        "nascimento": "2022-04-10",
+        "relato": "Estou esgotada. Hoje não consigo fazer mais treino nenhum com a Lia. Tudo vira mais uma tarefa para mim.",
+        "historico": [],
+        "esperado": "Acolher primeiro e reduzir demandas; não exigir treino, nem acionar crise só por esgotamento."
+      },
+      "respostaCompleta": "Isso faz sentido, e faz sentido mesmo — não é fraqueza, é o sinal de que você já deu muito hoje.\n\nTem um jeito de encarar isso que costuma aliviar um pouco: nem tudo que você faz *com* a Lia precisa ser treino. Às vezes o dia que parece improdutivo — ela do seu lado enquanto você dobra roupa, vocês duas ouvindo música, ela te vendo cozinhar — é dia de vínculo, de regulação, de presença. E isso é desenvolvimento também, do tipo que nenhuma atividade estruturada substitui.\n\nHoje pode ser esse dia. Sem tarefa, sem meta. Só vocês duas no mesmo espaço, sem você precisar produzir nada.\n\nAmanhã a gente vê o que faz sentido retomar.",
+      "erro": null,
+      "duracaoMs": 7132.5236,
+      "selecionadas": [
+        "709924d0-0d63-4c10-b513-258636ec01f7",
+        "854864cc-4189-4e77-bb7e-89498ff70193",
+        "dd16f1d0-d9d8-4e0b-b423-93fee7a5d209"
+      ],
+      "rastros": [
+        {
+          "canal": "web",
+          "membro_id": "6d656d62-0068-4000-8000-000000000068",
+          "skills": [
+            "meu_bem_estar",
+            "regulacao_emocional"
+          ],
+          "tags": 11,
+          "idade": 4,
+          "recuperados": [
+            "709924d0-0d63-4c10-b513-258636ec01f7",
+            "854864cc-4189-4e77-bb7e-89498ff70193",
+            "dd16f1d0-d9d8-4e0b-b423-93fee7a5d209"
+          ],
+          "enviados": [
+            "709924d0-0d63-4c10-b513-258636ec01f7",
+            "854864cc-4189-4e77-bb7e-89498ff70193",
+            "dd16f1d0-d9d8-4e0b-b423-93fee7a5d209"
+          ],
+          "n_recuperados": 3,
+          "n_enviados": 3,
+          "vazio": false,
+          "motivo_vazio": null,
+          "uso_efetivo": "nao_observavel"
+        }
+      ],
+      "chamadas": [
+        {
+          "host": "api.anthropic.com",
+          "modelo": "claude-haiku-4-5",
+          "duracaoMs": 721.2839999999997,
+          "hashPedido": "76e5df8ceda24dde57cea3b69c71755211c0003e47757cefe8d048d2ed3760f0",
+          "charsPedido": 1505,
+          "tokensEstimados": 377,
+          "blocoProjetado": "",
+          "inputTokens": 489,
+          "outputTokens": 27,
+          "http": 200
+        },
+        {
+          "host": "api.anthropic.com",
+          "modelo": "claude-haiku-4-5",
+          "duracaoMs": 604.4789000000019,
+          "hashPedido": "60aacb4c57989b55cac5bbbda415ae2e57bef62ac328edb8900e2a5d0300a08a",
+          "charsPedido": 2425,
+          "tokensEstimados": 607,
+          "blocoProjetado": "",
+          "inputTokens": 805,
+          "outputTokens": 11,
+          "http": 200
+        },
+        {
+          "host": "api.anthropic.com",
+          "modelo": "claude-sonnet-4-6",
+          "duracaoMs": 5795.877800000002,
+          "hashPedido": "8a0b8deaef02d442fb53b5e0e1f29f522fe9179fda2c774d672281b5729c1140",
+          "charsPedido": 69199,
+          "tokensEstimados": 17300,
+          "blocoProjetado": "<repertorio_kolo>\nIsto é REPERTÓRIO da Kolo pra você raciocinar — não é roteiro e não se cita.\n\n- Use \"QUANDO SERVE\" pra decidir se aquilo cabe MESMO nesta situação. Se não couber, ignore aquela entrada; trazer conteúdo que não serve é pior do que não trazer.\n- \"EVITE\" é o que NÃO recomendar. Não vire isso em aula sobre erros.\n- \"DÁ PRA FAZER\" é o que a família consegue executar hoje — adapte à idade e aos interesses da criança que você já conhece, em vez de repetir o passo literal.\n- \"ATIVIDADES\" são brincadeiras e atividades concretas já validadas. Prefira ADAPTAR uma delas ao interesse da criança a inventar uma do zero — mas nunca cite a lista, e nunca proponha uma que não caiba na idade ou no momento.\n- \"CRENÇA A DESFAZER\" é o que o adulto provavelmente pensa e que atrapalha. NÃO diga isso a ela, não a corrija e não a acuse de pensar assim: use só para escolher como falar, e para não reforçar a crença sem querer.\n- NUNCA escreva \"quando usar\", \"erros comuns\", \"passos\", \"atividades\" ou \"crença\" como seções da resposta, e nunca despeje as 3 entradas. Escolha o que ajuda AGORA e transforme em conversa.\n\n1. Baixar o estímulo antes de tentar conversar\n   Em crise, antes de qualquer conversa, baixe os estímulos: luz mais baixa, som desligado, sua voz mais grave e devagar. Quando o sistema nervoso está sobrecarregado, mais palavras viram mais ruído. Você fala depois.\n\n2. Aviso prévio de 5 minutos com linguagem concreta\n   Uma coisa que costuma ajudar muito: avisar 5 minutos antes da transição, com palavras bem concretas. Em vez de \"vamos sair logo\", diga \"em 5 minutos a gente coloca o casaco e vai para a escola\". Pode ser ainda mais simples se você mostrar o casaco enquanto fala.\n\n3. Medo de cachorro, escuro, altura, médico Aproximação gradual: ver de…\n   Emoção é verdade, pura e sempre. Quando a criança sente que você está ali de verdade, genuinamente presente — aproximação gradual: ver de longe, mais perto, observar outro, ela interagir — ela consegue se conhecer melhor, confiar em si mesma com mais leveza. Validar não significa resolver tudo para ela. Significa estar, escutar, permitir que sinta. Essa segurança emocional é o alicerce para tudo que vem depois. Ela precisa saber que o que sente importa, que pode contar com você.\n   QUANDO SERVE: Situações que triggereiam medo, transições temidas, evitação significativa.\n   EVITE: Forçar confrontação · ridicularizar · oferecer recompensa ('coragem' valida perigo).\n   DÁ PRA FAZER: Aproximação gradual: ver de longe, mais perto, observar outro, ela interagir · Livros sobre medo · Você modelando não é perigoso\n   ATIVIDADES: Aproximação gradual: ver de longe, mais perto, observar outro, ela interagir. Livros sobre medo. Você modelando não é perigoso.\n   CRENÇA A DESFAZER: Medo é fraqueza. Se proteger, piora. Preciso empurrar.\n</repertorio_kolo>",
+          "inputTokens": 1836,
+          "outputTokens": 212,
+          "http": 200
+        }
+      ],
+      "consultasConstruidas": 21,
+      "metrica": null,
+      "escritasRemotas": 0,
+      "producao": false
+    },
+    {
+      "id": "REF05",
+      "contextoFicticio": {
+        "id": "REF05",
+        "tema": "expectativa",
+        "crianca": "Heitor",
+        "nascimento": "2022-04-10",
+        "relato": "Não vejo a hora de o Heitor falar. Às vezes parece que só quando ele falar vou conseguir conhecer de verdade o que ele quer.",
+        "historico": [],
+        "esperado": "Explorar a crença como possibilidade respeitosa, reconhecer comunicação atual sem culpar ou prometer fala."
+      },
+      "respostaCompleta": "Essa espera é pesada, e faz sentido querer tanto ouvir a voz dele.\n\nMas tem uma coisa que vale observar com calma: o Heitor já está se comunicando. Toda vez que ele pega sua mão e leva pra algum lugar, toda vez que traz um objeto pra você, todo olhar em direção a algo que quer — isso é ele dizendo alguma coisa. Não é o mesmo que falar, mas tem um significado real, e ele está te escolhendo pra contar.\n\nA fala vai chegar do jeito que tem que chegar, no tempo dele. Mas enquanto isso, o que ele já faz tem valor agora — e você já conhece ele muito mais do que parece.\n\nUma coisa prática que ajuda nessa fase: quando ele comunicar alguma coisa do jeito dele — puxar, trazer, apontar — antes de atender, você faz eco com uma palavra só, bem simples, ligada ao que ele quis. Ele levou até a geladeira? *\"Água.\"* Trouxe o tênis? *\"Sair.\"* Não precisa pedir que ele repita, não precisa esperar ele falar pra atender. É só plantar a palavra no momento em que o sentido está vivo pra ele.\n\nEsses momentos são onde a linguagem costuma surgir — não no treino, mas no uso real, com alguém que já entende o que ele quer dizer.",
+      "erro": null,
+      "duracaoMs": 11981.474500000004,
+      "selecionadas": [
+        "854864cc-4189-4e77-bb7e-89498ff70193",
+        "363fd1e4-7f89-4815-8c83-4ce2a5edf39d",
+        "e1e083df-15ea-4297-9652-69530f8780e7"
+      ],
+      "rastros": [
+        {
+          "canal": "web",
+          "membro_id": "6d656d62-0087-4000-8000-000000000087",
+          "skills": [
+            "comunicacao",
+            "meu_bem_estar"
+          ],
+          "tags": 9,
+          "idade": 4,
+          "recuperados": [
+            "854864cc-4189-4e77-bb7e-89498ff70193",
+            "363fd1e4-7f89-4815-8c83-4ce2a5edf39d",
+            "e1e083df-15ea-4297-9652-69530f8780e7"
+          ],
+          "enviados": [
+            "854864cc-4189-4e77-bb7e-89498ff70193",
+            "363fd1e4-7f89-4815-8c83-4ce2a5edf39d",
+            "e1e083df-15ea-4297-9652-69530f8780e7"
+          ],
+          "n_recuperados": 3,
+          "n_enviados": 3,
+          "vazio": false,
+          "motivo_vazio": null,
+          "uso_efetivo": "nao_observavel"
+        }
+      ],
+      "chamadas": [
+        {
+          "host": "api.anthropic.com",
+          "modelo": "claude-haiku-4-5",
+          "duracaoMs": 750.5031000000017,
+          "hashPedido": "5c843870bbad72437fb415989123d8169eff66b2ac12d47b2674704baeeabf16",
+          "charsPedido": 1525,
+          "tokensEstimados": 382,
+          "blocoProjetado": "",
+          "inputTokens": 491,
+          "outputTokens": 23,
+          "http": 200
+        },
+        {
+          "host": "api.anthropic.com",
+          "modelo": "claude-haiku-4-5",
+          "duracaoMs": 606.8868999999977,
+          "hashPedido": "b288bd7208971327372d021a48842e7b4fe4e439cf047b53e54b39bd85a43f7b",
+          "charsPedido": 2445,
+          "tokensEstimados": 612,
+          "blocoProjetado": "",
+          "inputTokens": 807,
+          "outputTokens": 11,
+          "http": 200
+        },
+        {
+          "host": "api.anthropic.com",
+          "modelo": "claude-sonnet-4-6",
+          "duracaoMs": 10616.562700000002,
+          "hashPedido": "7ca34062b5ebfd26433344775b3e385bf35280fbfef081d4706505f1f60c8fe6",
+          "charsPedido": 69675,
+          "tokensEstimados": 17419,
+          "blocoProjetado": "<repertorio_kolo>\nIsto é REPERTÓRIO da Kolo pra você raciocinar — não é roteiro e não se cita.\n\n- Use \"QUANDO SERVE\" pra decidir se aquilo cabe MESMO nesta situação. Se não couber, ignore aquela entrada; trazer conteúdo que não serve é pior do que não trazer.\n- \"EVITE\" é o que NÃO recomendar. Não vire isso em aula sobre erros.\n- \"DÁ PRA FAZER\" é o que a família consegue executar hoje — adapte à idade e aos interesses da criança que você já conhece, em vez de repetir o passo literal.\n- \"ATIVIDADES\" são brincadeiras e atividades concretas já validadas. Prefira ADAPTAR uma delas ao interesse da criança a inventar uma do zero — mas nunca cite a lista, e nunca proponha uma que não caiba na idade ou no momento.\n- \"CRENÇA A DESFAZER\" é o que o adulto provavelmente pensa e que atrapalha. NÃO diga isso a ela, não a corrija e não a acuse de pensar assim: use só para escolher como falar, e para não reforçar a crença sem querer.\n- NUNCA escreva \"quando usar\", \"erros comuns\", \"passos\", \"atividades\" ou \"crença\" como seções da resposta, e nunca despeje as 3 entradas. Escolha o que ajuda AGORA e transforme em conversa.\n\n1. Aviso prévio de 5 minutos com linguagem concreta\n   Uma coisa que costuma ajudar muito: avisar 5 minutos antes da transição, com palavras bem concretas. Em vez de \"vamos sair logo\", diga \"em 5 minutos a gente coloca o casaco e vai para a escola\". Pode ser ainda mais simples se você mostrar o casaco enquanto fala.\n\n2. Limite firme + acolhimento na mesma frase\n   Quando precisar firmar um limite numa hora difícil, tente colocar três coisas na mesma frase: o que você vê (vejo que você está com raiva), o limite (não vou deixar você bater) e a presença (vou ficar aqui com você). A criança recebe o limite e o cuidado juntos — não como opostos.\n\n3. Puxar pela mão, apontar ou entregar objeto já é comunicação funcional\n   Puxar pela mão, apontar, entregar um objeto, aproximar uma palavra ou usar uma ecolalia com função já comunica algo. Responda ao sentido e modele só um próximo passo. Quando o Perfil trouxer a forma que a criança já usa, torne isso perceptível com naturalidade: se já usa palavras soltas, ligue essa habilidade a UMA palavra do item pedido, não a um menu genérico. Nunca exija fala ou contato visual para atender.\n   QUANDO SERVE: Quando a família diz que a criança não pede, mas relata gesto, objeto, som, aproximação de palavra, script ou ecolalia com função.\n   EVITE: [\"dizer que a criança não se comunica quando o relato já mostra uma forma funcional\",\"reter o item até obter fala ou contato visual\",\"pedir várias habilidades novas de uma vez\",\"listar fala, gesto, imagem e apontar quando o Perfil já mostra qual via está disponível\",\"oferecer um menu de palavras genéricas em vez de escolher a palavra ligada ao pedido real\"]\n   DÁ PRA FAZER: Reconheça primeiro o significado da forma comunicativa que apareceu. · Cruze com o Perfil: se já usa palavras soltas, diga isso naturalmente e modele uma única palavra do item real; se usa gesto ou objeto, amplie a partir dessa forma. · Atenda ao pedido possível sem transformar fala ou olhar em condição para atender. · Observe qual forma a criança volta a usar espontaneamente em situação parecida.\n   CRENÇA A DESFAZER: Só conta como pedido quando a criança fala ou olha para o adulto.\n</repertorio_kolo>",
+          "inputTokens": 1957,
+          "outputTokens": 362,
+          "http": 200
+        }
+      ],
+      "consultasConstruidas": 21,
+      "metrica": null,
+      "escritasRemotas": 0,
+      "producao": false
+    },
+    {
+      "id": "REF06",
+      "contextoFicticio": {
+        "id": "REF06",
+        "tema": "tentativa",
+        "crianca": "Manu",
+        "nascimento": "2020-04-10",
+        "relato": "Já tentei. Avisei cinco minutos antes de desligar o desenho, mas ela chorou do mesmo jeito. Estou sozinha e não tenho energia para inventar um monte de coisa.",
+        "historico": [
+          {
+            "quem": "mae",
+            "texto": "Quando o desenho termina a Manu chora e não vem para o banho."
+          },
+          {
+            "quem": "ayla",
+            "texto": "Uma possibilidade é avisar cinco minutos antes, com uma frase concreta sobre o banho."
+          }
+        ],
+        "esperado": "Reconhecer tentativa sem sucesso, não repetir aviso como receita; investigar o que muda a orientação e adaptar à capacidade da adulta."
+      },
+      "respostaCompleta": "Faz sentido — cinco minutos antes avisa, mas não muda o quanto dói parar o desenho.\n\nUma coisa que costuma ajudar nesse momento: em vez de desligar e chamar pro banho, incluir ela no movimento. Algo como *\"vou ligar o chuveiro, você vem comigo?\"* — sem pedir que ela pare o desenho, só convidando para o próximo passo. Muitas vezes a criança segue o adulto quando não sente que está perdendo algo, e sim que está indo junto.\n\nSe a choro vier mesmo assim, tudo bem deixar ela chorar um pouco enquanto você já inicia o banho com calma. Sua presença tranquila nesse momento regula mais do que qualquer frase.\n\nO que você percebe — ela chora e logo se acalma quando entra no banheiro, ou o choro se arrasta por bastante tempo?",
+      "erro": null,
+      "duracaoMs": 8647.566399999996,
+      "selecionadas": [
+        "854864cc-4189-4e77-bb7e-89498ff70193",
+        "21a9fc7b-e719-4341-aa5b-6a1b09667f11",
+        "77c95c71-97d0-46e7-99a4-ad24dd57d673"
+      ],
+      "rastros": [
+        {
+          "canal": "web",
+          "membro_id": "6d656d62-0106-4000-8000-000000000106",
+          "skills": [
+            "transicoes",
+            "meu_bem_estar"
+          ],
+          "tags": 10,
+          "idade": 6,
+          "recuperados": [
+            "854864cc-4189-4e77-bb7e-89498ff70193",
+            "21a9fc7b-e719-4341-aa5b-6a1b09667f11",
+            "77c95c71-97d0-46e7-99a4-ad24dd57d673"
+          ],
+          "enviados": [
+            "854864cc-4189-4e77-bb7e-89498ff70193",
+            "21a9fc7b-e719-4341-aa5b-6a1b09667f11",
+            "77c95c71-97d0-46e7-99a4-ad24dd57d673"
+          ],
+          "n_recuperados": 3,
+          "n_enviados": 3,
+          "vazio": false,
+          "motivo_vazio": null,
+          "uso_efetivo": "nao_observavel"
+        }
+      ],
+      "chamadas": [
+        {
+          "host": "api.anthropic.com",
+          "modelo": "claude-haiku-4-5",
+          "duracaoMs": 776.7020000000048,
+          "hashPedido": "f28ec0525edb3d93da514ad849e8198f51a4254c92f4a6a0887ea723c92317e8",
+          "charsPedido": 1559,
+          "tokensEstimados": 390,
+          "blocoProjetado": "",
+          "inputTokens": 498,
+          "outputTokens": 29,
+          "http": 200
+        },
+        {
+          "host": "api.anthropic.com",
+          "modelo": "claude-haiku-4-5",
+          "duracaoMs": 626.7696999999971,
+          "hashPedido": "ed80f9170cc7d4466761fb97fe6f826f4738f0eebe2df5c02a62643bc5fb9087",
+          "charsPedido": 2659,
+          "tokensEstimados": 665,
+          "blocoProjetado": "",
+          "inputTokens": 878,
+          "outputTokens": 11,
+          "http": 200
+        },
+        {
+          "host": "api.anthropic.com",
+          "modelo": "claude-sonnet-4-6",
+          "duracaoMs": 7237.605100000001,
+          "hashPedido": "2b4b70c24f4e22f5ba816fdb09678c1e75256676bcf4a91533e012048129c29b",
+          "charsPedido": 70820,
+          "tokensEstimados": 17705,
+          "blocoProjetado": "<repertorio_kolo>\nIsto é REPERTÓRIO da Kolo pra você raciocinar — não é roteiro e não se cita.\n\n- Use \"QUANDO SERVE\" pra decidir se aquilo cabe MESMO nesta situação. Se não couber, ignore aquela entrada; trazer conteúdo que não serve é pior do que não trazer.\n- \"EVITE\" é o que NÃO recomendar. Não vire isso em aula sobre erros.\n- \"DÁ PRA FAZER\" é o que a família consegue executar hoje — adapte à idade e aos interesses da criança que você já conhece, em vez de repetir o passo literal.\n- \"ATIVIDADES\" são brincadeiras e atividades concretas já validadas. Prefira ADAPTAR uma delas ao interesse da criança a inventar uma do zero — mas nunca cite a lista, e nunca proponha uma que não caiba na idade ou no momento.\n- \"CRENÇA A DESFAZER\" é o que o adulto provavelmente pensa e que atrapalha. NÃO diga isso a ela, não a corrija e não a acuse de pensar assim: use só para escolher como falar, e para não reforçar a crença sem querer.\n- NUNCA escreva \"quando usar\", \"erros comuns\", \"passos\", \"atividades\" ou \"crença\" como seções da resposta, e nunca despeje as 3 entradas. Escolha o que ajuda AGORA e transforme em conversa.\n\n1. Aviso prévio de 5 minutos com linguagem concreta\n   Uma coisa que costuma ajudar muito: avisar 5 minutos antes da transição, com palavras bem concretas. Em vez de \"vamos sair logo\", diga \"em 5 minutos a gente coloca o casaco e vai para a escola\". Pode ser ainda mais simples se você mostrar o casaco enquanto fala.\n\n2. Crianças pequenas não têm capacidade neurológica de se auto-regular.\n   Tem um padrão bem comum aqui: crianças pequenas não têm capacidade neurológica de se auto-regular. E também: seu sistema nervoso é espelho: quando você está calmo, ela tende a ficar calma também Você vai notar isso especialmente se transições; desperte de noite; antes de situações estressantes; a criança está hiperativa ou muito letárgica; diariamente como estratégia preventiva. Na prática, comece assim: Massagem suave antes do sono. Respiração sincronizada. Canto ritmado. Abraços longos. Banho morno. Posição de conforto consistente. Caminhada lenta. Contacto pele-a-pele em bebês. Evita ficar presa em: esperar que a criança se acalme sozinha enquanto você está estressado Vale observar o que funciona com sua criança e ajustar conforme a resposta dela.\n   QUANDO SERVE: Transições; desperte de noite; antes de situações estressantes; quando a criança está hiperativa ou muito letárgica; diariamente como estratégia preventiva.\n   EVITE: Esperar que a criança se acalme sozinha enquanto você está estressado · oferecer múltiplas opções durante crise · usar tom de impaciência.\n   ATIVIDADES: Massagem suave antes do sono. Respiração sincronizada. Canto ritmado. Abraços longos. Banho morno. Posição de conforto consistente. Caminhada lenta. Contacto pele-a-pele em bebês.\n   CRENÇA A DESFAZER: Co-regulação não é mimar. É desenvolvimento neurobiológico. Sem experiências consistentes de co-regulação, a criança não aprende a se regular mais tarde.\n\n3. Criança pré-escolar está pronta para ajudar em tarefas com começo,…\n   Criança de 4-6 anos consegue muita coisa, contanto que a tarefa tenha começo, meio e fim claros. 'Arrume seu quarto' é vago e a paralisa; 'guarde os blocos vermelhos na caixa azul' ela faz. Vale incluir tarefas pequenas na rotina diária — regar planta, colocar prato na mesa, alimentar pet, separar a roupa suja. Quadro visual com figuras ajuda muito (ela coloca um imã quando termina). E depois pergunta: 'você completou! Como se sente?'. Não é punição nem cobrança; é inclusão na vida da casa. E ela percebe que faz parte, não só observa. Pertencer é necessidade, não luxo.\n   QUANDO SERVE: Diariamente, como parte natural da rotina. Não como punição, mas como inclusão na vida familiar.\n   EVITE: Tarefas mal definidas (criança não sabe se terminou). Muita supervisão/crítica durante a execução. Esperar perfeição. Não celebrar o cumprimento.\n   ATIVIDADES: 1) Quadro de rotina com figuras (criança coloca imã quando termina). 2) 'Sua missão é guardar blocos vermelhos na caixa azul'. 3) Depois: 'Você completou! Como você se sente?'. 4) Varie tarefas a cada mês.\n   CRENÇA A DESFAZER: ❌ 'Criança dessa idade não consegue fazer nada direito' → ✅ 'Criança consegue fazer bem coisas claras'; ❌ 'Dou tarefa, ele esquece' → ✅ 'Rotina visual ajuda memória'\n</repertorio_kolo>",
+          "inputTokens": 2405,
+          "outputTokens": 225,
+          "http": 200
+        }
+      ],
+      "consultasConstruidas": 21,
+      "metrica": null,
+      "escritasRemotas": 0,
+      "producao": false
+    }
+  ]
+}
