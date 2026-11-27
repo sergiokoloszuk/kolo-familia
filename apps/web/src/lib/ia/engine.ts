@@ -10,6 +10,8 @@ import type { ContextoSkillResposta } from "./context";
 import { fronteiraAtravessada } from "@/lib/conducao/fronteiras";
 import { logEvent } from "@/lib/log";
 import { assemblePrompt, type Modo, type OutputTypeData } from "./prompt";
+import { FATOS_COMERCIAIS, FATOS_COMERCIAIS_SEM_TRIAL } from "@/lib/billing/fatos-comerciais";
+import { jornadaSemTrial } from "@/lib/billing/virada-comercial";
 import { classificarIntencao, type Intencao } from "./intencao";
 import {
   runTomValidators,
@@ -105,9 +107,14 @@ export async function prepararRespostaStream(params: {
   //
   // O histórico é carregado EM PARALELO com o roteamento, e a classificação em
   // paralelo com o contexto: a correção não custa uma ida a mais no relógio.
-  const [roteadas, anterior] = await Promise.all([
+  //
+  // A VIRADA COMERCIAL vale para a web também (PEND-257): sem ela, a Ayla do
+  // app seguia dizendo "o teste grátis é de 7 dias" depois que o teste acabou
+  // para quem chega. Mesma decisão do WhatsApp; erro de leitura = o fato de hoje.
+  const [roteadas, anterior, semTrial] = await Promise.all([
     routeSkillsAI(userInput, skills),
     carregarTurnosAnteriores(supabase, conversaId, userInput),
+    jornadaSemTrial(supabase),
   ]);
 
   const [ctx, turno] = await Promise.all([
@@ -148,6 +155,7 @@ export async function prepararRespostaStream(params: {
     intencao: turno.intencao,
     tema: turno.tema,
     aceite: turno.aceite,
+    fatosComerciais: semTrial ? FATOS_COMERCIAIS_SEM_TRIAL : FATOS_COMERCIAIS,
   });
 
   return { system, messages, roteadas, intencao: turno.intencao, tema: turno.tema, ctx };
