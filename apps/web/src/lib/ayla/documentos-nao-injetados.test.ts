@@ -38,6 +38,7 @@ const MARCA: Record<string, string> = {
   plano: "PLANO-NAO-DEVE-ENTRAR",
   cartoes_visuais: "CARTOES-NAO-DEVEM-ENTRAR",
   fontes_confiaveis: "FONTES-NAO-DEVEM-ENTRAR",
+  demonstracao: "DEMONSTRACAO-NAO-DEVE-ENTRAR",
 };
 
 beforeEach(() => {
@@ -73,7 +74,7 @@ describe("os cinco estão ativos no banco", () => {
     const s = systems[0] ?? "";
     expect(s, "o Core ativo não chegou").toContain(MARCA.core);
 
-    for (const chave of ["trial", "plano", "cartoes_visuais", "fontes_confiaveis"] as const) {
+    for (const chave of ["trial", "plano", "cartoes_visuais", "fontes_confiaveis", "demonstracao"] as const) {
       expect(
         s,
         `o documento "${chave}" VAZOU para a conversa só por estar ativo`,

@@ -35,6 +35,12 @@ export const CHAVES_DOCUMENTO = [
   "plano",
   "cartoes_visuais",
   "fontes_confiaveis",
+  /**
+   * A condução da DEMONSTRAÇÃO da landing (PEND-259, 27/11/2026). Entra só no
+   * prompt de `/api/demo/*` (`lib/demo/servico.ts`), nunca na conversa de uma
+   * família. Sem versão ativa, a demonstração não abre.
+   */
+  "demonstracao",
 ] as const;
 
 export type ChaveDocumento = (typeof CHAVES_DOCUMENTO)[number];
@@ -46,6 +52,7 @@ export const ROTULO_DOCUMENTO: Record<ChaveDocumento, string> = {
   plano: "Plano",
   cartoes_visuais: "Cartões Visuais",
   fontes_confiaveis: "Fontes Confiáveis",
+  demonstracao: "Demonstração (landing)",
 };
 
 export type DocumentoResolvido = {

@@ -8,6 +8,7 @@ const items = [
   { href: "/admin", label: "Início", exact: true },
   { href: "/admin/black-friday", label: "Black Friday" },
   { href: "/admin/virada", label: "Virada comercial" },
+  { href: "/admin/demonstracao", label: "Demonstração" },
   { href: "/admin/familias", label: "Famílias" },
   { href: "/admin/aulas", label: "Aulas" },
   { href: "/admin/mensagens", label: "Mensagens" },

@@ -271,7 +271,7 @@ substitui a prioridade atual de segurança nem a análise de produção.
 | [PEND-256](#pend-256) | Virada comercial: conta nova sem teste grátis a partir de uma data programada | P0 | IMPLEMENTADA, NÃO PUBLICADA — branch comercial/virada-2026-12; data não programada |
 | [PEND-257](#pend-257) | Chat web da Ayla ainda recebe o fato comercial "teste grátis de 7 dias" depois da virada | P2 | ABERTA |
 | [PEND-258](#pend-258) | A migração 0084 perdeu a checagem do ledger por e-mail que a 0081 fazia | P2 | ABERTA — medida só por leitura do SQL |
-| [PEND-259](#pend-259) | Demonstração única da Ayla na landing (20 min, código no WhatsApp, resumo, 1 por número) | P1 | BLOQUEADA — landing com Karina; tabela nova exige migração aplicada por quem tem acesso ao banco |
+| [PEND-259](#pend-259) | Demonstração única da Ayla na landing (20 min, código no WhatsApp, resumo, 1 por número) | P1 | IMPLEMENTADA, NÃO PUBLICADA — falta aplicar a 0101, ligar DEMO_AYLA_HABILITADA, ativar o documento e integrar a landing |
 <!-- PENDENCIAS-INDEX:END -->
 
 ---
@@ -11578,12 +11578,17 @@ decidir se restaura.
 ### PEND-259
 **Demonstração única da Ayla na landing (20 min, código no WhatsApp, resumo, 1 por número)**
 Bloco: **F · Assinatura, cobrança e fiscal** · Prioridade: **P1**
-STATUS: **BLOQUEADA — landing com Karina; tabela nova exige migração aplicada por quem tem acesso ao banco** · Aberta em: 2026-11-27
+STATUS: **IMPLEMENTADA, NÃO PUBLICADA — falta aplicar a 0101, ligar DEMO_AYLA_HABILITADA, ativar o documento e integrar a landing** · Aberta em: 2026-11-27
 
-Não existe conversa com a Ayla sem login nem código de WhatsApp para visitante
-(`verificacoes_whatsapp` exige família). A peça de backend (captação, código,
-conversa com documento próprio editável no Admin, resumo pelo WhatsApp,
-bloqueio por número) depende da migração e do contrato com a landing.
+Backend pronto na branch comercial/virada-2026-12: migração 0101
+(`demonstracoes_ayla`, `demonstracao_mensagens`, 1 por número no índice único,
+RLS sem políticas), rotas `/api/demo/{codigo,confirmar,mensagem,encerrar}`
+(fail-closed por `DEMO_AYLA_HABILITADA`, CORS por `DEMO_ORIGENS_PERMITIDAS`),
+condução no documento `demonstracao` do Admin (versionado) e simulador livre
+em `/admin/demonstracao`. Contrato em `docs/specs/demonstracao-landing.md`.
+Falta: aplicar a 0101 em produção; a landing da Karina chamar as rotas;
+Karina escrever e ativar a condução; decidir retenção/exclusão dos dados
+pessoais (nome, e-mail, telefone, conversa).
 **Critério:** demonstração completa com número de QA, segunda tentativa
 bloqueada, Admin livre, resumo recebido, e passagem para cadastro sem teste.
 
