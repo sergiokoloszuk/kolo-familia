@@ -6,6 +6,7 @@ import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { logServerError } from "@/lib/log";
 import { notificarFeedback } from "@/lib/admin/notificacoes";
 import { TRIAL_DIAS } from "@/lib/billing/fatos-comerciais";
+import { jornadaSemTrial } from "@/lib/billing/virada-comercial";
 import { formatarBRL, lerPlanosParaExibir } from "@/lib/billing/planos";
 
 /**
@@ -76,11 +77,19 @@ Regras:
 
 
 /** System prompt com fatos AO VIVO (preço vem da tabela; não fica velho). */
-function montarSystem(precos: { mensal: string | null; anual: string | null }): string {
+function montarSystem(
+  precos: { mensal: string | null; anual: string | null },
+  semTrial = false,
+): string {
+  // Virada comercial (`lib/billing/virada-comercial`): quem chega não ganha
+  // dias grátis; quem já tem teste vê o prazo na tela de Assinatura.
+  const teste = semTrial
+    ? "- Teste grátis: não existe para novas contas. Quem já tem um teste em andamento vê o prazo na tela de Assinatura."
+    : `- Teste grátis: ${TRIAL_DIAS} dias, sem precisar de cartão.`;
   const fatos = `# Fatos atuais (use estes valores; NÃO invente)
 - Plano mensal: ${precos.mensal ?? "ver na tela de Assinatura"}.
 - Plano anual: ${precos.anual ?? "ver na tela de Assinatura"}.
-- Teste grátis: ${TRIAL_DIAS} dias, sem precisar de cartão.
+${teste}
 - Cancelar: na tela de Assinatura, use "Gerenciar assinatura" para cancelar a renovação. Cancelar a assinatura NÃO apaga a conta nem os registros. Para apagar definitivamente os dados, use Configurações > Minha conta.`;
   return `${SYSTEM_BASE}\n\n${fatos}\n\n${MAPA}`;
 }
@@ -124,7 +133,10 @@ export async function perguntarAjuda(
       return { ok: false, error: "A ajuda inteligente não está configurada no servidor." };
     }
 
-    const system = montarSystem(await lerPrecos());
+    const system = montarSystem(
+      await lerPrecos(),
+      await jornadaSemTrial(createServiceRoleClient()),
+    );
 
     let raw = "";
     for (const model of [MODELS.leve, MODELS.principal]) {

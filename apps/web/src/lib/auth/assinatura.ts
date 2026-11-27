@@ -126,6 +126,23 @@ export function testeJaUsadoAntes(
   return fim - criado < 60_000;
 }
 
+/**
+ * A família NUNCA teve teste — o caso normal depois da virada comercial
+ * (`lib/billing/virada-comercial`): concluiu o cadastro sem linha, ou só tem a
+ * linha `canceled` que o webhook cria num checkout não pago.
+ *
+ * ⚠️ Conservadora de propósito: qualquer sinal de teste (`trial_ends_at`),
+ * cortesia ou `past_due` (o teste antigo que virou `past_due` sem cartão)
+ * responde `false`, e aí vale o texto de sempre ("seu período grátis acabou").
+ * Errar para o lado antigo só repete o que já existe; errar para o novo diria a
+ * quem teve teste que ele nunca existiu.
+ */
+export function nuncaTeveTeste(sub: AcessoAssinatura | null | undefined): boolean {
+  if (!sub) return true;
+  if (sub.trial_ends_at || sub.cortesia === true) return false;
+  return sub.status === "canceled";
+}
+
 /** True quando o trial existe mas já venceu (pra mensagem específica). */
 export function trialVencido(sub: AcessoAssinatura | null | undefined): boolean {
   return (

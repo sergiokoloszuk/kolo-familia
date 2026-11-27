@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { enviarTexto } from "./whatsappSender";
 import { chaveTelefoneBR } from "@/lib/telefone";
 import { logEvent } from "@/lib/log";
+import { jornadaSemTrial } from "@/lib/billing/virada-comercial";
 
 /**
  * QUEM ESCREVE SEM TER CADASTRO.
@@ -182,7 +183,7 @@ export function ehTelefoneDeVerdade(identificador: string | null | undefined): b
  * única coisa que faz o WhatsApp funcionar depois. Sem essa linha, ela pode
  * cadastrar outro telefone e voltar ao mesmo silêncio por outro caminho.
  */
-export function textoParaDesconhecido(link: string): string {
+export function textoParaDesconhecido(link: string, semTrial = false): string {
   return [
     "Oi! Aqui é a Ayla, do Kolo Família 🌿",
     "",
@@ -190,7 +191,11 @@ export function textoParaDesconhecido(link: string): string {
     "",
     `O caminho de entrada é este: ${link}`,
     "",
-    "Lá é só tocar no botão de começar o teste e criar a conta com este mesmo número de WhatsApp.",
+    // ⚠️ Depois da virada comercial não existe teste para começar — o botão
+    // é o de criar a conta.
+    semTrial
+      ? "Lá é só tocar no botão de criar a conta e usar este mesmo número de WhatsApp."
+      : "Lá é só tocar no botão de começar o teste e criar a conta com este mesmo número de WhatsApp.",
     "",
     "Assim que terminar, é só me chamar aqui que a gente conversa.",
   ].join("\n");
@@ -304,7 +309,7 @@ export async function atenderDesconhecido(
   try {
     await enviarTexto({
       phoneE164: inbound.phoneE164,
-      texto: textoParaDesconhecido(link),
+      texto: textoParaDesconhecido(link, await jornadaSemTrial(supabase)),
       delaySegundos: 2,
     });
   } catch (e) {

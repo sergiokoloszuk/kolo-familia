@@ -70,7 +70,7 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
               href="/signup"
               className={cn(buttonVariants({ size: "sm" }))}
             >
-              Começar grátis
+              Criar conta
             </Link>
           </nav>
         </div>

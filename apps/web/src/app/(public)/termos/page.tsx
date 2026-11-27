@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Eyebrow } from "@/components/brand/eyebrow";
+import { createServiceRoleClient } from "@/lib/supabase/server";
+import { jornadaSemTrial } from "@/lib/billing/virada-comercial";
 
 export const metadata: Metadata = {
   title: "Termos de Uso · Kolo Família",
@@ -7,7 +9,13 @@ export const metadata: Metadata = {
     "Termos de uso do Kolo Família — natureza e limites do serviço, uso de IA, dados de crianças, assinatura e cancelamento.",
 };
 
-export default function TermosPage() {
+// A seção 6 depende da virada comercial, que muda pelo Admin sem deploy.
+export const dynamic = "force-dynamic";
+
+export default async function TermosPage() {
+  // ⚠️ TEXTO LEGAL: a versão "sem teste" da seção 6 precisa do aval da
+  // responsável/jurídico antes de a virada ser programada.
+  const semTrial = await jornadaSemTrial(createServiceRoleClient());
   return (
     <article className="mx-auto w-full max-w-3xl px-6 py-16">
       <header className="mb-10 border-b border-kolo-linha pb-8">
@@ -121,13 +129,22 @@ export default function TermosPage() {
 
         <section>
           <h2 className="text-lg font-semibold">
-            6. Teste Gratuito e Assinaturas
+            {semTrial ? "6. Demonstração e Assinaturas" : "6. Teste Gratuito e Assinaturas"}
           </h2>
-          <p>
-            O teste normal é de 7 dias. Não é necessário cadastrar cartão para
-            começar e o término do teste não gera cobrança automática.
-          </p>
-          <p>Na Black Friday 2026:</p>
+          {semTrial ? (
+            <p>
+              Novas contas não têm período de teste gratuito: é possível
+              conhecer a Ayla por uma demonstração e, para continuar, contratar
+              um plano. Testes, cortesias e condições promocionais concedidos
+              antes dessa mudança são mantidos até o fim do prazo de cada um.
+            </p>
+          ) : (
+            <p>
+              O teste normal é de 7 dias. Não é necessário cadastrar cartão para
+              começar e o término do teste não gera cobrança automática.
+            </p>
+          )}
+          <p>{semTrial ? "Para quem participou da Black Friday 2026:" : "Na Black Friday 2026:"}</p>
           <ul className="ml-5 list-disc space-y-1">
             <li>o teste é de 15 dias completos;</li>
             <li>o plano promocional é mensal, por R$ 39,90;</li>

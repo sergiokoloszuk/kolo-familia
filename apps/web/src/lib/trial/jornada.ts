@@ -360,14 +360,26 @@ export function blocoPosTrial(params: {
    * Default `true` preserva o comportamento de quem não passa o parâmetro.
    */
   podeOferecerLink?: boolean;
+  /**
+   * A família NUNCA teve teste: chegou depois da virada comercial
+   * (`lib/billing/virada-comercial`), conheceu a Ayla pela demonstração e
+   * ainda não assinou. As regras do modo são as mesmas — o que muda é o que é
+   * VERDADE dizer: não houve período gratuito para "terminar".
+   *
+   * Default `false` preserva, byte a byte, o texto de quem já teve teste.
+   */
+  semTesteAnterior?: boolean;
 }): string {
   const nivel = nivelDeEvidencia(params.fatos);
   const nome = (params.nomeCrianca ?? "").trim();
   const dela = nome ? ` de ${nome}` : " da criança";
+  const semTeste = params.semTesteAnterior === true;
   const linhas: string[] = [];
 
   linhas.push(
-    "MOMENTO: o período de teste desta família TERMINOU. A conversa continua, mas o objetivo dela mudou.",
+    semTeste
+      ? "MOMENTO: esta família fez o cadastro mas AINDA NÃO ASSINOU, e não existe teste grátis para ela — nunca diga que um período gratuito terminou, nem ofereça dias grátis. A conversa existe para mostrar a Kolo e conduzir à assinatura."
+      : "MOMENTO: o período de teste desta família TERMINOU. A conversa continua, mas o objetivo dela mudou.",
   );
 
   linhas.push(
@@ -408,7 +420,7 @@ export function blocoPosTrial(params: {
   // depende de assinatura é a pior combinação possível: a pergunta não é
   // sincera, porque a resposta dela não pode ser atendida.
   linhas.push(
-    `ABERTURA SEM CONTEÚDO — "oi", "olá", "bom dia", um emoji, ou qualquer mensagem que não traga assunto: acolha o retorno em uma frase curta e diga, com clareza e sem rodeio, que o período gratuito terminou${nome ? ` e que os registros${dela} continuam guardados` : ""}. NÃO faça pergunta social ("como você está?", "como vocês estão?", "tudo bem?") — você não pode atender o que ela responderia, e perguntar sabendo disso é falso. Também não reinicie apresentação nem cadastro: esta família já é conhecida.`,
+    `ABERTURA SEM CONTEÚDO — "oi", "olá", "bom dia", um emoji, ou qualquer mensagem que não traga assunto: acolha ${semTeste ? "a chegada" : "o retorno"} em uma frase curta e diga, com clareza e sem rodeio, ${semTeste ? "que para começar o acompanhamento é só escolher um plano" : "que o período gratuito terminou"}${nome ? ` e que os registros${dela} continuam guardados` : ""}. NÃO faça pergunta social ("como você está?", "como vocês estão?", "tudo bem?") — você não pode atender o que ela responderia, e perguntar sabendo disso é falso. Também não reinicie apresentação nem cadastro: esta família já é conhecida.`,
   );
 
   linhas.push(

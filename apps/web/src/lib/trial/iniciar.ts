@@ -1,8 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { logEvent, logServerError } from "@/lib/log";
+import { jornadaSemTrial } from "@/lib/billing/virada-comercial";
 
 /**
- * O ÚNICO LUGAR DO APP QUE INICIA O TESTE DE 7 DIAS.
+ * O ÚNICO LUGAR DO APP QUE INICIA O TESTE DE 7 DIAS — e, depois da virada
+ * comercial (`lib/billing/virada-comercial`), o lugar que deixa de iniciá-lo
+ * para família nova.
  *
  * ── por que isto existe ───────────────────────────────────────────────────
  *
@@ -45,12 +48,18 @@ export type MotivoTrial =
   | "nao_verificado"
   | "sem_consentimento"
   | "familia_inexistente"
+  /**
+   * A virada comercial está valendo: família nova não ganha dias grátis —
+   * conhece a Ayla pela demonstração e assina direto. É a regra funcionando.
+   */
+  | "sem_trial_jornada_nova"
   | "erro";
 
 export type ResultadoTrial = { iniciado: boolean; motivo: MotivoTrial };
 
 /** Recusas esperadas — não são falha do sistema, são a regra funcionando. */
 const RECUSAS_LEGITIMAS: ReadonlySet<string> = new Set([
+  "sem_trial_jornada_nova",
   "sem_whatsapp",
   "nao_verificado",
   "sem_consentimento",
@@ -61,6 +70,38 @@ export async function iniciarTrial(
   familyId: string,
 ): Promise<ResultadoTrial> {
   try {
+    // ⚠️ A VIRADA NÃO CORTA DIREITO ANTIGO. Depois dela, só deixa de nascer
+    // teste para quem ainda NÃO tem linha em `subscription_accesses` — que é
+    // exatamente o caminho "iniciado" da RPC. Quem já tem linha continua
+    // passando pela RPC, porque é lá que mora o direito de legado (0084): ela
+    // devolve `legado_iniciado` ou `ja_existia`, e nunca cria teste novo.
+    if (await jornadaSemTrial(admin)) {
+      const { data: linha, error: erroLinha } = await admin
+        .from("subscription_accesses")
+        .select("family_account_id")
+        .eq("family_account_id", familyId)
+        .maybeSingle();
+      if (erroLinha) {
+        // Na dúvida, NÃO concede: depois da virada, teste indevido é o erro
+        // que não se desfaz (a família já viu os dias grátis).
+        await logServerError("iniciar_trial_virada_leitura_falhou", erroLinha, {
+          family_account_id: familyId,
+        });
+        return { iniciado: false, motivo: "erro" };
+      }
+      if (!linha) {
+        await logEvent({
+          kind: "trial_inicio",
+          severity: "info",
+          persistir: true,
+          family_account_id: familyId,
+          message: "trial: sem_trial_jornada_nova",
+          payload: { motivo: "sem_trial_jornada_nova", em: new Date().toISOString() },
+        });
+        return { iniciado: false, motivo: "sem_trial_jornada_nova" };
+      }
+    }
+
     const { data, error } = await admin.rpc("iniciar_trial_se_apto", {
       p_family_id: familyId,
     });

@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import {
+  nuncaTeveTeste,
   trialValido,
   trialVencido,
   type AcessoAssinatura,
@@ -39,7 +40,13 @@ export type EstadoComercial =
   /** Autenticada, teste acabou e não assinou. Também veio para assinar. */
   | "trial_vencido"
   /** Já paga. Não se oferece teste nem nova compra. */
-  | "assinante";
+  | "assinante"
+  /**
+   * Autenticada, com família, e NUNCA teve teste — a jornada da virada
+   * comercial. Veio para assinar; mandá-la ao `/signup` seria pedir um
+   * cadastro que ela já fez.
+   */
+  | "cadastrada_sem_plano";
 
 export type CtaPrecos = {
   estado: EstadoComercial;
@@ -70,9 +77,41 @@ const HERO_VISITANTE = {
   sub: "Sem cartão pra começar. Depois você decide.",
 } as const;
 
-/** O CTA de cada estado — puro, para poder ser testado sem banco nem sessão. */
-export function ctaDoEstado(estado: EstadoComercial, diasTrialVisitante = 7): CtaPrecos {
+/**
+ * A manchete do visitante DEPOIS da virada comercial: não há dias grátis — a
+ * pessoa conhece a Ayla pela demonstração e assina direto.
+ */
+const HERO_VISITANTE_SEM_TRIAL = {
+  titulo: "A Kolo do seu lado",
+  destaque: "todos os dias",
+  sub: "Cancele quando quiser. Seus registros ficam com você.",
+} as const;
+
+/**
+ * O CTA de cada estado — puro, para poder ser testado sem banco nem sessão.
+ *
+ * `semTrial` = a virada comercial está valendo (`lib/billing/virada-comercial`).
+ * Muda só o que se oferece a quem ainda não tem conta; os estados de quem já
+ * tem teste, oferta ou assinatura continuam iguais.
+ */
+export function ctaDoEstado(
+  estado: EstadoComercial,
+  diasTrialVisitante = 7,
+  semTrial = false,
+): CtaPrecos {
   switch (estado) {
+    case "cadastrada_sem_plano":
+      return {
+        estado,
+        rotulo: "Escolher meu plano",
+        destino: "/assinatura",
+        nota: "Seu cadastro está feito — aqui você escolhe como começar.",
+        hero: {
+          titulo: "Escolha seu plano",
+          destaque: "e comece com a Kolo",
+          sub: "Tudo que você já registrou continua com você.",
+        },
+      };
     case "em_trial":
       return {
         estado,
@@ -114,6 +153,15 @@ export function ctaDoEstado(estado: EstadoComercial, diasTrialVisitante = 7): Ct
       };
     case "visitante":
     default:
+      if (semTrial) {
+        return {
+          estado: "visitante",
+          rotulo: "Criar minha conta",
+          destino: "/signup",
+          nota: null,
+          hero: HERO_VISITANTE_SEM_TRIAL,
+        };
+      }
       return {
         estado: "visitante",
         rotulo: `Começar ${diasTrialVisitante} dias grátis`,
@@ -134,7 +182,7 @@ export function ctaDoEstado(estado: EstadoComercial, diasTrialVisitante = 7): Ct
  * Uma consulta, e só quando há sessão. Visitante — que é a maioria do tráfego
  * de uma página pública — não paga nada.
  */
-export async function estadoComercialDoVisitante(): Promise<EstadoComercial> {
+export async function estadoComercialDoVisitante(semTrial = false): Promise<EstadoComercial> {
   try {
     const supabase = await createClient();
     const {
@@ -159,6 +207,9 @@ export async function estadoComercialDoVisitante(): Promise<EstadoComercial> {
     if (acesso?.status === "active") return "assinante";
     if (trialValido(acesso)) return "em_trial";
     if (trialVencido(acesso)) return "trial_vencido";
+    // Só existe depois da virada: antes dela, toda família com cadastro
+    // concluído tem linha de teste. Sem a virada, segue o caminho de sempre.
+    if (semTrial && nuncaTeveTeste(acesso)) return "cadastrada_sem_plano";
     // `past_due`, `paused`, `canceled` e o resto continuam vendo a página
     // pública. Eles têm tratamento próprio dentro do app, e inventar copy nova
     // para eles aqui seria mexer no que não foi medido.

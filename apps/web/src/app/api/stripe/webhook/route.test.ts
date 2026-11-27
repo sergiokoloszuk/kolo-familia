@@ -28,7 +28,12 @@ import { assinaturaLiberada } from "@/lib/auth/assinatura";
 type Linha = Record<string, unknown>;
 type ErroFalso = { message: string; code?: string };
 
-function criarBanco(subscriptionAccesses: Linha[] = [], participacoesBlackFriday: Linha[] = []) {
+function criarBanco(
+  subscriptionAccesses: Linha[] = [],
+  participacoesBlackFriday: Linha[] = [],
+  /** Famílias que NÃO existem em `family_accounts` — o INSERT bate na FK. */
+  familiasInexistentes: string[] = [],
+) {
   const tabelas: Record<string, Linha[]> = {
     subscription_accesses: subscriptionAccesses,
     assinaturas: [],
@@ -61,6 +66,32 @@ function criarBanco(subscriptionAccesses: Linha[] = [], participacoesBlackFriday
         const casadas = alvos();
         for (const l of casadas) Object.assign(l, acao.patch);
         return { data: casadas.map((l) => ({ family_account_id: l.family_account_id })), error: null };
+      }
+      if (acao.tipo === "insert" && tabela === "subscription_accesses") {
+        // Como o Postgres: chave primária = família, e FK para family_accounts.
+        const novos = acao.novos ?? [];
+        for (const novo of novos) {
+          if (familiasInexistentes.includes(novo.family_account_id as string)) {
+            return {
+              data: null,
+              error: {
+                message: 'insert or update on table "subscription_accesses" violates foreign key constraint',
+                code: "23503",
+              },
+            };
+          }
+          if (tabelas[tabela].some((l) => l.family_account_id === novo.family_account_id)) {
+            return {
+              data: null,
+              error: {
+                message: 'duplicate key value violates unique constraint "subscription_accesses_pkey"',
+                code: "23505",
+              },
+            };
+          }
+          tabelas[tabela].push({ ...novo });
+        }
+        return { data: novos.map((n) => ({ family_account_id: n.family_account_id })), error: null };
       }
       if (acao.tipo === "insert" || acao.tipo === "upsert") {
         const novos = acao.novos ?? [];
@@ -525,16 +556,107 @@ describe("falha de persistência não pode terminar como sucesso", () => {
     expect(erro?.message).toContain("recusada pelo banco");
   });
 
-  it("update que não casa com nenhuma linha é falha, não silêncio", async () => {
-    // Família que não existe na Kolo: o UPDATE devolve error: null e nada.
-    // Sem conferir as linhas afetadas, isso passaria por sucesso.
-    banco = criarBanco([]);
+  it("família que não existe na Kolo é falha, não silêncio", async () => {
+    // O UPDATE devolve error: null e nada; a linha só pode ser criada para
+    // família que existe — a FK recusa, e isso não pode virar 2xx.
+    banco = criarBanco([], [], [FAMILIA]);
+    registrarNoStripe("active");
 
     const r = await entregar(eventoCheckout());
 
     expect(r.status).toBe(500);
-    const erro = logs.find((l) => l.kind === "stripe_checkout_completed" && l.severity === "error");
-    expect(erro?.message).toContain("nenhuma linha");
+    expect(banco.linha(FAMILIA)).toBeUndefined();
+    const erro = logs.find(
+      (l) => l.kind === "stripe_checkout_completed_linha_criada" && l.severity === "error",
+    );
+    expect(erro?.message).toContain("recusada pelo banco");
+  });
+});
+
+// ============================================================
+// VIRADA COMERCIAL — família sem teste (sem linha) que assina direto
+// ============================================================
+
+describe("jornada sem teste: quem paga sem nunca ter tido linha ganha acesso", () => {
+  it("checkout pago cria a linha já active", async () => {
+    banco = criarBanco([]);
+    registrarNoStripe("active");
+
+    const r = await entregar(eventoCheckout());
+
+    expect(r.status).toBe(200);
+    expect(banco.linha(FAMILIA)).toMatchObject({
+      status: "active",
+      stripe_customer_id: CLIENTE,
+      stripe_subscription_id: ASSINATURA,
+    });
+    expect(acessoLiberado()).toBe(true);
+  });
+
+  it("subscription.created chega ANTES do checkout: linha nasce e o checkout concede", async () => {
+    banco = criarBanco([]);
+    registrarNoStripe("incomplete");
+
+    const antes = await entregar(eventoAssinatura("incomplete", { tipo: "customer.subscription.created" }));
+    expect(antes.status).toBe(200);
+    // `incomplete` é transitório: a linha nasce, mas sem acesso.
+    expect(acessoLiberado()).toBe(false);
+
+    registrarNoStripe("active");
+    const depois = await entregar(eventoCheckout());
+    expect(depois.status).toBe(200);
+    expect(banco.linha(FAMILIA)?.status).toBe("active");
+    expect(acessoLiberado()).toBe(true);
+  });
+
+  it("checkout sem pagamento só vincula: linha nasce canceled, sem acesso", async () => {
+    banco = criarBanco([]);
+    registrarNoStripe("incomplete");
+
+    const r = await entregar(eventoCheckout({ pago: false }));
+
+    expect(r.status).toBe(200);
+    expect(banco.linha(FAMILIA)).toMatchObject({
+      status: "canceled",
+      stripe_customer_id: CLIENTE,
+    });
+    // Não é teste: nada para o cron D-3/D-1/D-0 achar.
+    expect(banco.linha(FAMILIA)?.trial_ends_at).toBeUndefined();
+    expect(acessoLiberado()).toBe(false);
+  });
+
+  it("fatura paga para família sem linha libera o acesso", async () => {
+    banco = criarBanco([]);
+    registrarNoStripe("active");
+
+    const r = await entregar(eventoFatura("invoice.payment_succeeded", 5490));
+
+    expect(r.status).toBe(200);
+    expect(banco.linha(FAMILIA)?.status).toBe("active");
+    expect(acessoLiberado()).toBe(true);
+  });
+
+  it("reenvio do mesmo checkout não duplica nem quebra", async () => {
+    banco = criarBanco([]);
+    registrarNoStripe("active");
+    const evento = eventoCheckout();
+
+    expect((await entregar(evento)).status).toBe(200);
+    expect((await entregar(evento)).status).toBe(200);
+
+    expect(banco.tabelas.subscription_accesses).toHaveLength(1);
+    expect(acessoLiberado()).toBe(true);
+  });
+
+  it("caso legítimo intacto: quem já tem linha de teste continua no UPDATE, sem linha nova", async () => {
+    banco = criarBanco([linhaTrial({ vencido: false })]);
+    registrarNoStripe("active");
+
+    await entregar(eventoCheckout());
+
+    expect(banco.tabelas.subscription_accesses).toHaveLength(1);
+    expect(banco.linha(FAMILIA)?.status).toBe("active");
+    expect(logs.some((l) => l.kind === "stripe_checkout_completed_linha_criada")).toBe(false);
   });
 });
 

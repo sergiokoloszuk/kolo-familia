@@ -50,6 +50,12 @@ export type InitialState = {
     recursos: { texto?: string } | null;
     dinamica: { texto?: string } | null;
   } | null;
+  /**
+   * A virada comercial está valendo (`lib/billing/virada-comercial`): o
+   * cadastro não abre período gratuito — leva à escolha do plano. Lido no
+   * servidor; sem ele, o texto de sempre.
+   */
+  semTrial?: boolean;
 };
 
 const TOTAL_STEPS = 6;
@@ -60,7 +66,11 @@ const TOTAL_STEPS = 6;
  * vem (previsibilidade). [NOME] = primeira criança; antes de capturada, usa
  * "seu filho ou sua filha".
  */
-function chromeDoPasso(step: number, nomeCrianca: string | null): { titulo: string; linha: string } {
+function chromeDoPasso(
+  step: number,
+  nomeCrianca: string | null,
+  semTrial = false,
+): { titulo: string; linha: string } {
   const N = capitalizarNome(nomeCrianca) || "seu filho ou sua filha";
   switch (step) {
     case 1:
@@ -86,7 +96,7 @@ function chromeDoPasso(step: number, nomeCrianca: string | null): { titulo: stri
       return {
         titulo: "Termos e WhatsApp",
         linha:
-          "Por último, dois aceites: um pros termos de uso e outro pra Ayla poder te mandar mensagem no WhatsApp — a lei pede essa permissão separada, e você pode tirar quando quiser. Depois disso, seu período gratuito começa.",
+          `Por último, dois aceites: um pros termos de uso e outro pra Ayla poder te mandar mensagem no WhatsApp — a lei pede essa permissão separada, e você pode tirar quando quiser. ${semTrial ? "Depois disso, é só escolher o seu plano." : "Depois disso, seu período gratuito começa."}`,
       };
     default:
       return { titulo: "Tudo pronto", linha: "" };
@@ -152,7 +162,7 @@ export function OnboardingWizard({ initial }: { initial: InitialState }) {
   }
 
   const nomeCrianca = state.membros[0]?.nome ?? null;
-  const chrome = chromeDoPasso(step, nomeCrianca);
+  const chrome = chromeDoPasso(step, nomeCrianca, initial.semTrial === true);
 
   return (
     <div className="flex flex-col gap-6">
@@ -387,6 +397,7 @@ export function OnboardingWizard({ initial }: { initial: InitialState }) {
               }
               nomeCrianca={capitalizarNome(state.membros[0]?.nome) || "quem você cuida"}
               aylaAutorizada={optinAyla}
+              semTrial={initial.semTrial === true}
               pending={pending}
               onComplete={(destino, janela) =>
                 runAction(
