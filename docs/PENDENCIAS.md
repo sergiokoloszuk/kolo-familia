@@ -268,10 +268,10 @@ substitui a prioridade atual de segurança nem a análise de produção.
 | [PEND-251](#pend-251) | A Ayla presume dado que não tem e orienta antes de perguntar o que decide | P2 | PARCIAL — Core v13.3 candidato; sem prova em produção |
 | [PEND-252](#pend-252) | Oferta de cartões visuais: responder "sim" não abre a montagem | P1 | PARCIAL — mitigado no Core v13.4 (ensina a frase); correção estrutural pendente |
 | [PEND-253](#pend-253) | Canal seguro para a responsável pedir ajustes de comportamento da Ayla | P2 | PARCIAL — guia e formulário publicados; rito sem uso ainda |
-| [PEND-256](#pend-256) | Virada comercial: conta nova sem teste grátis a partir de uma data programada | P0 | IMPLEMENTADA, NÃO PUBLICADA — branch comercial/virada-2026-12; data não programada |
-| [PEND-257](#pend-257) | Chat web da Ayla ainda recebe o fato comercial "teste grátis de 7 dias" depois da virada | P2 | ABERTA |
+| [PEND-256](#pend-256) | Virada comercial: conta nova sem teste grátis a partir de uma data programada | P0 | PARCIAL — em produção (3b9f53a4), sem efeito até a data ser programada em /admin/virada |
+| [PEND-257](#pend-257) | Chat web da Ayla ainda recebe o fato comercial "teste grátis de 7 dias" depois da virada | P2 | IMPLEMENTADA — o chat da web usa o fato da jornada; vale ao publicar |
 | [PEND-258](#pend-258) | A migração 0084 perdeu a checagem do ledger por e-mail que a 0081 fazia | P2 | ABERTA — medida só por leitura do SQL |
-| [PEND-259](#pend-259) | Demonstração única da Ayla na landing (20 min, código no WhatsApp, resumo, 1 por número) | P1 | IMPLEMENTADA, NÃO PUBLICADA — falta aplicar a 0101, ligar DEMO_AYLA_HABILITADA, ativar o documento e integrar a landing |
+| [PEND-259](#pend-259) | Demonstração única da Ayla na landing (20 min, código no WhatsApp, resumo, 1 por número) | P1 | PARCIAL — código em produção (3b9f53a4), desligado; falta aplicar a 0101, ligar DEMO_AYLA_HABILITADA, ativar o documento e integrar a landing |
 <!-- PENDENCIAS-INDEX:END -->
 
 ---
@@ -11532,7 +11532,7 @@ guardar (ou exportar) a conversa do simulador.
 ### PEND-256
 **Virada comercial: conta nova sem teste grátis a partir de uma data programada**
 Bloco: **F · Assinatura, cobrança e fiscal** · Prioridade: **P0**
-STATUS: **IMPLEMENTADA, NÃO PUBLICADA — branch comercial/virada-2026-12; data não programada** · Aberta em: 2026-11-27
+STATUS: **PARCIAL — em produção (3b9f53a4), sem efeito até a data ser programada em /admin/virada** · Aberta em: 2026-11-27
 
 Decisão de Karina (27/11): depois da Black Friday, conta nova não ganha 7 nem
 15 dias; conhece a Ayla por uma demonstração na landing e assina direto
@@ -11555,13 +11555,15 @@ checklist no dia, 48 h sem `trial_inicio=iniciado` depois da data e sem
 ### PEND-257
 **Chat web da Ayla ainda recebe o fato comercial "teste grátis de 7 dias" depois da virada**
 Bloco: **F · Assinatura, cobrança e fiscal** · Prioridade: **P2**
-STATUS: **ABERTA** · Aberta em: 2026-11-27
+STATUS: **IMPLEMENTADA — o chat da web usa o fato da jornada; vale ao publicar** · Aberta em: 2026-11-27
 
 `lib/ia/prompt.ts` monta o system da web com a constante `FATOS_COMERCIAIS`
 (sincrona, em cache), não com `fatosComerciaisParaFamilia`. Depois da virada, só
 quem já tem acesso conversa na web, então o risco é a Ayla responder "o teste é
 de 7 dias" a uma assinante que pergunte. **Critério:** a web usa o mesmo fato
 que o WhatsApp, sem quebrar o cache do system.
+
+27/11: `prepararRespostaStream` lê `jornadaSemTrial` e passa `FATOS_COMERCIAIS_SEM_TRIAL` a `assemblePrompt`; o system muda só uma vez, na virada, então o cache segue. Sem data programada o system é idêntico ao de antes (teste `lib/ia/fatos-web.test.ts`).
 
 ### PEND-258
 **A migração 0084 perdeu a checagem do ledger por e-mail que a 0081 fazia**
@@ -11578,7 +11580,7 @@ decidir se restaura.
 ### PEND-259
 **Demonstração única da Ayla na landing (20 min, código no WhatsApp, resumo, 1 por número)**
 Bloco: **F · Assinatura, cobrança e fiscal** · Prioridade: **P1**
-STATUS: **IMPLEMENTADA, NÃO PUBLICADA — falta aplicar a 0101, ligar DEMO_AYLA_HABILITADA, ativar o documento e integrar a landing** · Aberta em: 2026-11-27
+STATUS: **PARCIAL — código em produção (3b9f53a4), desligado; falta aplicar a 0101, ligar DEMO_AYLA_HABILITADA, ativar o documento e integrar a landing** · Aberta em: 2026-11-27
 
 Backend pronto na branch comercial/virada-2026-12: migração 0101
 (`demonstracoes_ayla`, `demonstracao_mensagens`, 1 por número no índice único,

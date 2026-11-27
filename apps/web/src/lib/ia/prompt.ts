@@ -203,6 +203,10 @@ export function buildSystemTextConversa(
   skills: SkillRow[],
   intencao?: Intencao,
   tema?: string | null,
+  // O fato comercial da jornada (PEND-257). Quem chama decide pela virada
+  // (`jornadaSemTrial`); sem ele, o de hoje. Muda uma vez, na virada, e por
+  // isso pode morar no system sem quebrar o cache.
+  fatosComerciais: string = FATOS_COMERCIAIS,
 ): string {
   // ENTREGA = desafio. É a mesma regra do WhatsApp (`ehEntrega`): crise,
   // desabafo e dúvida pontual continuam em texto corrido, porque título em
@@ -210,7 +214,7 @@ export function buildSystemTextConversa(
   const entrega = intencao === "desafio";
   return `${nucleoConducao()}
 
-# ${FATOS_COMERCIAIS}
+# ${fatosComerciais}
 
 # Especialistas que você reúne neste turno
 
@@ -504,15 +508,17 @@ export function assemblePrompt(params: {
    * não no system: é fato desta mensagem, não regra do produto.
    */
   aceite?: string | null;
+  /** Fato comercial da jornada; ver `buildSystemTextConversa`. */
+  fatosComerciais?: string;
 }): {
   system: Anthropic.TextBlockParam[];
   messages: Anthropic.MessageParam[];
 } {
-  const { skills, ctx, userInput, modo, intencao, tema, aceite } = params;
+  const { skills, ctx, userInput, modo, intencao, tema, aceite, fatosComerciais } = params;
 
   const systemText =
     modo.kind === "conversa"
-      ? buildSystemTextConversa(skills, intencao, tema)
+      ? buildSystemTextConversa(skills, intencao, tema, fatosComerciais)
       : buildSystemTextOutputType(skills, modo.outputType);
 
   const system: Anthropic.TextBlockParam[] = [
