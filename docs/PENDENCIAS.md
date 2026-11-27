@@ -172,7 +172,7 @@ substitui a prioridade atual de segurança nem a análise de produção.
 | [PEND-124](#pend-124) | configuracao_geral não existe em produção — migração 0068 nunca aplicada | P2 | MEDIDA — IMPACTO NÃO PROVADO |
 | [PEND-125](#pend-125) | 31% dos cadastros nunca confirmam o e-mail e nunca entram | P0 | MEDIDA — CAUSA NÃO ISOLADA |
 | [PEND-126](#pend-126) | A jornada D0–D7 do Trial não acontece: 2 dias de 8, e 94% nunca são contactadas | P0 | MEDIDA — NÃO CORRIGIDA |
-| [PEND-127](#pend-127) | Atribuição e funil misturam landing, canal, testes e janelas | P1 | VALIDADA LOCALMENTE · DEPLOY PENDENTE |
+| [PEND-127](#pend-127) | Atribuição e funil do dashboard misturam landing, canal, testes e janelas | P1 | PUBLICADA · CTA BASE44 E PROVA DE NOVOS CADASTROS PENDENTES |
 | [PEND-128](#pend-128) | O contato do suporte ainda está duplicado no documento trial v4 | P2 | PARCIALMENTE CORRIGIDA |
 | [PEND-129](#pend-129) | O HMAC do código de ativação tem valor padrão público no código | P0 | MEDIDA — IMPACTO EM PRODUÇÃO NÃO CONFIRMADO |
 | [PEND-130](#pend-130) | O código de ativação não tem limite de tentativas, de reenvios nem cooldown | P1 | MEDIDA — NÃO CORRIGIDA |
@@ -6731,7 +6731,7 @@ STATUS: **MEDIDA — NÃO CORRIGIDA** · Aberta em: 2026-08-21
 ### PEND-127
 **Atribuição e funil do dashboard misturam landing, canal, testes e janelas**
 Bloco: **H · Governança / E · Analytics** · Prioridade: **P1**
-STATUS: **VALIDADA LOCALMENTE · DEPLOY PENDENTE** · Aberta em: 2026-08-21
+STATUS: **PUBLICADA · CTA BASE44 E PROVA DE NOVOS CADASTROS PENDENTES** · Aberta em: 2026-08-21
 
 - **Correção da hipótese histórica:** a migração 0052 grava `utm_*`
   diretamente em `family_accounts`; não existe nem deveria existir tabela
@@ -6748,6 +6748,11 @@ STATUS: **VALIDADA LOCALMENTE · DEPLOY PENDENTE** · Aberta em: 2026-08-21
 - **Correção validada:** paginação vitalícia, funil cumulativo, classificação
   explícita de canal e card de qualidade da atribuição. O replay somente leitura
   contra produção passou; 24 testes dirigidos e o build completo passaram.
+- **Prova operacional em 27/11/2026:** Vercel concluiu o deploy do commit
+  `d6c6da0c980d270603fcd8c2cd1c4f8db22acdf2`; `/api/health` no domínio
+  principal devolveu esse mesmo SHA, `ambiente=production`, `ok=true` e
+  `db.ok=true`. A URL `kolo-familia-web-git-claude-ayla-foco-core-ce3424-*`
+  que mostrou o erro `3300206153` era um preview antigo, não produção.
 - **CRITÉRIO DE CONCLUSÃO:** código publicado e comprovado no domínio principal;
   CTA da Base44 preserva UTMs recebidas e só usa `base44` quando não existe canal;
   novos cadastros controlados provam pago, direto, indicação e landing sem UTM.
