@@ -72,7 +72,7 @@ PEND-092 → 017 → 098 → 093 → 094 → 095 → 039 → 042 → 097 → 099
 substitui a prioridade atual de segurança nem a análise de produção.
 
 <!-- PENDENCIAS-INDEX:START -->
-Índice completo gerado de 192 fichas neste arquivo. A ficha é a fonte do estado; não edite as linhas abaixo à mão. Para atualizar: `node scripts/pendencias-index.mjs --write`.
+Índice completo gerado de 196 fichas neste arquivo. A ficha é a fonte do estado; não edite as linhas abaixo à mão. Para atualizar: `node scripts/pendencias-index.mjs --write`.
 
 | ID | Pendência | Prioridade | Estado da ficha |
 |---|---|---|---|
@@ -268,6 +268,10 @@ substitui a prioridade atual de segurança nem a análise de produção.
 | [PEND-251](#pend-251) | A Ayla presume dado que não tem e orienta antes de perguntar o que decide | P2 | PARCIAL — Core v13.3 candidato; sem prova em produção |
 | [PEND-252](#pend-252) | Oferta de cartões visuais: responder "sim" não abre a montagem | P1 | PARCIAL — mitigado no Core v13.4 (ensina a frase); correção estrutural pendente |
 | [PEND-253](#pend-253) | Canal seguro para a responsável pedir ajustes de comportamento da Ayla | P2 | PARCIAL — guia e formulário publicados; rito sem uso ainda |
+| [PEND-256](#pend-256) | Virada comercial: conta nova sem teste grátis a partir de uma data programada | P0 | IMPLEMENTADA, NÃO PUBLICADA — branch comercial/virada-2026-12; data não programada |
+| [PEND-257](#pend-257) | Chat web da Ayla ainda recebe o fato comercial "teste grátis de 7 dias" depois da virada | P2 | ABERTA |
+| [PEND-258](#pend-258) | A migração 0084 perdeu a checagem do ledger por e-mail que a 0081 fazia | P2 | ABERTA — medida só por leitura do SQL |
+| [PEND-259](#pend-259) | Demonstração única da Ayla na landing (20 min, código no WhatsApp, resumo, 1 por número) | P1 | BLOQUEADA — landing com Karina; tabela nova exige migração aplicada por quem tem acesso ao banco |
 <!-- PENDENCIAS-INDEX:END -->
 
 ---
@@ -11525,9 +11529,69 @@ anterior. Lacuna: o simulador (`admin/inteligencia`) **não guarda conversa** �
 **Critério:** três pedidos reais atendidos pelo rito, e decisão registrada sobre
 guardar (ou exportar) a conversa do simulador.
 
+### PEND-256
+**Virada comercial: conta nova sem teste grátis a partir de uma data programada**
+Bloco: **F · Assinatura, cobrança e fiscal** · Prioridade: **P0**
+STATUS: **IMPLEMENTADA, NÃO PUBLICADA — branch comercial/virada-2026-12; data não programada** · Aberta em: 2026-11-27
+
+Decisão de Karina (27/11): depois da Black Friday, conta nova não ganha 7 nem
+15 dias; conhece a Ayla por uma demonstração na landing e assina direto
+(R$ 54,90). Implementado: data em `configuracao_geral.virada_comercial_em`
+(`/admin/virada`, sem deploy; recusa data anterior ao fim da Black Friday);
+`iniciarTrial` não chama a RPC para família **sem linha** (com linha, a RPC
+segue decidindo o direito de legado da 0084); **defeito P0 corrigido**: o
+webhook do Stripe e a semeadura da reconciliação só faziam `UPDATE`, então quem
+pagasse sem ter tido teste ficaria sem acesso (`gravarAcessoDaFamilia` cria a
+linha); Ayla, `/precos`, onboarding, `/ajuda`, `/termos` e número desconhecido
+sem promessa de dias grátis; quem já teve teste recebe o texto de sempre.
+Checklist em `docs/VIRADA-COMERCIAL-2026-12-CHECKLIST.md`. Falta: aval do texto
+da seção 6 dos termos; revisão do texto do onboarding conversacional e do Core
+ativo (vivem no banco); prova com Stripe em modo de teste; fases do CRM
+interno ainda chamam "Ativou o teste" (sem efeito para a família).
+**Critério:** publicada com a data não programada (health no SHA), smoke da
+checklist no dia, 48 h sem `trial_inicio=iniciado` depois da data e sem
+`stripe_*_linha_criada` com erro.
+
+### PEND-257
+**Chat web da Ayla ainda recebe o fato comercial "teste grátis de 7 dias" depois da virada**
+Bloco: **F · Assinatura, cobrança e fiscal** · Prioridade: **P2**
+STATUS: **ABERTA** · Aberta em: 2026-11-27
+
+`lib/ia/prompt.ts` monta o system da web com a constante `FATOS_COMERCIAIS`
+(sincrona, em cache), não com `fatosComerciaisParaFamilia`. Depois da virada, só
+quem já tem acesso conversa na web, então o risco é a Ayla responder "o teste é
+de 7 dias" a uma assinante que pergunte. **Critério:** a web usa o mesmo fato
+que o WhatsApp, sem quebrar o cache do system.
+
+### PEND-258
+**A migração 0084 perdeu a checagem do ledger por e-mail que a 0081 fazia**
+Bloco: **F · Assinatura, cobrança e fiscal** · Prioridade: **P2**
+STATUS: **ABERTA — medida só por leitura do SQL** · Aberta em: 2026-11-27
+
+O fluxo normal de `iniciar_trial_se_apto` na 0084 não chama mais
+`teste_ja_usado(v_email)` (0081 devolvia `trial_ja_utilizado`), embora o
+comentário diga "idêntico à 0081". O ledger por telefone (0069) continua.
+Depois da virada o caminho quase não é usado, mas volta se a virada for
+cancelada. **Critério:** conferir em produção com `pg_get_functiondef` e
+decidir se restaura.
+
+### PEND-259
+**Demonstração única da Ayla na landing (20 min, código no WhatsApp, resumo, 1 por número)**
+Bloco: **F · Assinatura, cobrança e fiscal** · Prioridade: **P1**
+STATUS: **BLOQUEADA — landing com Karina; tabela nova exige migração aplicada por quem tem acesso ao banco** · Aberta em: 2026-11-27
+
+Não existe conversa com a Ayla sem login nem código de WhatsApp para visitante
+(`verificacoes_whatsapp` exige família). A peça de backend (captação, código,
+conversa com documento próprio editável no Admin, resumo pelo WhatsApp,
+bloqueio por número) depende da migração e do contrato com a landing.
+**Critério:** demonstração completa com número de QA, segunda tentativa
+bloqueada, Admin livre, resumo recebido, e passagem para cadastro sem teste.
+
 ---
 
-**Proximo ID livre: PEND-254. *(PEND-232 a PEND-243 estão reivindicadas em outras frentes; PEND-244 registra a ausência de autorização por cargo no Admin; PEND-245 e PEND-246 pertencem à remediação Black Friday; PEND-225, PEND-226 e PEND-228 estão reivindicadas no worktree `ayla-conversa-valor`; PEND-227 foi incorporada nesta frente; PEND-209 a PEND-211 já estão reivindicadas por outra frente; 024 e 025 reservadas por frentes ainda nao publicadas; PEND-202 reivindicada em commit e ainda sem ficha; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
+---
+
+**Proximo ID livre: PEND-260. *(PEND-254 e PEND-255 estão reivindicadas no PR #165, ainda não mergeado; PEND-232 a PEND-243 estão reivindicadas em outras frentes; PEND-244 registra a ausência de autorização por cargo no Admin; PEND-245 e PEND-246 pertencem à remediação Black Friday; PEND-225, PEND-226 e PEND-228 estão reivindicadas no worktree `ayla-conversa-valor`; PEND-227 foi incorporada nesta frente; PEND-209 a PEND-211 já estão reivindicadas por outra frente; 024 e 025 reservadas por frentes ainda nao publicadas; PEND-202 reivindicada em commit e ainda sem ficha; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.

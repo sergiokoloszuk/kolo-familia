@@ -1,3 +1,4 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { logEvent } from "@/lib/log";
 
 /**
@@ -129,6 +130,65 @@ export async function conferirEscrita(
     payload: { ...base, resultado: "ok", linhas },
   });
   return linhas;
+}
+
+/**
+ * Grava o patch no acesso da família — e CRIA a linha quando ela não existe.
+ *
+ * ⚠️ 27/11/2026, VIRADA COMERCIAL. Até aqui a linha de `subscription_accesses`
+ * só nascia junto com o teste grátis (`iniciar_trial_se_apto`), então todo
+ * evento do Stripe podia ser um `UPDATE`. Com a jornada sem teste, a família
+ * conclui o cadastro **sem linha** e paga: o `UPDATE` não casa com ninguém,
+ * `conferirEscrita` lança, o Stripe reenvia para sempre e quem pagou continua
+ * bloqueada — a classe Rochelle, agora para toda família nova.
+ *
+ * Ordem: tenta o `UPDATE` (o caminho de sempre, inalterado para quem tem
+ * linha); com zero linhas, insere a linha com o patch. A linha nasce
+ * `canceled` quando o patch não diz o status (vínculo sem pagamento) — é o
+ * estado "sem assinatura vigente", que não libera acesso, não é lido como
+ * teste e não dispara nenhum aviso de fim de teste. Família que não existe na
+ * Kolo continua sendo falha visível: a chave estrangeira recusa o `INSERT`.
+ *
+ * Corrida (dois eventos da mesma assinatura ao mesmo tempo): o segundo
+ * `INSERT` bate na chave primária, é tolerado, e o patch é reaplicado na linha
+ * que o primeiro criou — agora exigindo linha.
+ */
+export async function gravarAcessoDaFamilia(
+  admin: SupabaseClient,
+  familyId: string,
+  patch: Record<string, unknown>,
+  ctx: ContextoEscrita,
+): Promise<number> {
+  const atualizar = (exigirLinha: boolean) =>
+    conferirEscrita(
+      admin
+        .from("subscription_accesses")
+        .update(patch)
+        .eq("family_account_id", familyId)
+        .select("family_account_id"),
+      { ...ctx, familyId, exigirLinha },
+    );
+
+  const linhas = await atualizar(false);
+  if (linhas > 0) return linhas;
+
+  const criadas = await conferirEscrita(
+    admin
+      .from("subscription_accesses")
+      .insert({ status: "canceled", ...patch, family_account_id: familyId })
+      .select("family_account_id"),
+    {
+      ...ctx,
+      kind: `${ctx.kind}_linha_criada`,
+      familyId,
+      campos: Object.keys(patch),
+      exigirLinha: false,
+      tolerarDuplicata: true,
+    },
+  );
+  if (criadas > 0) return criadas;
+
+  return atualizar(true);
 }
 
 /**

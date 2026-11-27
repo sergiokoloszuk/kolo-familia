@@ -18,11 +18,14 @@ import { BLACK_FRIDAY_2026, janelaPublicaAberta } from "@/lib/billing/black-frid
 import { lerEstadoBlackFriday } from "@/lib/billing/estado-black-friday";
 import { lerOfertaBlackFridayNoStripe } from "@/lib/billing/oferta-black-friday";
 import { resolverOfertaDaFamilia } from "@/lib/billing/oferta-familia";
+import { jornadaSemTrial } from "@/lib/billing/virada-comercial";
 
+// ⚠️ Sem promessa de teste: a descrição vale antes e depois da virada
+// comercial, e é lida por buscadores que não sabem a data.
 export const metadata: Metadata = {
   title: "Preços · Kolo Família",
   description:
-    "Teste grátis sem cartão. Depois, você escolhe se quer continuar. Sem pegadinhas.",
+    "Planos mensal e anual da Kolo Família. Cancele quando quiser. Sem pegadinhas.",
 };
 
 // O preço vem do Stripe, espelhado em configuracao_precos. Ver lib/billing/planos.ts.
@@ -39,9 +42,12 @@ export default async function PrecosPage({
   const auth = await createClient();
   // ⚠️ O CTA depende de quem está olhando — ver `cta-por-estado.ts`. Quem chega
   // pelo convite de fim de teste não pode receber "comece um teste".
+  // ⚠️ VIRADA COMERCIAL: sem dias grátis para quem chega depois da data
+  // programada no Admin. Sem data, a página é a de sempre.
+  const semTrial = await jornadaSemTrial(admin);
   const [planos, estado, estadoCampanha, ofertaIndividual] = await Promise.all([
     lerPlanosParaExibir(admin),
-    estadoComercialDoVisitante(),
+    estadoComercialDoVisitante(semTrial),
     lerEstadoBlackFriday(admin),
     resolverOfertaDaFamilia(auth),
   ]);
@@ -51,7 +57,7 @@ export default async function PrecosPage({
   const promocionalCentavos = ofertaIndividual?.valorCentavos
     ?? (campanhaPublica?.ok ? campanhaPublica.valorCentavos : null);
   const blackFriday = promocionalCentavos != null;
-  const cta = ctaDoEstado(estado, blackFriday ? BLACK_FRIDAY_2026.diasTrial : 7);
+  const cta = ctaDoEstado(estado, blackFriday ? BLACK_FRIDAY_2026.diasTrial : 7, semTrial);
   const mensalCent = promocionalCentavos ?? planos.mensal.centavos;
   const anualCent = planos.anual.centavos;
   const mensalLabel = formatarBRL(mensalCent);
@@ -235,15 +241,30 @@ export default async function PrecosPage({
             </>)}
           </div>
 
-          {/* Reassurance card. */}
+          {/* Reassurance card. Depois da virada comercial não há trial: a
+              garantia passa a ser o cancelamento simples. */}
           <div className="mx-auto mt-12 max-w-3xl rounded-2xl bg-kolo-lilas-bg-2 p-6 text-center md:p-8">
-            <p className="font-heading text-xl font-semibold text-foreground">
-              Sem cartão pra começar
-            </p>
-            <p className="mt-2 text-muted-foreground">
-              O trial não pede cartão. Você decide se gosta antes de pagar — não
-              existe risco de cobrança automática que você esqueceu.
-            </p>
+            {semTrial ? (
+              <>
+                <p className="font-heading text-xl font-semibold text-foreground">
+                  Sem fidelidade
+                </p>
+                <p className="mt-2 text-muted-foreground">
+                  Você cancela quando quiser, em um clique. O que você registrou
+                  sobre a sua família continua com você.
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="font-heading text-xl font-semibold text-foreground">
+                  Sem cartão pra começar
+                </p>
+                <p className="mt-2 text-muted-foreground">
+                  O trial não pede cartão. Você decide se gosta antes de pagar — não
+                  existe risco de cobrança automática que você esqueceu.
+                </p>
+              </>
+            )}
           </div>
         </div>
       </section>

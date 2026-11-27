@@ -9,6 +9,7 @@ import { carregarCopy } from "@/lib/onboarding/copy-store";
 import { familiasInternas } from "@/lib/analytics/internos";
 import type { RascunhoOnboarding } from "@/lib/onboarding/salvar-conversacional";
 import { whatsappDaAyla } from "@/lib/config/geral";
+import { jornadaSemTrial } from "@/lib/billing/virada-comercial";
 import { OnboardingWizard, type InitialState, type Membro } from "./wizard";
 import { OnboardingConversacional } from "./conversacional";
 
@@ -118,6 +119,8 @@ export default async function OnboardingPage() {
     whatsapp: family.whatsapp_e164,
     membros,
     perfilFamilia: perfilFamilia ?? null,
+    // Virada comercial: o último passo não promete período gratuito.
+    semTrial: await jornadaSemTrial(admin),
   };
 
   return (

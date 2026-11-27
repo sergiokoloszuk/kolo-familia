@@ -201,6 +201,7 @@ import {
   type EscolhaObjetivoHistoria,
 } from "./historia-whatsapp";
 import { planosWhatsappLigados } from "./plano-disponibilidade";
+import { familiaSemTesteAnterior } from "@/lib/billing/virada-comercial";
 
 /**
  * Orchestrator da Ayla — PRD §12.4. Os dois pontos de entrada:
@@ -3015,6 +3016,17 @@ async function processInboundInterno(
     // ⚠️ ORDEM PRESERVADA: isto vem DEPOIS do ramo de segurança acima (crise
     // continua tendo precedência sobre o comercial) e ANTES do convite fixo, que
     // continua existindo como comportamento de flag desligada.
+    //
+    // ⚠️ VIRADA COMERCIAL, 27/11/2026. Depois dela, quem está aqui sem acesso
+    // pode ser uma família que NUNCA teve teste (cadastrou e ainda não
+    // assinou). "Seu período grátis acabou" seria falso para ela — então o
+    // bloco do modo e o convite fixo trocam só essa verdade. Quem já teve
+    // teste recebe exatamente o texto de sempre.
+    const semTesteAnterior = await familiaSemTesteAnterior(supabase, family.id);
+    const conviteFixo = (nomeMae: string, link: string | null) =>
+      semTesteAnterior
+        ? `Oi, ${nomeMae}! Que bom ter você aqui 🌿 Pra a gente começar — estratégias, rotina, tudo o que a Kolo faz com você — é só escolher seu plano aqui:\n${link}\n\nO que você já me contou fica guardado. 💛`
+        : `Oi, ${nomeMae}! Eu adoraria seguir te ajudando 🌿 Mas seu período grátis acabou. Pra a gente continuar — estratégias, rotina, tudo o que você já conhece — é só assinar aqui:\n${link}\n\nO que você me contou fica tudo guardado. 💛`;
     if (posTrialAtivo() && ctxA) {
       const podeLink = await reservarConviteAssinatura(supabase, family.id);
       const link = podeLink
@@ -3026,6 +3038,7 @@ async function processInboundInterno(
         modo: "pos_trial",
         // Sem link neste turno, o bloco proíbe repetir o que está no histórico.
         linkDisponivel: Boolean(link),
+        semTesteAnterior,
       }).catch((e) => {
         console.warn(
           "[ayla:pos-trial] falhou, caindo pro convite fixo:",
@@ -3063,7 +3076,7 @@ async function processInboundInterno(
           family_account_id: family.id,
           membro_atipico_id: null,
           phone: ctxA.whatsapp_e164,
-          texto: `Oi, ${ctxA.nomeMae}! Eu adoraria seguir te ajudando 🌿 Mas seu período grátis acabou. Pra a gente continuar — estratégias, rotina, tudo o que você já conhece — é só assinar aqui:\n${link}\n\nO que você me contou fica tudo guardado. 💛`,
+          texto: conviteFixo(ctxA.nomeMae, link),
           category: "reativa",
           tipo: "assinatura_nudge",
           controleTurno,
@@ -3093,7 +3106,7 @@ async function processInboundInterno(
       // mais — o ramo virou inalcançável, então sai. Nenhuma mensagem que a
       // família recebia deixa de existir: fora da janela, o texto sempre foi
       // este. Se um segundo convite precisar de outra voz, isso é política.
-      const texto = `Oi, ${ctxA.nomeMae}! Eu adoraria seguir te ajudando 🌿 Mas seu período grátis acabou. Pra a gente continuar — estratégias, rotina, tudo o que você já conhece — é só assinar aqui:\n${link}\n\nO que você me contou fica tudo guardado. 💛`;
+      const texto = conviteFixo(ctxA.nomeMae, link);
       const resp = await enviarEPersistir(supabase, {
         family_account_id: family.id,
         membro_atipico_id: null,

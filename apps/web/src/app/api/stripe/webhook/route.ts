@@ -12,6 +12,7 @@ import {
 } from "@/lib/stripe/status";
 import {
   conferirEscrita,
+  gravarAcessoDaFamilia,
   exigirFamiliaResolvida,
   avisarFamiliaNaoResolvida,
 } from "@/lib/stripe/acesso";
@@ -187,12 +188,12 @@ async function onCheckoutSessionCompleted(
     patch.pagamento_falhou_em = null;
   }
 
-  await conferirEscrita(
-    admin
-      .from("subscription_accesses")
-      .update(patch)
-      .eq("family_account_id", familyId)
-      .select("family_account_id"),
+  // Família da jornada sem teste chega aqui SEM linha — ver
+  // `gravarAcessoDaFamilia`.
+  await gravarAcessoDaFamilia(
+    admin,
+    familyId,
+    patch,
     {
       kind: "stripe_checkout_completed",
       familyId,
@@ -290,12 +291,10 @@ async function onSubscriptionChanged(
   // forca === "neutra" → decisao segue "vinculo": grava os ids e o período,
   // não toca no status. É aqui que a classe Rochelle morre.
 
-  await conferirEscrita(
-    admin
-      .from("subscription_accesses")
-      .update(patch)
-      .eq("family_account_id", familyId)
-      .select("family_account_id"),
+  await gravarAcessoDaFamilia(
+    admin,
+    familyId,
+    patch,
     {
       kind: "stripe_subscription_changed",
       familyId,
@@ -417,16 +416,14 @@ async function onInvoiceSucceeded(
     eventId: event.id,
     eventType: event.type,
   });
-  await conferirEscrita(
-    admin
-      .from("subscription_accesses")
-      .update({
-        status: "active",
-        current_period_end: isoFromUnix(getSubPeriodEnd(sub)),
-        pagamento_falhou_em: null, // regularizou → limpa o carimbo (não apaga dados)
-      })
-      .eq("family_account_id", familyId)
-      .select("family_account_id"),
+  await gravarAcessoDaFamilia(
+    admin,
+    familyId,
+    {
+      status: "active",
+      current_period_end: isoFromUnix(getSubPeriodEnd(sub)),
+      pagamento_falhou_em: null, // regularizou → limpa o carimbo (não apaga dados)
+    },
     {
       kind: "stripe_invoice_succeeded",
       familyId,

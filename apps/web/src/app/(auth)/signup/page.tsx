@@ -302,7 +302,7 @@ export default function SignupPage() {
   return (
     <Card className="w-full max-w-sm">
       <CardHeader>
-        <CardTitle>Começar grátis</CardTitle>
+        <CardTitle>Criar sua conta</CardTitle>
         <CardDescription>Sem cartão. Cancela quando quiser.</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">

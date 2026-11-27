@@ -21,6 +21,7 @@ export function Tela6Confirmacao({
   apelido,
   nomeCrianca,
   aylaAutorizada,
+  semTrial = false,
   pending,
   onComplete,
   onPrevious,
@@ -28,6 +29,8 @@ export function Tela6Confirmacao({
   apelido: string;
   nomeCrianca: string;
   aylaAutorizada: boolean;
+  /** Virada comercial valendo: o cadastro leva ao plano, não a um teste. */
+  semTrial?: boolean;
   pending: boolean;
   onComplete: (destino: "/kolo-vivo" | "/estrategias", janela: JanelaKey | null) => void;
   onPrevious: () => void;
@@ -72,7 +75,9 @@ export function Tela6Confirmacao({
           <div>
             <p className="font-medium">Tudo pronto, {apelido}.</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              Seu período gratuito começa agora. Sem cartão e sem cobrança automática.
+              {semTrial
+                ? "Seu cadastro está feito. No próximo passo você escolhe o seu plano e a gente começa."
+                : "Seu período gratuito começa agora. Sem cartão e sem cobrança automática."}
             </p>
           </div>
         </div>

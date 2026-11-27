@@ -908,6 +908,12 @@ export async function responderExperimental(
      */
     linkDisponivel?: boolean;
     /**
+     * Só o pós-Trial usa: a família NUNCA teve teste — chegou depois da virada
+     * comercial e ainda não assinou. Dizer "seu período gratuito terminou" a
+     * ela seria falso. Ver `semTesteAnterior` em `blocoPosTrial`.
+     */
+    semTesteAnterior?: boolean;
+    /**
      * Só o simulador passa isto. A conversa real, nunca — e o teste
      * `simulador-nao-escreve.test.ts` prende que estes turnos não são gravados
      * em lugar nenhum.
@@ -1282,6 +1288,7 @@ export async function responderExperimental(
           rotulos,
           fatos,
           podeOferecerLink: params.linkDisponivel !== false,
+          semTesteAnterior: params.semTesteAnterior === true,
         })
       : "";
     // A criança que a resposta vai carimbar: no foco compartilhado ou ambíguo

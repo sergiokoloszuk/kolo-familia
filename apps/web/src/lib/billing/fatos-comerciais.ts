@@ -45,24 +45,36 @@ export const TRIAL_DIAS = 7;
 export const FATOS_COMERCIAIS = `FATO COMERCIAL, nunca invente: fora de uma campanha registrada, o teste grátis é de ${TRIAL_DIAS} dias — não confunda com a duração de um Plano. Uma regra individual de campanha, quando fornecida abaixo, prevalece apenas para aquela família. Preço, planos e "como assino": responda VOCÊ e mande o link de Planos que o canal te dá — nunca mande procurar o suporte por causa disso.`;
 
 /**
+ * O mesmo fato DEPOIS da virada comercial (`lib/billing/virada-comercial`):
+ * quem chega agora não ganha dias grátis. Quem já tem teste, cortesia ou
+ * oferta mantém o próprio prazo — e esse prazo chega à Ayla pelos blocos da
+ * jornada e pela regra individual abaixo, nunca por este texto.
+ */
+export const FATOS_COMERCIAIS_SEM_TRIAL = `FATO COMERCIAL, nunca invente: a Kolo não oferece teste grátis para quem chega agora — a pessoa conhece a Ayla por uma demonstração e, se quiser continuar, assina um plano. Nunca prometa nem ofereça dias grátis. Quem já recebeu um teste, cortesia ou oferta mantém o prazo dela; uma regra individual, quando fornecida abaixo, prevalece apenas para aquela família. Preço, planos e "como assino": responda VOCÊ e mande o link de Planos que o canal te dá — nunca mande procurar o suporte por causa disso.`;
+
+/**
  * Acrescenta a exceção individual somente quando o banco prova participação.
- * Tabela ausente, erro ou família desconhecida preservam a regra normal de 7.
+ * Tabela ausente, erro ou família desconhecida preservam a regra normal —
+ * a de 7 dias, ou a sem teste quando a virada está valendo.
  */
 export async function fatosComerciaisParaFamilia(
   supabase: SupabaseClient | null | undefined,
   familyId: string | null | undefined,
 ): Promise<string> {
-  if (!supabase || !familyId) return FATOS_COMERCIAIS;
+  if (!supabase) return FATOS_COMERCIAIS;
+  const base = (await jornadaSemTrial(supabase)) ? FATOS_COMERCIAIS_SEM_TRIAL : FATOS_COMERCIAIS;
+  if (!familyId) return base;
   try {
     const { data, error } = await supabase
       .from("black_friday_2026_participacoes")
       .select("trial_fim_em, oferta_fim_exclusivo")
       .eq("family_account_id", familyId)
       .maybeSingle();
-    if (error || !data) return FATOS_COMERCIAIS;
-    return `${FATOS_COMERCIAIS}\nFATO INDIVIDUAL BLACK FRIDAY 2026: esta família recebeu 15 dias completos de teste. O teste termina em ${data.trial_fim_em}. Ela pode contratar por R$ 39,90 por mês antes de ${data.oferta_fim_exclusivo}. Assinar durante o teste preserva todos os dias e a primeira cobrança ocorre depois do término.`;
+    if (error || !data) return base;
+    return `${base}\nFATO INDIVIDUAL BLACK FRIDAY 2026: esta família recebeu 15 dias completos de teste. O teste termina em ${data.trial_fim_em}. Ela pode contratar por R$ 39,90 por mês antes de ${data.oferta_fim_exclusivo}. Assinar durante o teste preserva todos os dias e a primeira cobrança ocorre depois do término.`;
   } catch {
-    return FATOS_COMERCIAIS;
+    return base;
   }
 }
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { jornadaSemTrial } from "./virada-comercial";

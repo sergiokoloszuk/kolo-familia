@@ -209,10 +209,19 @@ export async function semearVinculosDoStripe(
       if (jaTem) continue;
 
       const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer.id;
-      const { error: erroSeed } = await admin
-        .from("subscription_accesses")
-        .update({ stripe_customer_id: customerId, stripe_subscription_id: sub.id })
-        .eq("family_account_id", familyId);
+      // ⚠️ VIRADA COMERCIAL, 27/11/2026: família da jornada sem teste pode não
+      // ter linha nenhuma — o `UPDATE` não casaria e a semeadura seria muda.
+      // A linha nasce `canceled` (sem acesso); quem decide o status continua
+      // sendo a passada de sempre, com a mesma regra do webhook.
+      const vinculo = { stripe_customer_id: customerId, stripe_subscription_id: sub.id };
+      const { error: erroSeed } = linha
+        ? await admin
+            .from("subscription_accesses")
+            .update(vinculo)
+            .eq("family_account_id", familyId)
+        : await admin
+            .from("subscription_accesses")
+            .insert({ family_account_id: familyId, status: "canceled", ...vinculo });
       if (erroSeed) {
         await logEvent({
           kind: KIND_DIVERGENCIA,

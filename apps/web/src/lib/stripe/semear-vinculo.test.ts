@@ -116,6 +116,37 @@ describe("a passada Stripe → Kolo", () => {
     vi.resetModules();
   });
 
+  it("8. MORDE: família da jornada sem teste, SEM linha, ganha a linha com o vínculo", async () => {
+    // Virada comercial (27/11/2026): quem nunca teve teste não tem linha. Com
+    // só `UPDATE`, a semeadura casaria com ninguém e a rede ficaria cega.
+    vi.resetModules();
+    vi.doMock("./client", () => ({
+      getStripeClient: () => ({
+        subscriptions: {
+          list: async () => ({
+            data: [{ id: "sub_nova", status: "active", customer: "cus_9", metadata: { family_account_id: "fam-sem-linha" } }],
+          }),
+        },
+      }),
+    }));
+    const { semearVinculosDoStripe } = await import("./reconciliacao");
+    const b = banco();
+    const inseridas: Record<string, unknown>[] = [];
+    const base = b.from();
+    const comInsert = {
+      ...b,
+      from: () => ({ ...base, insert: async (linha: Record<string, unknown>) => { inseridas.push(linha); return { error: null }; } }),
+    };
+    const r = await semearVinculosDoStripe(comInsert as never);
+    expect(r.semeadas).toBe(1);
+    // Nasce SEM acesso: quem decide o status é a passada de sempre.
+    expect(inseridas).toEqual([
+      { family_account_id: "fam-sem-linha", status: "canceled", stripe_customer_id: "cus_9", stripe_subscription_id: "sub_nova" },
+    ]);
+    vi.doUnmock("./client");
+    vi.resetModules();
+  });
+
   it("7. MORDE: a passada é CHAMADA, e antes dos filtros da varredura", () => {
     // ⚠️ Este teste já nasceu fraco uma vez: procurava só o NOME
     // `semearVinculosDoStripe`, e o nome aparece no comentário logo acima da
