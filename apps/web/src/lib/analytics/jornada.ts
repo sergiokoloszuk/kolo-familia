@@ -1,6 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { familiasInternas } from "./internos";
 import { emailsPorFamilia } from "./emails";
+import {
+  calcularMarcosJornada,
+  classificarCanalAtribuicao,
+  type CanalAtribuicao,
+} from "./jornada-regras";
 
 /**
  * "Jornada do Trial" — mapeia cada família numa FASE da jornada de trial
@@ -33,34 +38,66 @@ export const FASE_INFO: Record<FaseTrial, { label: string; desc: string }> = {
 
 const CANAL_LABEL: Record<string, string> = {
   trafego_pago: "Tráfego pago",
+  organico_social: "Social orgânico",
   afiliado: "Afiliado",
   convite: "Convite",
-  direto: "Direto",
+  parceria: "Parceria / referral",
+  landing_sem_canal: "Landing Base44 — canal desconhecido",
+  sem_origem: "Sem origem identificada",
+  desconhecido: "Origem não classificada",
 };
 
 /** utm_source cru → rótulo amigável. Fallback: o próprio valor. */
 const SOURCE_LABEL: Record<string, string> = {
   facebookads: "Meta Ads",
-  facebook: "Meta Ads",
-  fb: "Meta Ads",
-  instagram: "Meta Ads",
-  ig: "Meta Ads",
-  meta: "Meta Ads",
-  google: "Google Ads",
+  facebook: "Facebook",
+  fb: "Facebook",
+  instagram: "Instagram",
+  ig: "Instagram",
+  meta: "Meta",
+  google: "Google",
   googleads: "Google Ads",
   google_ads: "Google Ads",
   adwords: "Google Ads",
-  tiktok: "TikTok Ads",
+  tiktok: "TikTok",
+  tiktokads: "TikTok Ads",
+  tiktok_ads: "TikTok Ads",
 };
 const labelSource = (s: string) => SOURCE_LABEL[s.toLowerCase()] ?? s;
 
 /** Separa a origem em canal amigável + campanha + criativo (pra tabela). */
 function origemDetalhe(
-  f: { afiliado_id: string | null; utm_source: string | null; utm_campaign: string | null; utm_content: string | null; ref_codigo: string | null },
+  f: {
+    afiliado_id: string | null;
+    utm_source: string | null;
+    utm_medium: string | null;
+    utm_campaign: string | null;
+    utm_content: string | null;
+    ref_codigo: string | null;
+  },
   afiliadoNome: Map<string, string>,
 ): { canal: string; campanha: string | null; criativo: string | null } {
   if (f.afiliado_id)
     return { canal: `Afiliado: ${afiliadoNome.get(f.afiliado_id) ?? f.afiliado_id}`, campanha: null, criativo: null };
+  const classificacao = classificarCanalAtribuicao(f);
+  if (classificacao === "landing_sem_canal")
+    return {
+      canal: CANAL_LABEL.landing_sem_canal,
+      campanha: f.utm_campaign?.trim() || null,
+      criativo: f.utm_content?.trim() || null,
+    };
+  if (classificacao === "parceria")
+    return {
+      canal: `Parceria: ${f.utm_source}`,
+      campanha: f.utm_campaign?.trim() || null,
+      criativo: f.utm_content?.trim() || null,
+    };
+  if (classificacao === "desconhecido")
+    return {
+      canal: `Origem não classificada: ${f.utm_source}`,
+      campanha: f.utm_campaign?.trim() || null,
+      criativo: f.utm_content?.trim() || null,
+    };
   if (f.utm_source)
     return {
       canal: labelSource(f.utm_source),
@@ -68,7 +105,7 @@ function origemDetalhe(
       criativo: f.utm_content?.trim() || null,
     };
   if (f.ref_codigo) return { canal: "Convite", campanha: f.ref_codigo, criativo: null };
-  return { canal: "Direto", campanha: null, criativo: null };
+  return { canal: CANAL_LABEL.sem_origem, campanha: null, criativo: null };
 }
 
 /** desafio_area → rótulo amigável (dor principal). Fallback: o próprio valor. */
@@ -93,6 +130,36 @@ const AREA_LABEL: Record<string, string> = {
 const MS_DIA = 24 * 60 * 60 * 1000;
 /** Eventos que NÃO contam como "uso/orientação" (pageview e intenção). */
 const NAO_USO = new Set(["tela_visitada", "checkout_iniciado", "form_submit"]);
+
+type EventoJornada = {
+  family_account_id: string | null;
+  evento: string;
+  created_at: string;
+};
+
+/**
+ * O Supabase limita respostas grandes. O funil é vitalício, então pagina todos
+ * os eventos em vez de deixar os primeiros 1.000 decidirem a jornada inteira.
+ */
+async function carregarEventosJornada(admin: SupabaseClient): Promise<EventoJornada[]> {
+  const pagina = 1000;
+  const todos: EventoJornada[] = [];
+
+  for (let inicio = 0; ; inicio += pagina) {
+    const { data, error } = await admin
+      .from("user_events")
+      .select("family_account_id, evento, created_at")
+      .order("created_at", { ascending: true })
+      .range(inicio, inicio + pagina - 1);
+    if (error) throw new Error(`Falha ao carregar user_events do dashboard: ${error.message}`);
+
+    const lote = (data ?? []) as EventoJornada[];
+    todos.push(...lote);
+    if (lote.length < pagina) break;
+  }
+
+  return todos;
+}
 
 /**
  * Sub-funil do ONBOARDING — decompõe o "Cadastrou". `family_accounts.onboarding_step`
@@ -147,50 +214,6 @@ const PASSO_LABEL: Record<string, string> = {
   voce_horario: "No horário de contato",
 };
 
-export type FiltroJornada = { periodo?: string; origem?: string };
-
-/** Janela de datas (por created_at) a partir do filtro de período. */
-function janelaPeriodo(periodo: string, agora: number): { desde: number; ate: number } {
-  const d = new Date(agora);
-  const inicioMes = new Date(d.getFullYear(), d.getMonth(), 1).getTime();
-  const amanha = agora + MS_DIA;
-  switch (periodo) {
-    case "7d":
-      return { desde: agora - 7 * MS_DIA, ate: amanha };
-    case "30d":
-      return { desde: agora - 30 * MS_DIA, ate: amanha };
-    case "mes":
-      return { desde: inicioMes, ate: amanha };
-    case "mes_passado":
-      return { desde: new Date(d.getFullYear(), d.getMonth() - 1, 1).getTime(), ate: inicioMes };
-    default: // "tudo" = 90 dias
-      return { desde: agora - 90 * MS_DIA, ate: amanha };
-  }
-}
-
-/** A família passa no filtro de origem/canal? */
-function passaOrigem(
-  f: { utm_source: string | null; afiliado_id: string | null; ref_codigo: string | null },
-  origem: string,
-): boolean {
-  if (!origem || origem === "todas") return true;
-  const src = f.utm_source?.toLowerCase() ?? null;
-  switch (origem) {
-    case "trafego_pago":
-      return !!f.utm_source;
-    case "meta":
-      return src != null && ["facebookads", "facebook", "fb", "instagram", "ig", "meta"].includes(src);
-    case "google":
-      return src != null && ["google", "googleads", "google_ads", "adwords"].includes(src);
-    case "afiliado":
-      return !!f.afiliado_id;
-    case "direto":
-      return !f.utm_source && !f.afiliado_id && !f.ref_codigo;
-    default:
-      return true;
-  }
-}
-
 type Rank = { label: string; n: number };
 
 type FamRow = {
@@ -201,6 +224,7 @@ type FamRow = {
   afiliado_id: string | null;
   ref_codigo: string | null;
   utm_source: string | null;
+  utm_medium: string | null;
   utm_campaign: string | null;
   utm_content: string | null;
   whatsapp_e164: string | null;
@@ -247,8 +271,9 @@ export type FamiliaSegmento = {
   whatsapp: string | null;
   fase: FaseTrial;
   /** Marcos cumulativos (o funil é cumulativo; a fase é o estado exclusivo). */
-  ativou: boolean;
-  ativado: boolean;
+  iniciouOnboarding: boolean;
+  concluiuOnboarding: boolean;
+  recebeuPrimeiroValor: boolean;
   engajado: boolean;
   /** Passo do onboarding (1-7) e a tela onde está parada — pra decompor "Cadastrou". */
   onboardingStep: number;
@@ -284,6 +309,14 @@ export type JornadaData = {
   porCriativo: { label: string; cadastrou: number; ativado: number; converteu: number }[];
   /** Taxa de conversão trial→pago (assinantes / cadastros). */
   conversao: { taxa: number; assinantes: number; cadastros: number };
+  qualidadeAtribuicao: {
+    total: number;
+    identificada: number;
+    coberturaPct: number;
+    semOrigem: number;
+    landingSemCanal: number;
+    desconhecida: number;
+  };
   dorRank: Rank[];
   leads: JornadaLead[];
   /** Todas as famílias reais com marcos + fase — pro drill-down por segmento. */
@@ -293,12 +326,13 @@ export type JornadaData = {
 
 export async function carregarJornadaTrial(admin: SupabaseClient): Promise<JornadaData> {
   const agora = Date.now();
-  const desde90 = new Date(agora - 90 * MS_DIA).toISOString();
+  const desde90Ms = agora - 90 * MS_DIA;
+  const desde90 = new Date(desde90Ms).toISOString();
 
   const [
     { data: famsRaw },
     { data: subs },
-    { data: events },
+    events,
     { data: afiliadosRows },
     { data: diarios },
     { data: perfis },
@@ -309,17 +343,14 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
     admin
       .from("family_accounts")
       .select(
-        "id, created_at, onboarding_completed, onboarding_step, afiliado_id, ref_codigo, utm_source, utm_campaign, utm_content, whatsapp_e164",
+        "id, created_at, onboarding_completed, onboarding_step, afiliado_id, ref_codigo, utm_source, utm_medium, utm_campaign, utm_content, whatsapp_e164",
       ),
     admin
       .from("subscription_accesses")
       .select(
         "family_account_id, status, trial_ends_at, current_period_end, cancel_at_period_end, updated_at",
       ),
-    admin
-      .from("user_events")
-      .select("family_account_id, evento, created_at")
-      .gte("created_at", desde90),
+    carregarEventosJornada(admin),
     admin.from("afiliados").select("id, nome, codigo_unico"),
     admin
       .from("diarios")
@@ -393,9 +424,10 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
     if (e.evento !== "checkout_iniciado") continue;
     const fid = e.family_account_id as string | null;
     if (!fid) continue;
+    const t = new Date(e.created_at as string).getTime();
+    if (t < desde90Ms) continue;
     const cur = checkoutByFam.get(fid) ?? { n: 0, ultimo: 0 };
     cur.n += 1;
-    const t = new Date(e.created_at as string).getTime();
     if (t > cur.ultimo) cur.ultimo = t;
     checkoutByFam.set(fid, cur);
   }
@@ -417,21 +449,21 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
     atividade.set(fid, cur);
   }
 
-  const canalDe = (f: FamRow): string => {
-    if (f.afiliado_id) return "afiliado";
-    if (f.utm_source) return "trafego_pago";
-    if (f.ref_codigo) return "convite";
-    return "direto";
-  };
+  const canalDe = (f: FamRow): CanalAtribuicao => classificarCanalAtribuicao(f);
   const origemDe = (f: FamRow): string => {
     if (f.afiliado_id) return `Afiliado: ${afiliadoNome.get(f.afiliado_id) ?? f.afiliado_id}`;
-    if (f.utm_source) return `${f.utm_source}${f.utm_campaign ? ` · ${f.utm_campaign}` : ""}`;
     if (f.ref_codigo) return `Convite: ${f.ref_codigo}`;
-    return "Direto";
+    const canal = canalDe(f);
+    if (canal === "landing_sem_canal") return CANAL_LABEL.landing_sem_canal;
+    if (canal === "parceria") return `Parceria: ${f.utm_source}`;
+    if (canal === "desconhecido") return `Origem não classificada: ${f.utm_source}`;
+    if (f.utm_source) return `${f.utm_source}${f.utm_campaign ? ` · ${f.utm_campaign}` : ""}`;
+    return CANAL_LABEL.sem_origem;
   };
 
   let cadastrou = 0,
-    ativouTeste = 0,
+    iniciouOnboardingN = 0,
+    concluiuOnboardingN = 0,
     ativadoN = 0,
     engajadoN = 0,
     converteuN = 0,
@@ -462,17 +494,21 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
     const diaTrial = Math.min(7, Math.max(1, Math.floor((agora - criado) / MS_DIA) + 1));
     const usos = at.usos;
     const temAtividade = at.total > 0;
-    // Ativado = concluiu E teve o 1º momento de valor: uso no app, OU recebeu um
-    // plano, OU conversou com a Ayla (a orientação dela também é ativação).
-    const recebeuValor = usos >= 1 || temPlano.has(f.id) || falouComAyla.has(f.id);
-    const ativadoBool = Boolean(f.onboarding_completed) && recebeuValor;
-    const engajadoBool = usos >= 2 || (temPlano.has(f.id) && falouComAyla.has(f.id));
+    const step = Math.min(7, Math.max(1, f.onboarding_step ?? 1));
+    const marcos = calcularMarcosJornada({
+      onboardingCompleted: f.onboarding_completed,
+      onboardingStep: step,
+      usos,
+      temPlano: temPlano.has(f.id),
+      falouComAyla: falouComAyla.has(f.id),
+    });
+    const ativadoBool = marcos.recebeuPrimeiroValor;
+    const engajadoBool = marcos.engajou;
     const inativo = temAtividade && at.ultima > 0 && agora - at.ultima > MS_DIA;
     const trialEnds = sub?.trialEnds ? new Date(sub.trialEnds).getTime() : null;
     const trialVencido = status === "trialing" && trialEnds != null && trialEnds <= agora;
 
-    const step = Math.min(7, Math.max(1, f.onboarding_step ?? 1));
-    const concluiuOnb = Boolean(f.onboarding_completed) || step >= 7;
+    const concluiuOnb = marcos.concluiuOnboarding;
 
     // Onde parou: a pergunta exata (rascunho) e, faltando ela, a tela grossa.
     const rasc = rascunhoByFam.get(f.id);
@@ -485,10 +521,11 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
     // Funil cumulativo — só usuários REAIS (o interno fica de fora das contagens).
     if (!interno) {
       cadastrou += 1;
-      if (temAtividade) ativouTeste += 1;
+      if (marcos.iniciouOnboarding) iniciouOnboardingN += 1;
+      if (marcos.concluiuOnboarding) concluiuOnboardingN += 1;
       if (ativadoBool) ativadoN += 1;
       if (engajadoBool) engajadoN += 1;
-      if (status === "active") converteuN += 1;
+      if (status === "active" && ativadoBool) converteuN += 1;
       // Sub-funil do onboarding (cumulativo) — só a coorte a partir de ONBOARDING_DESDE.
       if (criado >= ONBOARDING_DESDE) {
         for (let i = 0; i < ONBOARDING_ETAPAS.length; i++) {
@@ -507,7 +544,7 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
       else if (inativo && usos >= 1) fase = "em_risco";
       else if (engajadoBool) fase = "engajado";
       else if (ativadoBool) fase = "ativado";
-      else if (temAtividade) fase = "ativou_teste";
+      else if (marcos.concluiuOnboarding) fase = "ativou_teste";
       else fase = "cadastrou";
     } else fase = "cadastrou";
 
@@ -516,9 +553,9 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
     if (!interno) {
       if (fase === "em_risco") emRisco += 1;
       if (fase === "expirado") expirados += 1;
-      const converteu = status === "active";
+      const converteu = status === "active" && ativadoBool;
       bump(porOrigem, canal, ativadoBool, converteu);
-      if (f.utm_source) {
+      if (canal === "trafego_pago") {
         bump(
           porCampanha,
           `${f.utm_source} · ${f.utm_campaign?.trim() || "(sem campanha)"}`,
@@ -548,8 +585,9 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
         ultimoUso,
         whatsapp: f.whatsapp_e164 ?? null,
         fase,
-        ativou: temAtividade,
-        ativado: ativadoBool,
+        iniciouOnboarding: marcos.iniciouOnboarding,
+        concluiuOnboarding: marcos.concluiuOnboarding,
+        recebeuPrimeiroValor: ativadoBool,
         engajado: engajadoBool,
         onboardingStep: step,
         onboardingLabel: paradoEm,
@@ -603,19 +641,64 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
 
   const funil = [
     { key: "cadastrou", label: "Cadastrou", desc: FASE_INFO.cadastrou.desc, n: cadastrou },
-    { key: "ativou_teste", label: "Ativou o teste", desc: FASE_INFO.ativou_teste.desc, n: ativouTeste },
-    { key: "ativado", label: "Ativado", desc: FASE_INFO.ativado.desc, n: ativadoN },
-    { key: "engajado", label: "Engajado", desc: FASE_INFO.engajado.desc, n: engajadoN },
+    {
+      key: "iniciou_onboarding",
+      label: "Iniciou o onboarding",
+      desc: "Avançou além do primeiro passo do cadastro.",
+      n: iniciouOnboardingN,
+    },
+    {
+      key: "concluiu_onboarding",
+      label: "Concluiu o onboarding",
+      desc: "Terminou o cadastro e entrou no produto.",
+      n: concluiuOnboardingN,
+    },
+    {
+      key: "recebeu_valor",
+      label: "Recebeu o 1º valor",
+      desc: "Concluiu o onboarding e usou uma função, recebeu um plano ou conversou com a Ayla.",
+      n: ativadoN,
+    },
+    {
+      key: "engajado",
+      label: "Engajou novamente",
+      desc: "Depois do primeiro valor, teve um segundo uso ou combinou plano e conversa com a Ayla.",
+      n: engajadoN,
+    },
     { key: "convertido", label: "Converteu", desc: FASE_INFO.convertido.desc, n: converteuN },
   ];
 
-  const porOrigemArr = ["trafego_pago", "afiliado", "convite", "direto"]
+  const ordemCanais: CanalAtribuicao[] = [
+    "trafego_pago",
+    "organico_social",
+    "afiliado",
+    "convite",
+    "parceria",
+    "landing_sem_canal",
+    "desconhecido",
+    "sem_origem",
+  ];
+  const porOrigemArr = ordemCanais
     .map((c) => ({
       canal: c,
       label: CANAL_LABEL[c],
       ...(porOrigem.get(c) ?? { cadastrou: 0, ativado: 0, converteu: 0 }),
     }))
     .filter((o) => o.cadastrou > 0);
+
+  const nCanal = (canal: CanalAtribuicao) => porOrigem.get(canal)?.cadastrou ?? 0;
+  const semOrigem = nCanal("sem_origem");
+  const landingSemCanal = nCanal("landing_sem_canal");
+  const desconhecida = nCanal("desconhecido");
+  const identificada = cadastrou - semOrigem - landingSemCanal - desconhecida;
+  const qualidadeAtribuicao = {
+    total: cadastrou,
+    identificada,
+    coberturaPct: cadastrou > 0 ? Math.round((identificada / cadastrou) * 100) : 0,
+    semOrigem,
+    landingSemCanal,
+    desconhecida,
+  };
 
   const mapToArr = (m: Map<string, FunilOrigem>) =>
     [...m.entries()]
@@ -647,6 +730,7 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
     porCampanha: mapToArr(porCampanha),
     porCriativo: mapToArr(porCriativo),
     conversao,
+    qualidadeAtribuicao,
     dorRank,
     leads,
     todasFamilias,
@@ -699,7 +783,7 @@ export async function carregarJornadaAdmin(admin: SupabaseClient): Promise<Jorna
     admin
       .from("family_accounts")
       .select(
-        "id, created_at, onboarding_completed, whatsapp_e164, afiliado_id, ref_codigo, utm_source, utm_campaign, utm_content",
+        "id, created_at, onboarding_completed, onboarding_step, whatsapp_e164, afiliado_id, ref_codigo, utm_source, utm_medium, utm_campaign, utm_content",
       ),
     admin.from("subscription_accesses").select("family_account_id, status, trial_ends_at"),
     admin
@@ -777,17 +861,16 @@ export async function carregarJornadaAdmin(admin: SupabaseClient): Promise<Jorna
     if (melhor) dorByFam.set(fid, AREA_LABEL[melhor] ?? melhor);
   }
 
-  const canalDe = (f: FamAdminRow): string => {
-    if (f.afiliado_id) return "afiliado";
-    if (f.utm_source) return "trafego_pago";
-    if (f.ref_codigo) return "convite";
-    return "direto";
-  };
+  const canalDe = (f: FamAdminRow): CanalAtribuicao => classificarCanalAtribuicao(f);
   const origemDe = (f: FamAdminRow): string => {
     if (f.afiliado_id) return `Afiliado: ${afiliadoNome.get(f.afiliado_id) ?? f.afiliado_id}`;
-    if (f.utm_source) return `${f.utm_source}${f.utm_campaign ? ` · ${f.utm_campaign}` : ""}`;
     if (f.ref_codigo) return `Convite: ${f.ref_codigo}`;
-    return "Direto";
+    const canal = canalDe(f);
+    if (canal === "landing_sem_canal") return CANAL_LABEL.landing_sem_canal;
+    if (canal === "parceria") return `Parceria: ${f.utm_source}`;
+    if (canal === "desconhecido") return `Origem não classificada: ${f.utm_source}`;
+    if (f.utm_source) return `${f.utm_source}${f.utm_campaign ? ` · ${f.utm_campaign}` : ""}`;
+    return CANAL_LABEL.sem_origem;
   };
 
   const vazio = (): Record<FaseTrial, JornadaAdminFamilia[]> => ({

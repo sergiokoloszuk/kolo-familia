@@ -21,8 +21,9 @@ const SEGMENTOS: Record<
   { label: string; desc?: string; pred: (f: FamiliaSegmento) => boolean }
 > = {
   cadastrou: { label: "Cadastrou", pred: () => true },
-  ativou_teste: { label: "Ativou o teste", pred: (f) => f.ativou },
-  ativado: { label: "Ativado", pred: (f) => f.ativado },
+  iniciou_onboarding: { label: "Iniciou o onboarding", pred: (f) => f.iniciouOnboarding },
+  concluiu_onboarding: { label: "Concluiu o onboarding", pred: (f) => f.concluiuOnboarding },
+  recebeu_valor: { label: "Recebeu o 1º valor", pred: (f) => f.recebeuPrimeiroValor },
   engajado: { label: "Engajado", pred: (f) => f.engajado },
   convertido: { label: "Converteu", pred: (f) => f.fase === "convertido" },
   em_risco: { label: "Em risco (parou 24h+)", pred: (f) => f.fase === "em_risco" },
@@ -129,7 +130,10 @@ export default async function AquisicaoJornadaPage({
       </Bloco>
 
       {/* Funil por fase da jornada */}
-      <Bloco titulo="Funil da jornada" desc="Cada etapa é um subconjunto da anterior. % sobre quem cadastrou.">
+      <Bloco
+        titulo="Funil da jornada"
+        desc="Marcos vitalícios e cumulativos: cada etapa é um subconjunto da anterior. % sobre quem cadastrou."
+      >
         <ul className="flex flex-col gap-2">
           {j.funil.map((f) => {
             const ativo = segAtivo === f.key;
@@ -509,6 +513,34 @@ export default async function AquisicaoJornadaPage({
         </Bloco>
       )}
 
+      <Bloco
+        titulo="Qualidade da atribuição"
+        desc="Mostra quanto da base tem canal realmente identificado. Landing não é tratada como aquisição."
+      >
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <IndicadorQualidade
+            label="Canal identificado"
+            value={`${j.qualidadeAtribuicao.coberturaPct}%`}
+            sub={`${j.qualidadeAtribuicao.identificada} de ${j.qualidadeAtribuicao.total}`}
+          />
+          <IndicadorQualidade
+            label="Sem origem"
+            value={j.qualidadeAtribuicao.semOrigem}
+            sub="não assumir que foi direto"
+          />
+          <IndicadorQualidade
+            label="Via Base44"
+            value={j.qualidadeAtribuicao.landingSemCanal}
+            sub="landing conhecida, canal desconhecido"
+          />
+          <IndicadorQualidade
+            label="UTM desconhecida"
+            value={j.qualidadeAtribuicao.desconhecida}
+            sub="precisa classificação explícita"
+          />
+        </div>
+      </Bloco>
+
       {/* Conversão por origem */}
       <Bloco titulo="Conversão por origem" desc="Qual canal traz gente que ativa e assina.">
         {j.porOrigem.length === 0 ? (
@@ -627,6 +659,24 @@ function FichaCard({ titulo, children }: { titulo: string; children: React.React
   );
 }
 
+function IndicadorQualidade({
+  label,
+  value,
+  sub,
+}: {
+  label: string;
+  value: number | string;
+  sub: string;
+}) {
+  return (
+    <div className="rounded-xl border border-foreground/[0.08] bg-white px-4 py-3">
+      <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
+      <p className="font-heading text-2xl text-foreground">{value}</p>
+      <p className="mt-0.5 text-xs text-muted-foreground">{sub}</p>
+    </div>
+  );
+}
+
 /** Status cru da assinatura → o que ele significa pra quem vai abordar. */
 function rotuloStatus(status: string | null): string {
   switch (status) {
@@ -677,7 +727,7 @@ function FunilTabela({
           <tr className="text-left text-xs uppercase tracking-wide text-muted-foreground">
             <th className="py-2 pr-3 font-medium">{col}</th>
             <th className="px-3 py-2 text-right font-medium">Cadastrou</th>
-            <th className="px-3 py-2 text-right font-medium">Ativado</th>
+            <th className="px-3 py-2 text-right font-medium">Recebeu 1º valor</th>
             <th className="px-3 py-2 text-right font-medium">Converteu</th>
           </tr>
         </thead>

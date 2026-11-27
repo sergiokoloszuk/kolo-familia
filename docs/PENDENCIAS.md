@@ -172,7 +172,7 @@ substitui a prioridade atual de segurança nem a análise de produção.
 | [PEND-124](#pend-124) | configuracao_geral não existe em produção — migração 0068 nunca aplicada | P2 | MEDIDA — IMPACTO NÃO PROVADO |
 | [PEND-125](#pend-125) | 31% dos cadastros nunca confirmam o e-mail e nunca entram | P0 | MEDIDA — CAUSA NÃO ISOLADA |
 | [PEND-126](#pend-126) | A jornada D0–D7 do Trial não acontece: 2 dias de 8, e 94% nunca são contactadas | P0 | MEDIDA — NÃO CORRIGIDA |
-| [PEND-127](#pend-127) | utm_attribution não existe em produção (migração 0052 nunca aplicada) | P1 | MEDIDA |
+| [PEND-127](#pend-127) | Atribuição e funil misturam landing, canal, testes e janelas | P1 | VALIDADA LOCALMENTE · DEPLOY PENDENTE |
 | [PEND-128](#pend-128) | O contato do suporte ainda está duplicado no documento trial v4 | P2 | PARCIALMENTE CORRIGIDA |
 | [PEND-129](#pend-129) | O HMAC do código de ativação tem valor padrão público no código | P0 | MEDIDA — IMPACTO EM PRODUÇÃO NÃO CONFIRMADO |
 | [PEND-130](#pend-130) | O código de ativação não tem limite de tentativas, de reenvios nem cooldown | P1 | MEDIDA — NÃO CORRIGIDA |
@@ -6729,21 +6729,28 @@ STATUS: **MEDIDA — NÃO CORRIGIDA** · Aberta em: 2026-08-21
 ---
 
 ### PEND-127
-**`utm_attribution` não existe em produção (migração 0052 nunca aplicada)**
-Bloco: **H · Governança** · Prioridade: **P1**
-STATUS: **MEDIDA** · Aberta em: 2026-08-21
+**Atribuição e funil do dashboard misturam landing, canal, testes e janelas**
+Bloco: **H · Governança / E · Analytics** · Prioridade: **P1**
+STATUS: **VALIDADA LOCALMENTE · DEPLOY PENDENTE** · Aberta em: 2026-08-21
 
-- **PROVEI EM PRODUÇÃO (20/08):** consulta a `utm_attribution` devolve
-  `relation "public.utm_attribution" does not exist`.
-- **CONSEQUÊNCIA:** não existe atribuição de origem. Investigando a PEND-125
-  (31% não confirmam o e-mail), não foi possível saber se esses cadastros vêm
-  de uma campanha específica, de tráfego pago ou de indicação. **Toda conversa
-  sobre funil é chute enquanto isto não existir.**
-- **A terceira migração da base que se prova não aplicada**, junto com a 0068
-  (PEND-124) e as 0080/0081 antes desta frente. Não é coincidência — é a
-  PEND-119 cobrando juros.
-- **CRITÉRIO DE CONCLUSÃO:** tabela existindo, populada por cadastro novo, e
-  uma consulta de origem respondida com dado real.
+- **Correção da hipótese histórica:** a migração 0052 grava `utm_*`
+  diretamente em `family_accounts`; não existe nem deveria existir tabela
+  separada `utm_attribution`.
+- **Baseline de produção em 26/11/2026:** a tela comparava 210 que "ativaram o
+  teste" com 241 "ativados", porque misturava eventos de 90 dias com planos e
+  conversas vitalícios. A consulta também parava em 1.000 linhas apesar de
+  existirem 6.445 `user_events`.
+- **Origem:** 365 cadastros tinham `facebookads`, 11 tinham `base44` e 60 não
+  tinham UTM. `base44` identifica a landing, não o canal de aquisição.
+- **Teste, não parceria:** os oito registros `escalasaas*` eram sete campanhas
+  `teste*` e uma gravação. Eles passam a ficar fora dos indicadores sem impedir
+  que uma indicação real futura da mesma fonte seja contada.
+- **Correção validada:** paginação vitalícia, funil cumulativo, classificação
+  explícita de canal e card de qualidade da atribuição. O replay somente leitura
+  contra produção passou; 24 testes dirigidos e o build completo passaram.
+- **CRITÉRIO DE CONCLUSÃO:** código publicado e comprovado no domínio principal;
+  CTA da Base44 preserva UTMs recebidas e só usa `base44` quando não existe canal;
+  novos cadastros controlados provam pago, direto, indicação e landing sem UTM.
 
 ---
 
